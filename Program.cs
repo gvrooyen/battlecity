@@ -10,14 +10,21 @@ namespace battlecity
         static void Main(string[] args)
         {
             var info = new Microsoft.VisualBasic.Devices.ComputerInfo();
-            System.Console.WriteLine(info.TotalPhysicalMemory);
-            System.Console.WriteLine(info.AvailablePhysicalMemory);
-            System.Console.WriteLine(info.TotalVirtualMemory);
-            System.Console.WriteLine(info.AvailableVirtualMemory);
             System.Console.WriteLine(info.OSFullName);
+            System.Console.WriteLine("Memory usage: {0}%", info.AvailablePhysicalMemory*100/info.TotalPhysicalMemory);
 
-            ChallengeService.ChallengeClient client = new ChallengeService.ChallengeClient("ChallengePort", "http://localhost:7070/Challenge/ChallengeService");
-            client.login();
+            var endpoint = "http://localhost:7070/Challenge/ChallengeService";
+            if (args.Length > 0)
+            {
+                endpoint = args[0];
+            }
+
+            System.ServiceModel.BasicHttpBinding binding = new System.ServiceModel.BasicHttpBinding();
+            binding.MaxReceivedMessageSize = 1048576;
+            System.ServiceModel.EndpointAddress remoteAddress = new System.ServiceModel.EndpointAddress(endpoint);
+            ChallengeService.ChallengeClient client = new ChallengeService.ChallengeClient(binding, remoteAddress);            
+            ChallengeService.state?[][] result = client.login();
+            System.Console.WriteLine(result.Length);
         }
     }
 }

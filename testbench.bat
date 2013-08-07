@@ -1,9 +1,12 @@
 echo off
 set pwd=%~dp0
-echo Launching battlecity harness...
+echo Cleaning old battles...
 cd ../../harness
+rmdir battle*-*
+echo Launching battlecity harness...
 start launch.bat
-ping 1.1.1.1 -n 1 - w 3000 > nul
+rem ping 1.1.1.1 -n1 -w5000 > nul
+choice /C X /T 3 /D X > nul
 echo Activating first player...
 cd %pwd%
 start start.bat http://localhost:7070/Challenge/ChallengeService

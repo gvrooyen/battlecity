@@ -10,6 +10,8 @@ namespace battlecity
         static void Main(string[] args)
         {
             var info = new Microsoft.VisualBasic.Devices.ComputerInfo();
+            Board board;
+
             System.Console.WriteLine(info.OSFullName);
             System.Console.WriteLine("Memory usage: {0}%", info.AvailablePhysicalMemory*100/info.TotalPhysicalMemory);
 
@@ -20,11 +22,18 @@ namespace battlecity
             }
 
             System.ServiceModel.BasicHttpBinding binding = new System.ServiceModel.BasicHttpBinding();
-            binding.MaxReceivedMessageSize = 1048576;
+            binding.MaxReceivedMessageSize = 1024*1024;
             System.ServiceModel.EndpointAddress remoteAddress = new System.ServiceModel.EndpointAddress(endpoint);
-            ChallengeService.ChallengeClient client = new ChallengeService.ChallengeClient(binding, remoteAddress);            
-            ChallengeService.state?[][] result = client.login();
-            System.Console.WriteLine(result.Length);
+            ChallengeService.ChallengeClient client = new ChallengeService.ChallengeClient(binding, remoteAddress);
+
+            try
+            {
+                ChallengeService.state?[][] result = client.login();
+                System.Console.WriteLine(result.Length);
+                board = new Board(result);
+                System.Console.WriteLine(board.toString());
+            }
+            finally { }
         }
     }
 }

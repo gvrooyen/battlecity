@@ -34,7 +34,7 @@ namespace battlecity
             this.board = board;
         }
 
-        public string toString()
+        public string ToString()
         {
             string S = "";
             foreach (ChallengeService.state?[] row in board)

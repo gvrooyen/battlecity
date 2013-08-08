@@ -35,6 +35,38 @@ namespace battlecity.ChallengeService {
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.ComponentModel.DesignerCategoryAttribute("code")]
     [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://challenge.entelect.co.za/")]
+    public partial class delta : object, System.ComponentModel.INotifyPropertyChanged {
+        
+        private long millisecondsToNextTickField;
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Form=System.Xml.Schema.XmlSchemaForm.Unqualified, Order=0)]
+        public long millisecondsToNextTick {
+            get {
+                return this.millisecondsToNextTickField;
+            }
+            set {
+                this.millisecondsToNextTickField = value;
+                this.RaisePropertyChanged("millisecondsToNextTick");
+            }
+        }
+        
+        public event System.ComponentModel.PropertyChangedEventHandler PropertyChanged;
+        
+        protected void RaisePropertyChanged(string propertyName) {
+            System.ComponentModel.PropertyChangedEventHandler propertyChanged = this.PropertyChanged;
+            if ((propertyChanged != null)) {
+                propertyChanged(this, new System.ComponentModel.PropertyChangedEventArgs(propertyName));
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "4.0.30319.1009")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://challenge.entelect.co.za/")]
     public partial class @base : object, System.ComponentModel.INotifyPropertyChanged {
         
         private int xField;
@@ -643,6 +675,8 @@ namespace battlecity.ChallengeService {
         
         private events eventsField;
         
+        private long millisecondsToNextTickField;
+        
         private System.DateTime nextTickTimeField;
         
         private bool nextTickTimeFieldSpecified;
@@ -677,6 +711,18 @@ namespace battlecity.ChallengeService {
         
         /// <remarks/>
         [System.Xml.Serialization.XmlElementAttribute(Form=System.Xml.Schema.XmlSchemaForm.Unqualified, Order=2)]
+        public long millisecondsToNextTick {
+            get {
+                return this.millisecondsToNextTickField;
+            }
+            set {
+                this.millisecondsToNextTickField = value;
+                this.RaisePropertyChanged("millisecondsToNextTick");
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Form=System.Xml.Schema.XmlSchemaForm.Unqualified, Order=3)]
         public System.DateTime nextTickTime {
             get {
                 return this.nextTickTimeField;
@@ -700,7 +746,7 @@ namespace battlecity.ChallengeService {
         }
         
         /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute(Form=System.Xml.Schema.XmlSchemaForm.Unqualified, Order=3)]
+        [System.Xml.Serialization.XmlElementAttribute(Form=System.Xml.Schema.XmlSchemaForm.Unqualified, Order=4)]
         public string playerName {
             get {
                 return this.playerNameField;
@@ -712,7 +758,7 @@ namespace battlecity.ChallengeService {
         }
         
         /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute("players", Form=System.Xml.Schema.XmlSchemaForm.Unqualified, IsNullable=true, Order=4)]
+        [System.Xml.Serialization.XmlElementAttribute("players", Form=System.Xml.Schema.XmlSchemaForm.Unqualified, IsNullable=true, Order=5)]
         public player[] players {
             get {
                 return this.playersField;
@@ -761,10 +807,11 @@ namespace battlecity.ChallengeService {
         [return: System.ServiceModel.MessageParameterAttribute(Name="return")]
         battlecity.ChallengeService.getStatusResponse getStatus(battlecity.ChallengeService.getStatus request);
         
-        // CODEGEN: Parameter 'arg0' requires additional schema information that cannot be captured using the parameter mode. The specific attribute is 'System.Xml.Serialization.XmlElementAttribute'.
+        // CODEGEN: Parameter 'return' requires additional schema information that cannot be captured using the parameter mode. The specific attribute is 'System.Xml.Serialization.XmlElementAttribute'.
         [System.ServiceModel.OperationContractAttribute(Action="", ReplyAction="*")]
         [System.ServiceModel.FaultContractAttribute(typeof(battlecity.ChallengeService.EndOfGameException), Action="", Name="EndOfGameException")]
         [System.ServiceModel.XmlSerializerFormatAttribute(SupportFaults=true)]
+        [return: System.ServiceModel.MessageParameterAttribute(Name="return")]
         battlecity.ChallengeService.setActionResponse setAction(battlecity.ChallengeService.setAction request);
         
         // CODEGEN: Parameter 'return' requires additional schema information that cannot be captured using the parameter mode. The specific attribute is 'System.Xml.Serialization.XmlArrayAttribute'.
@@ -774,6 +821,13 @@ namespace battlecity.ChallengeService {
         [System.ServiceModel.XmlSerializerFormatAttribute(SupportFaults=true)]
         [return: System.ServiceModel.MessageParameterAttribute(Name="return")]
         battlecity.ChallengeService.loginResponse login(battlecity.ChallengeService.login request);
+        
+        // CODEGEN: Parameter 'return' requires additional schema information that cannot be captured using the parameter mode. The specific attribute is 'System.Xml.Serialization.XmlElementAttribute'.
+        [System.ServiceModel.OperationContractAttribute(Action="", ReplyAction="*")]
+        [System.ServiceModel.FaultContractAttribute(typeof(battlecity.ChallengeService.EndOfGameException), Action="", Name="EndOfGameException")]
+        [System.ServiceModel.XmlSerializerFormatAttribute(SupportFaults=true)]
+        [return: System.ServiceModel.MessageParameterAttribute(Name="return")]
+        battlecity.ChallengeService.setActionsResponse setActions(battlecity.ChallengeService.setActions request);
     }
     
     [System.Diagnostics.DebuggerStepThroughAttribute()]
@@ -833,7 +887,15 @@ namespace battlecity.ChallengeService {
     [System.ServiceModel.MessageContractAttribute(WrapperName="setActionResponse", WrapperNamespace="http://challenge.entelect.co.za/", IsWrapped=true)]
     public partial class setActionResponse {
         
+        [System.ServiceModel.MessageBodyMemberAttribute(Namespace="http://challenge.entelect.co.za/", Order=0)]
+        [System.Xml.Serialization.XmlElementAttribute(Form=System.Xml.Schema.XmlSchemaForm.Unqualified)]
+        public battlecity.ChallengeService.delta @return;
+        
         public setActionResponse() {
+        }
+        
+        public setActionResponse(battlecity.ChallengeService.delta @return) {
+            this.@return = @return;
         }
     }
     
@@ -863,6 +925,47 @@ namespace battlecity.ChallengeService {
         }
         
         public loginResponse(System.Nullable<state>[][] @return) {
+            this.@return = @return;
+        }
+    }
+    
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.ServiceModel", "4.0.0.0")]
+    [System.ComponentModel.EditorBrowsableAttribute(System.ComponentModel.EditorBrowsableState.Advanced)]
+    [System.ServiceModel.MessageContractAttribute(WrapperName="setActions", WrapperNamespace="http://challenge.entelect.co.za/", IsWrapped=true)]
+    public partial class setActions {
+        
+        [System.ServiceModel.MessageBodyMemberAttribute(Namespace="http://challenge.entelect.co.za/", Order=0)]
+        [System.Xml.Serialization.XmlElementAttribute(Form=System.Xml.Schema.XmlSchemaForm.Unqualified)]
+        public battlecity.ChallengeService.action arg0;
+        
+        [System.ServiceModel.MessageBodyMemberAttribute(Namespace="http://challenge.entelect.co.za/", Order=1)]
+        [System.Xml.Serialization.XmlElementAttribute(Form=System.Xml.Schema.XmlSchemaForm.Unqualified)]
+        public battlecity.ChallengeService.action arg1;
+        
+        public setActions() {
+        }
+        
+        public setActions(battlecity.ChallengeService.action arg0, battlecity.ChallengeService.action arg1) {
+            this.arg0 = arg0;
+            this.arg1 = arg1;
+        }
+    }
+    
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.ServiceModel", "4.0.0.0")]
+    [System.ComponentModel.EditorBrowsableAttribute(System.ComponentModel.EditorBrowsableState.Advanced)]
+    [System.ServiceModel.MessageContractAttribute(WrapperName="setActionsResponse", WrapperNamespace="http://challenge.entelect.co.za/", IsWrapped=true)]
+    public partial class setActionsResponse {
+        
+        [System.ServiceModel.MessageBodyMemberAttribute(Namespace="http://challenge.entelect.co.za/", Order=0)]
+        [System.Xml.Serialization.XmlElementAttribute(Form=System.Xml.Schema.XmlSchemaForm.Unqualified)]
+        public battlecity.ChallengeService.delta @return;
+        
+        public setActionsResponse() {
+        }
+        
+        public setActionsResponse(battlecity.ChallengeService.delta @return) {
             this.@return = @return;
         }
     }
@@ -910,11 +1013,12 @@ namespace battlecity.ChallengeService {
             return base.Channel.setAction(request);
         }
         
-        public void setAction(int arg0, battlecity.ChallengeService.action arg1) {
+        public battlecity.ChallengeService.delta setAction(int arg0, battlecity.ChallengeService.action arg1) {
             battlecity.ChallengeService.setAction inValue = new battlecity.ChallengeService.setAction();
             inValue.arg0 = arg0;
             inValue.arg1 = arg1;
             battlecity.ChallengeService.setActionResponse retVal = ((battlecity.ChallengeService.Challenge)(this)).setAction(inValue);
+            return retVal.@return;
         }
         
         [System.ComponentModel.EditorBrowsableAttribute(System.ComponentModel.EditorBrowsableState.Advanced)]
@@ -925,6 +1029,19 @@ namespace battlecity.ChallengeService {
         public System.Nullable<state>[][] login() {
             battlecity.ChallengeService.login inValue = new battlecity.ChallengeService.login();
             battlecity.ChallengeService.loginResponse retVal = ((battlecity.ChallengeService.Challenge)(this)).login(inValue);
+            return retVal.@return;
+        }
+        
+        [System.ComponentModel.EditorBrowsableAttribute(System.ComponentModel.EditorBrowsableState.Advanced)]
+        battlecity.ChallengeService.setActionsResponse battlecity.ChallengeService.Challenge.setActions(battlecity.ChallengeService.setActions request) {
+            return base.Channel.setActions(request);
+        }
+        
+        public battlecity.ChallengeService.delta setActions(battlecity.ChallengeService.action arg0, battlecity.ChallengeService.action arg1) {
+            battlecity.ChallengeService.setActions inValue = new battlecity.ChallengeService.setActions();
+            inValue.arg0 = arg0;
+            inValue.arg1 = arg1;
+            battlecity.ChallengeService.setActionsResponse retVal = ((battlecity.ChallengeService.Challenge)(this)).setActions(inValue);
             return retVal.@return;
         }
     }

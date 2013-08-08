@@ -8,6 +8,8 @@
       <xs:element name="loginResponse" type="tns:loginResponse" />
       <xs:element name="setAction" type="tns:setAction" />
       <xs:element name="setActionResponse" type="tns:setActionResponse" />
+      <xs:element name="setActions" type="tns:setActions" />
+      <xs:element name="setActionsResponse" type="tns:setActionsResponse" />
       <xs:complexType name="getStatus">
         <xs:sequence />
       </xs:complexType>
@@ -20,6 +22,7 @@
         <xs:sequence>
           <xs:element name="currentTick" type="xs:int" />
           <xs:element minOccurs="0" name="events" type="tns:events" />
+          <xs:element name="millisecondsToNextTick" type="xs:long" />
           <xs:element minOccurs="0" name="nextTickTime" type="xs:dateTime" />
           <xs:element minOccurs="0" name="playerName" type="xs:string" />
           <xs:element minOccurs="0" maxOccurs="unbounded" name="players" nillable="true" type="tns:player" />
@@ -105,7 +108,14 @@
         </xs:sequence>
       </xs:complexType>
       <xs:complexType name="setActionResponse">
-        <xs:sequence />
+        <xs:sequence>
+          <xs:element minOccurs="0" name="return" type="tns:delta" />
+        </xs:sequence>
+      </xs:complexType>
+      <xs:complexType name="delta">
+        <xs:sequence>
+          <xs:element name="millisecondsToNextTick" type="xs:long" />
+        </xs:sequence>
       </xs:complexType>
       <xs:complexType name="login">
         <xs:sequence />
@@ -118,6 +128,17 @@
       <xs:complexType name="board">
         <xs:sequence>
           <xs:element minOccurs="0" maxOccurs="unbounded" name="states" nillable="true" type="tns:stateArray" />
+        </xs:sequence>
+      </xs:complexType>
+      <xs:complexType name="setActions">
+        <xs:sequence>
+          <xs:element minOccurs="0" name="arg0" type="tns:action" />
+          <xs:element minOccurs="0" name="arg1" type="tns:action" />
+        </xs:sequence>
+      </xs:complexType>
+      <xs:complexType name="setActionsResponse">
+        <xs:sequence>
+          <xs:element minOccurs="0" name="return" type="tns:delta" />
         </xs:sequence>
       </xs:complexType>
       <xs:simpleType name="state">
@@ -168,8 +189,14 @@
   <wsdl:message name="EndOfGameException">
     <wsdl:part name="EndOfGameException" element="tns:EndOfGameException" />
   </wsdl:message>
+  <wsdl:message name="setActions">
+    <wsdl:part name="parameters" element="tns:setActions" />
+  </wsdl:message>
   <wsdl:message name="login">
     <wsdl:part name="parameters" element="tns:login" />
+  </wsdl:message>
+  <wsdl:message name="setActionsResponse">
+    <wsdl:part name="parameters" element="tns:setActionsResponse" />
   </wsdl:message>
   <wsdl:message name="setActionResponse">
     <wsdl:part name="parameters" element="tns:setActionResponse" />
@@ -200,6 +227,11 @@
       <wsdl:input name="login" message="tns:login" />
       <wsdl:output name="loginResponse" message="tns:loginResponse" />
       <wsdl:fault name="NoBlameException" message="tns:NoBlameException" />
+      <wsdl:fault name="EndOfGameException" message="tns:EndOfGameException" />
+    </wsdl:operation>
+    <wsdl:operation name="setActions">
+      <wsdl:input name="setActions" message="tns:setActions" />
+      <wsdl:output name="setActionsResponse" message="tns:setActionsResponse" />
       <wsdl:fault name="EndOfGameException" message="tns:EndOfGameException" />
     </wsdl:operation>
   </wsdl:portType>
@@ -237,6 +269,18 @@
       <wsdl:fault name="NoBlameException">
         <soap:fault use="literal" name="NoBlameException" namespace="" />
       </wsdl:fault>
+      <wsdl:fault name="EndOfGameException">
+        <soap:fault use="literal" name="EndOfGameException" namespace="" />
+      </wsdl:fault>
+    </wsdl:operation>
+    <wsdl:operation name="setActions">
+      <soap:operation soapAction="" style="document" />
+      <wsdl:input name="setActions">
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output name="setActionsResponse">
+        <soap:body use="literal" />
+      </wsdl:output>
       <wsdl:fault name="EndOfGameException">
         <soap:fault use="literal" name="EndOfGameException" namespace="" />
       </wsdl:fault>

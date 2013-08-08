@@ -61,18 +61,21 @@
   <ItemGroup>
     <None Include="app.config" />
     <None Include="ClassDiagram.cd" />
+    <None Include="Service References\ChallengeService\battlecity.ChallengeService.delta.datasource">
+      <DependentUpon>Reference.svcmap</DependentUpon>
+    </None>
     <None Include="Service References\ChallengeService\battlecity.ChallengeService.game.datasource">
       <DependentUpon>Reference.svcmap</DependentUpon>
     </None>
     <None Include="Service References\ChallengeService\battlecity.ChallengeService.state.datasource">
       <DependentUpon>Reference.svcmap</DependentUpon>
     </None>
-    <None Include="Service References\ChallengeService\ChallengeService.wsdl" />
   </ItemGroup>
   <ItemGroup>
     <WCFMetadataStorage Include="Service References\ChallengeService\" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="Service References\ChallengeService\ChallengeService1.wsdl" />
     <None Include="Service References\ChallengeService\configuration91.svcinfo" />
   </ItemGroup>
   <ItemGroup>

@@ -18,10 +18,10 @@
     <ServiceContractMappings />
   </ClientOptions>
   <MetadataSources>
-    <MetadataSource Address="https://eolstoragewe.blob.core.windows.net/wm-428443-webfiles/ChallengeService.wsdl" Protocol="http" SourceId="1" />
+    <MetadataSource Address="file:///C:/Users/G-J/Documents/Visual%20Studio%202010/Projects/battlecity/harness/100kTestHarness/wsdl/ChallengeService.wsdl" Protocol="file" SourceId="1" />
   </MetadataSources>
   <Metadata>
-    <MetadataFile FileName="ChallengeService.wsdl" MetadataType="Wsdl" ID="469630a9-3163-4d14-8902-4f4a4ea39970" SourceId="1" SourceUrl="https://eolstoragewe.blob.core.windows.net/wm-428443-webfiles/ChallengeService.wsdl" />
+    <MetadataFile FileName="ChallengeService1.wsdl" MetadataType="Wsdl" ID="113b38d2-a259-441e-86cd-3f00808c2bc3" SourceId="1" SourceUrl="file:///C:/Users/G-J/Documents/Visual Studio 2010/Projects/battlecity/harness/100kTestHarness/wsdl/ChallengeService.wsdl" />
   </Metadata>
   <Extensions>
     <ExtensionFile FileName="configuration91.svcinfo" Name="configuration91.svcinfo" />

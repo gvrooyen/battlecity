@@ -31,7 +31,16 @@ namespace battlecity
                 ChallengeService.state?[][] result = client.login();
                 System.Console.WriteLine(result.Length);
                 board = new Board(result);
-                System.Console.WriteLine(board.toString());
+                System.Console.WriteLine(board.ToString());
+                while (true)
+                {
+                    ChallengeService.game status = client.getStatus();
+                    System.Console.WriteLine("-------------------------------------------------");
+                    System.Console.WriteLine("Player: {0} | Tick: {1}", status.playerName, status.currentTick);
+                    System.Console.WriteLine("{0} ms to next tick", status.millisecondsToNextTick);
+                    if (status.millisecondsToNextTick < 0)
+                        System.Threading.Thread.Sleep((int)(-status.millisecondsToNextTick)+100);
+                }
             }
             finally { }
         }

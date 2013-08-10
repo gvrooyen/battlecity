@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Diagnostics;
 
 namespace battlecity
 {
@@ -36,8 +37,7 @@ namespace battlecity
                 bool inSync = false;
                 int lastTick = 0;
                 long sleepDelta = 0;
-                int syncTarget = 2850;
-                int missedTickCount = 0;
+                long syncTarget = Settings.SYNC_TARGET;
 
                 while (true)
                 {
@@ -52,30 +52,52 @@ namespace battlecity
                          * (danger!) and should re-sync.
                          */
                         var ms = -status.millisecondsToNextTick;
+
+                        System.Console.WriteLine("-------------------------------------------------");
+                        System.Console.WriteLine("Player: {0} | Tick: {1}", status.playerName, status.currentTick);
+                        System.Console.WriteLine("{0} ms to next tick", status.millisecondsToNextTick);
+
                         if (status.currentTick == lastTick + 1)
                         {
                             Diagnostics.Sync.addTickPeriod(ms);
-                            if (ms > 2850)
+                            if (ms > syncTarget)
                                 sleepDelta = 0;
-                            else if ((ms <= 2850) && (ms > 2500))
-                                sleepDelta = -10;
-                            else if ((ms <= 2500) && (ms > 2000))
-                                sleepDelta = -100;
+                            else if ((ms <= syncTarget) && (ms > (syncTarget - Settings.SYNC_TARGET_BAND)))
+                            {
+                                sleepDelta = -Settings.SYNC_DELTA_STEP_LO;
+                                System.Console.WriteLine("Synchronisation below target; stepping up by {0} ms.", -sleepDelta);
+                            }
+                            else if ((ms <= (syncTarget - Settings.SYNC_TARGET_BAND)) && (ms > (syncTarget - 2 * Settings.SYNC_TARGET_BAND)))
+                            {
+                                sleepDelta = -Settings.SYNC_DELTA_STEP_HI;
+                                System.Console.WriteLine("Synchronisation FAR below target; stepping up by {0} ms.", -sleepDelta);
+                            }
+                            else if (ms > 0)
+                            {
+                                sleepDelta = ms;
+                                System.Console.WriteLine("Near miss; pull back by {0} ms.", sleepDelta);
+                            }
                             else
+                            {
+                                System.Console.WriteLine("Completely out of sync; resynchronising.");
                                 inSync = false;
+                            }
                         }
                         else if (status.currentTick == lastTick)
+                        {
                             Diagnostics.Sync.dupedTicks += 1;
+                            // Check again immediately
+                            sleepDelta = -Settings.SYNC_TICK;
+                            syncTarget -= Settings.SYNC_DELTA_STEP_LO;
+                            System.Console.WriteLine("Duped tick! Adjusting target to {0} ms.", syncTarget);
+                        }
                         else
                         {
                             inSync = false;
                             Diagnostics.Sync.missedTicks += 1;
-                            missedTickCount += 1;
-                            if (missedTickCount >= 3)
-                            {
-                                missedTickCount = 0;
-                                syncTarget -= 50;   // BUG: What happens when it falls below 2500?
-                            }
+                            syncTarget -= Settings.SYNC_DELTA_STEP_HI;
+                            if (syncTarget < (syncTarget - 2 * Settings.SYNC_TARGET_BAND))
+                                syncTarget = (syncTarget - 2 * Settings.SYNC_TARGET_BAND);
                         }
                     }
 
@@ -84,17 +106,15 @@ namespace battlecity
                         /* If we're not in sync, use the time delta reported by the server (millisecondsToNextTick) to
                          * estimate how long we should wait to synchronise.
                          */
-                        sleepDelta = -Settings.SYNC_TICK - status.millisecondsToNextTick + 200;
+                        sleepDelta = -Settings.SYNC_TICK - status.millisecondsToNextTick + Settings.SYNC_TARGET_BAND / 2;
                         inSync = true;
                     }
 
-                    System.Console.WriteLine("-------------------------------------------------");
-                    System.Console.WriteLine("Player: {0} | Tick: {1}", status.playerName, status.currentTick);
-                    System.Console.WriteLine("{0} ms to next tick", status.millisecondsToNextTick);
-
                     lastTick = status.currentTick;
 
-                    System.Threading.Thread.Sleep((int)(Settings.SYNC_TICK + sleepDelta));
+                    var sleepTime = Settings.SYNC_TICK + sleepDelta;
+                    if (sleepTime > 0)
+                        System.Threading.Thread.Sleep((int)sleepTime);
                 }
             }
             finally

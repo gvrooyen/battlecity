@@ -6,8 +6,10 @@
         public const int MAX_SOAP_MSG_SIZE = MAX_BOARD_SIZE * MAX_BOARD_SIZE * 16;  // Maximum size of a received SOAP message
 
         public const long SYNC_TICK = 3000;				                            // Tick period in milliseconds
-        public const long SYNC_EARLY_LATE = 100;		                            // Seperation in milliseconds between the early/late ticks for synchronisation
-        public const long SYNC_DELTA = 100;				                            // Fine adjustment interval for the early-late gate in milliseconds
+        public const long SYNC_TARGET = 2900;   	                                // Target usable period between ticks
+        public const long SYNC_TARGET_BAND = 400;                                   // Sizes of bands below SYNC_TARGET used to determine adjustment step size
+        public const long SYNC_DELTA_STEP_LO = 10;                                  // Sync adjustment step close to SYNC_TARGET
+        public const long SYNC_DELTA_STEP_HI = 100;                                 // Sync adjustment step far from SYNC_TARGET
 
         public const int GARBAGE_INTERVAL = 100;		                            // Garbage collection poll interval in milliseconds
         public const int GARBAGE_THRESHOLD_HI = 95;	                                // Percentage total memory use that triggers garbage collection

@@ -11,6 +11,9 @@
         public const long SYNC_DELTA_STEP_LO = 10;                                  // Sync adjustment step close to SYNC_TARGET
         public const long SYNC_DELTA_STEP_HI = 100;                                 // Sync adjustment step far from SYNC_TARGET
 
+        public const long SCHEDULE_EARLY_MOVE = -1000;                              // Time before end of tick to post the backup move
+        public const long SCHEDULE_FINAL_MOVE = -500;                               // Time before end of tick to post the final move
+
         public const int GARBAGE_INTERVAL = 100;		                            // Garbage collection poll interval in milliseconds
         public const int GARBAGE_THRESHOLD_HI = 95;	                                // Percentage total memory use that triggers garbage collection
         public const int GARBAGE_THRESHOLD_LO = 75;	                                // Maximum allowed memory use after garbage collection

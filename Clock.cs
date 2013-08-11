@@ -39,7 +39,7 @@ namespace battlecity
         // Time balance remaining for the current cycle
         private long balance;
 
-        public Clock(int _period = 1000, int _deltaPeriod = 10)
+        public Clock(long _period = 1000, long _deltaPeriod = 10)
         {
             period = _period;
             deltaPeriod = _deltaPeriod;
@@ -61,9 +61,6 @@ namespace battlecity
             {
                 while (running)
                 {
-
-
-                    long balance = period - deltaPeriod;
                     long sleepTime = 0;
                     foreach (KeyValuePair<long, ThreadStart> s in schedule)
                     {
@@ -93,8 +90,12 @@ namespace battlecity
             }
         }
 
-        public void Start()
+        public void Start(long initialPeriod = 0)
         {
+            if (initialPeriod > 0)
+                balance = period;
+            else
+                balance = initialPeriod;
             throw new NotImplementedException();
         }
 

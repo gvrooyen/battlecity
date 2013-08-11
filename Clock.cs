@@ -18,11 +18,15 @@ namespace battlecity
         private Thread thread;
 
         // The master schedule keeps track of the events that have been added to this clock
-        private SortedList masterSchedule;
+        private SortedList<long, ThreadStart> masterSchedule;
 
         // The current schedule is updated per cycle, in order to correctly schedule
         // before-end-of cycle (negative time offset) events for the current cycle's period.
-        private SortedList currentSchedule;
+        private SortedList<long, ThreadStart> currentSchedule;
+
+        // true if the current schedule needs to be updated (typically because it hasn't been
+        // done before, or because this.balance has changed).
+        private bool currentScheduleOutdated;
 
         // true if the Clock is alive (running or stopped). When false, the clock thread terminates.
         private bool alive;
@@ -46,6 +50,9 @@ namespace battlecity
             alive = true;
             running = false;
             thread = null;
+            currentScheduleOutdated = true;
+            masterSchedule = new SortedList<long, ThreadStart>();
+            currentSchedule = new SortedList<long, ThreadStart>();
         }
 
         ~Clock()
@@ -61,18 +68,52 @@ namespace battlecity
             {
                 while (running)
                 {
-                    long sleepTime = 0;
-                    foreach (KeyValuePair<long, ThreadStart> s in schedule)
+                    /* At the start of each cycle, replicate the master schedule (which includes events
+                     * with a time offset relative to the end of the cycle) into the current schedule
+                     * for this cycle.
+                     */
+                    Console.WriteLine("--- TICK ---");
+                    if (currentScheduleOutdated)
                     {
-                        sleepTime = s.Key - sleepTime;
-                        balance -= s.Key;
-                        if (balance < 0)
-                            throw new TimeoutException("Scheduled task outside available clock period.");
-                        System.Threading.Thread.Sleep((int)sleepTime);
+                        foreach (KeyValuePair<long, ThreadStart> s in masterSchedule)
+                        {
+                            if ((s.Key >= 0) && (s.Key <= balance))
+                            {
+                                currentSchedule.Add(s.Key, s.Value);
+                            }
+                            else if (s.Key < 0)
+                            {
+                                if (balance + s.Key > 0)
+                                    currentSchedule.Add(balance + s.Key, s.Value);
+                                else
+                                    currentSchedule.Add(0, s.Value);
+                            }
+                        }
+                        currentScheduleOutdated = false;
+                    }
+
+                    long currentTime = 0;
+                    long sleepTime = 0;
+
+                    foreach (KeyValuePair<long, ThreadStart> s in currentSchedule)
+                    {
+                        if (s.Key > currentTime)
+                        {
+                            sleepTime = s.Key - currentTime;
+                            Thread.Sleep((int)sleepTime);
+                            currentTime += sleepTime;
+                        }
+
                         Thread t = new Thread(s.Value);
                         t.Start();
                     }
-                    System.Threading.Thread.Sleep((int)balance);
+
+                    sleepTime = balance - deltaPeriod - currentTime;
+                    if (sleepTime >= 0)
+                        Thread.Sleep((int)sleepTime);
+                    else
+                        Console.WriteLine("Schedule exceeded current clock cycle's period by {0} ms", -sleepTime);
+
                     if (delta == 0)
                     {
                         /* delta is interpreted in a trinary fashion. If it's negative, the clock should pull
@@ -96,7 +137,10 @@ namespace battlecity
                 balance = period;
             else
                 balance = initialPeriod;
-            throw new NotImplementedException();
+            currentScheduleOutdated = true;
+            thread = new Thread(Run);
+            running = true;
+            thread.Start();
         }
 
         public void Stop()
@@ -117,6 +161,8 @@ namespace battlecity
              * scheduled period, and may be dropped if the delay period is too short. Tasks
              * with negative time stamps are guaranteed to run.
              */
+            currentScheduleOutdated = true;
+            throw new NotImplementedException();
         }
 
         public void AddTask(long time, ThreadStart callBack)

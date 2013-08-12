@@ -124,16 +124,17 @@ namespace battlecity
                          * deltaPeriod to get to the full period (qf. the initialisation of balance). It it's
                          * positive, sleep for an additional deltaPeriod.
                          */
-                        System.Threading.Thread.Sleep((int)deltaPeriod);
+                        Thread.Sleep((int)deltaPeriod);
                     }
                     else if (delta > 0)
                     {
-                        System.Threading.Thread.Sleep(2*(int)deltaPeriod);
+                        Thread.Sleep(2*(int)deltaPeriod);
                     }
 
                     balance = period;
                     delta = 0;
                 }
+                Thread.Sleep((int)deltaPeriod);
             }
         }
 
@@ -162,12 +163,12 @@ namespace battlecity
 
         public void Stop()
         {
-            throw new NotImplementedException();
+            running = false;
         }
 
         public void Resume()
         {
-            throw new NotImplementedException();
+            running = true;
         }
 
         public void Reset(long delay = 0, bool applySchedule = true)
@@ -178,8 +179,17 @@ namespace battlecity
              * scheduled period, and may be dropped if the delay period is too short. Tasks
              * with negative time stamps are guaranteed to run.
              */
+
+            // TODO: Test this method
+            // TODO: Implement/remove applySchedule field
+            alive = false;
+            running = false;
+            thread.Join();
             currentScheduleOutdated = true;
-            throw new NotImplementedException();
+            balance = delay;
+            alive = true;
+            running = true;
+            thread.Start();
         }
 
         public void AddTask(long time, ThreadStart callBack)

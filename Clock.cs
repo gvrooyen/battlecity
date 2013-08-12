@@ -72,7 +72,9 @@ namespace battlecity
                      * with a time offset relative to the end of the cycle) into the current schedule
                      * for this cycle.
                      */
-                    Console.WriteLine("--- TICK ---");
+                    Console.WriteLine("--- TICK ----------------------------- balance {0} ms", balance);
+                    delta = 0;
+
                     if (currentScheduleOutdated)
                     {
                         foreach (KeyValuePair<long, ThreadStart> s in masterSchedule)
@@ -110,6 +112,7 @@ namespace battlecity
 
                     sleepTime = balance - deltaPeriod - currentTime;
                     if (sleepTime >= 0)
+
                         Thread.Sleep((int)sleepTime);
                     else
                         Console.WriteLine("Schedule exceeded current clock cycle's period by {0} ms", -sleepTime);
@@ -127,16 +130,30 @@ namespace battlecity
                     {
                         System.Threading.Thread.Sleep(2*(int)deltaPeriod);
                     }
+
+                    balance = period;
+                    delta = 0;
                 }
             }
         }
 
+        public void Push()
+        {
+            delta = -1;
+        }
+
+        public void Pull()
+        {
+            delta = +1;
+        }
+
         public void Start(long initialPeriod = 0)
         {
+            Console.WriteLine("Starting with a first period of {0} ms", initialPeriod);
             if (initialPeriod > 0)
-                balance = period;
-            else
                 balance = initialPeriod;
+            else
+                balance = period;
             currentScheduleOutdated = true;
             thread = new Thread(Run);
             running = true;

@@ -3,12 +3,14 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Diagnostics;
+using System.Threading;
 
 namespace battlecity
 {
     class Program
     {
         static Clock clock;
+        static ChallengeService.ChallengeClient client;
 
         static void handleNewTick()
         {
@@ -21,7 +23,29 @@ namespace battlecity
              * 3. Check that the executed moves correspond to the posted moves, and
              *    output a warning if this is not the case.
              */
-            System.Console.WriteLine("handleNewTick()");
+            ChallengeService.game status;
+            long ms;
+
+            Console.WriteLine("handleNewTick()");
+            lock (client)
+            {
+                status = client.getStatus();
+            }
+
+            // TODO: Add recovery logic for when ticks are duped
+
+            ms = -status.millisecondsToNextTick;
+            Console.WriteLine("- TICK {0}, {1} ms to next tick", status.currentTick, ms);
+            if (ms < Settings.SYNC_TARGET - 2 * Settings.SYNC_DELTA_STEP_LO)
+            {
+                Console.WriteLine("Pulling clock");
+                clock.Push();
+            }
+            else if (ms > Settings.SYNC_TARGET + 2 * Settings.SYNC_DELTA_STEP_LO)
+            {
+                Console.WriteLine("Pushing clock");
+                clock.Pull();
+            }
         }
 
         static void postEarlyMove()
@@ -56,7 +80,7 @@ namespace battlecity
             System.ServiceModel.BasicHttpBinding binding = new System.ServiceModel.BasicHttpBinding();
             binding.MaxReceivedMessageSize = Settings.MAX_SOAP_MSG_SIZE;
             System.ServiceModel.EndpointAddress remoteAddress = new System.ServiceModel.EndpointAddress(endpoint);
-            ChallengeService.ChallengeClient client = new ChallengeService.ChallengeClient(binding, remoteAddress);
+            client = new ChallengeService.ChallengeClient(binding, remoteAddress);
 
             try
             {
@@ -82,7 +106,8 @@ namespace battlecity
                 ChallengeService.game status = client.getStatus();
                 // TODO: Process first batch of events.
 
-                clock.Start(-status.millisecondsToNextTick);
+                Console.WriteLine(Settings.SYNC_INITIAL_DELAY);
+                clock.Start(-status.millisecondsToNextTick + 200);
 
                 while (true)
                 {

@@ -11,6 +11,7 @@ namespace battlecity
     {
         static Clock clock;
         static ChallengeService.ChallengeClient client;
+        static int lastTick = 0;
 
         static void handleNewTick()
         {
@@ -27,25 +28,67 @@ namespace battlecity
             long ms;
 
             Console.WriteLine("handleNewTick()");
+
             lock (client)
             {
                 status = client.getStatus();
             }
 
-            // TODO: Add recovery logic for when ticks are duped
-
             ms = -status.millisecondsToNextTick;
             Console.WriteLine("- TICK {0}, {1} ms to next tick", status.currentTick, ms);
-            if (ms < Settings.SYNC_TARGET - 2 * Settings.SYNC_DELTA_STEP_LO)
+
+            if (status.currentTick == lastTick)
             {
-                Console.WriteLine("Pulling clock");
+                // We've got a duped tick, so push the clock ahead
+                Console.WriteLine("Duped tick; pulling clock.");
+                Diagnostics.Sync.dupedTicks += 1;
+                clock.Pull();
+                
+                // A duped tick means the expected tick is just around the corner; wait a moment and try again
+                // TODO: Make sure the events from all status requests are handled correctly.
+                while (status.currentTick == lastTick)
+                {
+                    Thread.Sleep((int)Settings.SYNC_DELTA_STEP_LO);
+                    Console.WriteLine("Polling again for a new tick...");
+                    lock (client)
+                    {
+                        status = client.getStatus();
+                    }
+                }
+            }
+            else if (status.currentTick - lastTick > 1)
+            {
+                // We've completely missed a tick, so reset the clock
+                Console.WriteLine("Missed a tick! resetting clock.");
+                Diagnostics.Sync.missedTicks += 1;
+                clock.Reset(-status.millisecondsToNextTick + Settings.SYNC_INITIAL_DELAY);
+            }
+            else if (-status.millisecondsToNextTick <= 0)
+            {
+                Console.WriteLine("Borderline synchronisation; pulling clock.");
+                clock.Pull();
+            }
+            else if ((status.currentTick > 1) && (-status.millisecondsToNextTick < Settings.SYNC_TICK / 2))
+            {
+                // We're completely out of sync, so reset the clock
+                Console.WriteLine("Out of sync! resetting clock.");
+                clock.Reset(-status.millisecondsToNextTick + Settings.SYNC_INITIAL_DELAY);
+            }
+            else if (ms < Settings.SYNC_TARGET - 2 * Settings.SYNC_DELTA_STEP_LO)
+            {
+                Console.WriteLine("Pushing clock");
                 clock.Push();
             }
             else if (ms > Settings.SYNC_TARGET + 2 * Settings.SYNC_DELTA_STEP_LO)
             {
-                Console.WriteLine("Pushing clock");
+                Console.WriteLine("Pulling clock");
                 clock.Pull();
             }
+
+            lastTick = status.currentTick;
+
+            if (ms > 0)
+                Diagnostics.Sync.addTickPeriod(ms);
         }
 
         static void postEarlyMove()
@@ -107,7 +150,7 @@ namespace battlecity
                 // TODO: Process first batch of events.
 
                 Console.WriteLine(Settings.SYNC_INITIAL_DELAY);
-                clock.Start(-status.millisecondsToNextTick + 200);
+                clock.Start(-status.millisecondsToNextTick + Settings.SYNC_INITIAL_DELAY);
 
                 while (true)
                 {

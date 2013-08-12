@@ -72,7 +72,7 @@ namespace battlecity
                      * with a time offset relative to the end of the cycle) into the current schedule
                      * for this cycle.
                      */
-                    Console.WriteLine("--- TICK ----------------------------- balance {0} ms", balance);
+                    Console.WriteLine("--- TICK -----------------------------", balance);
                     delta = 0;
 
                     if (currentScheduleOutdated)

@@ -47,5 +47,21 @@ namespace battlecity
             }
             return S;
         }
+
+        public void Update(ChallengeService.events event_list)
+        {
+            if (event_list == null)
+                return;
+            if (event_list.blockEvents != null)
+                foreach (ChallengeService.blockEvent e in event_list.blockEvents)
+                {
+                    board[e.point.x][e.point.y] = e.newState;
+                }
+            if (event_list.unitEvents != null)
+                foreach (ChallengeService.unitEvent e in event_list.unitEvents)
+            {
+                Console.WriteLine(e.ToString());
+            }
+        }
     }
 }

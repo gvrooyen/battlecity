@@ -12,6 +12,8 @@ namespace battlecity
         static Clock clock;
         static ChallengeService.ChallengeClient client;
         static int lastTick = 0;
+        static Board board;
+        static readonly Random random = new Random();
 
         static void handleNewTick()
         {
@@ -32,6 +34,7 @@ namespace battlecity
             lock (client)
             {
                 status = client.getStatus();
+                board.Update(status.events);
             }
 
             ms = -status.millisecondsToNextTick;
@@ -53,6 +56,7 @@ namespace battlecity
                     lock (client)
                     {
                         status = client.getStatus();
+                        board.Update(status.events);
                     }
                 }
             }
@@ -103,13 +107,17 @@ namespace battlecity
         {
             /* Post the final best move found.
              */
+            Array actions = Enum.GetValues(typeof(ChallengeService.action));
+            ChallengeService.action A1 = (ChallengeService.action)actions.GetValue(random.Next(actions.Length));
+            ChallengeService.action A2 = (ChallengeService.action)actions.GetValue(random.Next(actions.Length));
             System.Console.WriteLine("postFinalMove()");
+            System.Console.WriteLine("Tank 1 {0}; Tank 2 {1}", A1, A2);
+            client.setActions(A1, A2);
         }
 
         static void Main(string[] args)
         {
             var info = new Microsoft.VisualBasic.Devices.ComputerInfo();
-            Board board;
 
             System.Console.WriteLine(info.OSFullName);
             System.Console.WriteLine("Memory usage: {0}%", info.AvailablePhysicalMemory*100/info.TotalPhysicalMemory);
@@ -147,7 +155,7 @@ namespace battlecity
                 // In the first tick, the server status is read, and the clock is started based
                 // on the reported millisecondsToNextTick.
                 ChallengeService.game status = client.getStatus();
-                // TODO: Process first batch of events.
+                board.Update(status.events);
 
                 Console.WriteLine(Settings.SYNC_INITIAL_DELAY);
                 clock.Start(-status.millisecondsToNextTick + Settings.SYNC_INITIAL_DELAY);

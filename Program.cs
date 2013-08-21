@@ -37,7 +37,7 @@ namespace battlecity
                 board.Update(status.events);
             }
 
-            ms = -status.millisecondsToNextTick;
+            ms = status.millisecondsToNextTick;
             Console.WriteLine("- TICK {0}, {1} ms to next tick", status.currentTick, ms);
 
             if (status.currentTick == lastTick)
@@ -65,18 +65,18 @@ namespace battlecity
                 // We've completely missed a tick, so reset the clock
                 Console.WriteLine("Missed a tick! resetting clock.");
                 Diagnostics.Sync.missedTicks += 1;
-                clock.Reset(-status.millisecondsToNextTick + Settings.SYNC_INITIAL_DELAY);
+                clock.Reset(status.millisecondsToNextTick + Settings.SYNC_INITIAL_DELAY);
             }
-            else if (-status.millisecondsToNextTick <= 0)
+            else if (status.millisecondsToNextTick <= 0)
             {
                 Console.WriteLine("Borderline synchronisation; pulling clock.");
                 clock.Pull();
             }
-            else if ((status.currentTick > 1) && (-status.millisecondsToNextTick < Settings.SYNC_TICK / 2))
+            else if ((status.currentTick > 1) && (status.millisecondsToNextTick < Settings.SYNC_TICK / 2))
             {
                 // We're completely out of sync, so reset the clock
                 Console.WriteLine("Out of sync! resetting clock.");
-                clock.Reset(-status.millisecondsToNextTick + Settings.SYNC_INITIAL_DELAY);
+                clock.Reset(status.millisecondsToNextTick + Settings.SYNC_INITIAL_DELAY);
             }
             else if (ms < Settings.SYNC_TARGET - 2 * Settings.SYNC_DELTA_STEP_LO)
             {
@@ -112,7 +112,9 @@ namespace battlecity
             ChallengeService.action A2 = (ChallengeService.action)actions.GetValue(random.Next(actions.Length));
             System.Console.WriteLine("postFinalMove()");
             System.Console.WriteLine("Tank 1 {0}; Tank 2 {1}", A1, A2);
-            client.setActions(A1, A2);
+            // client.setActions(A1, A2);
+            // client.setAction(0, A1);
+            // client.setAction(1, A2);
         }
 
         static void Main(string[] args)
@@ -156,9 +158,18 @@ namespace battlecity
                 // on the reported millisecondsToNextTick.
                 ChallengeService.game status = client.getStatus();
                 board.Update(status.events);
+                board.playerName = status.playerName;
+                if (status.players[0].name == status.playerName)
+                    board.playerID = 0;
+                else if (status.players[1].name == status.playerName)
+                    board.playerID = 1;
+                else
+                    throw new ArgumentException("Player '{0}' not found in player list.", status.playerName);
+
+                Console.WriteLine("Welcome, {0} (#{1})", board.playerName, board.playerID);
 
                 Console.WriteLine(Settings.SYNC_INITIAL_DELAY);
-                clock.Start(-status.millisecondsToNextTick + Settings.SYNC_INITIAL_DELAY);
+                clock.Start(status.millisecondsToNextTick + Settings.SYNC_INITIAL_DELAY);
 
                 while (true)
                 {

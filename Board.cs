@@ -6,6 +6,37 @@ using System.Text;
 namespace battlecity
 {
 
+    class Tank
+    {
+        public int x { get; set; }
+        public int y { get; set; }
+        public bool destroyed { get; set; }
+        public int id { get; set; }
+        public ChallengeService.direction direction { get; set; }
+
+        public Tank()
+        {
+            this.x = 0;
+            this.y = 0;
+            this.destroyed = false;
+        }
+
+        public Tank(int _x, int _y, ChallengeService.direction _direction, int _id)
+        {
+            this.x = _x;
+            this.y = _y;
+            this.id = _id;
+            this.direction = direction;
+            this.destroyed = false;
+        }
+    }
+
+    class Base
+    {
+        public int x { get; set; }
+        public int y { get; set; }
+    }
+
     class Board
     {
         private static Dictionary<ChallengeService.state?, string> icon;
@@ -36,6 +67,11 @@ namespace battlecity
             }
         }
 
+        public Tank[] playerTank { get; set; }
+        public Tank[] opponentTank { get; set; }
+        public Base playerBase { get; set; }
+        public Base opponentBase { get; set; }
+
         private void Initialize()
         {
             icon = new Dictionary<ChallengeService.state?, string>
@@ -45,6 +81,10 @@ namespace battlecity
                 {ChallengeService.state.NONE, "%"},
                 {ChallengeService.state.OUT_OF_BOUNDS, "@"}
             };
+            this.playerTank = new Tank[2];
+            this.opponentTank = new Tank[2];
+            this.playerBase = new Base();
+            this.opponentBase = new Base();
         }
 
         public Board()
@@ -58,7 +98,7 @@ namespace battlecity
             this.board = board;
         }
 
-        public string ToString()
+        public override string ToString()
         {
             string S = "";
             foreach (ChallengeService.state?[] row in board)

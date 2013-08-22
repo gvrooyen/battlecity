@@ -166,7 +166,31 @@ namespace battlecity
                 else
                     throw new ArgumentException("Player '{0}' not found in player list.", status.playerName);
 
+                board.playerBase.x = status.players[board.playerID].@base.x;
+                board.playerBase.y = status.players[board.playerID].@base.y;
+
                 Console.WriteLine("Welcome, {0} (#{1})", board.playerName, board.playerID);
+
+                if ((status.players[board.playerID].bullets == null) && (status.players[board.opponentID].bullets == null))
+                    Console.WriteLine("No bullets in play yet.");
+                else
+                    Console.WriteLine("WARNING: bullets already in play!");
+
+                int i = 0;
+                foreach (ChallengeService.unit u in status.players[board.playerID].units)
+                {
+                    board.playerTank[i++] = new Tank(u.x, u.y, u.direction, u.id);
+                    Console.WriteLine("Player tank ID {0} starts at ({1},{2}), facing {3}.",
+                        u.id, u.x, u.y, u.direction);
+                }
+
+                i = 0;
+                foreach (ChallengeService.unit u in status.players[board.opponentID].units)
+                {
+                    board.opponentTank[i++] = new Tank(u.x, u.y, u.direction, u.id);
+                    Console.WriteLine("Opponent tank ID {0} starts at ({1},{2}), facing {3}.",
+                        u.id, u.x, u.y, u.direction);
+                }
 
                 Console.WriteLine(Settings.SYNC_INITIAL_DELAY);
                 clock.Start(status.millisecondsToNextTick + Settings.SYNC_INITIAL_DELAY);

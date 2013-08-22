@@ -31,7 +31,7 @@ namespace battlecity
 
             Console.WriteLine("handleNewTick()");
 
-            lock (client)
+            lock(client)
             {
                 status = client.getStatus();
                 board.Update(status.events);
@@ -112,9 +112,12 @@ namespace battlecity
             ChallengeService.action A2 = (ChallengeService.action)actions.GetValue(random.Next(actions.Length));
             System.Console.WriteLine("postFinalMove()");
             System.Console.WriteLine("Tank 1 {0}; Tank 2 {1}", A1, A2);
-            // client.setActions(A1, A2);
-            // client.setAction(0, A1);
-            // client.setAction(1, A2);
+            lock(client)
+            {
+                // client.setActions(A1, A2);
+                client.setAction(board.playerTank[0].id, A1);
+                client.setAction(board.playerTank[1].id, A2);
+            }
         }
 
         static void Main(string[] args)

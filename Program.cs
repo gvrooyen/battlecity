@@ -13,7 +13,7 @@ namespace battlecity
         static ChallengeService.ChallengeClient client;
         static int lastTick = 0;
         static Board board;
-        static readonly Random random = new Random();
+        static AI bot;
 
         static void handleNewTick()
         {
@@ -107,17 +107,7 @@ namespace battlecity
         {
             /* Post the final best move found.
              */
-            Array actions = Enum.GetValues(typeof(ChallengeService.action));
-            ChallengeService.action A1 = (ChallengeService.action)actions.GetValue(random.Next(actions.Length));
-            ChallengeService.action A2 = (ChallengeService.action)actions.GetValue(random.Next(actions.Length));
-            System.Console.WriteLine("postFinalMove()");
-            System.Console.WriteLine("Tank 1 {0}; Tank 2 {1}", A1, A2);
-            lock(client)
-            {
-                // client.setActions(A1, A2);
-                client.setAction(board.playerTank[0].id, A1);
-                client.setAction(board.playerTank[1].id, A2);
-            }
+            bot.postFinalMove();
         }
 
         static void Main(string[] args)
@@ -194,6 +184,8 @@ namespace battlecity
                     Console.WriteLine("Opponent tank ID {0} starts at ({1},{2}), facing {3}.",
                         u.id, u.x, u.y, u.direction);
                 }
+
+                bot = new AI_Random(board, client);
 
                 Console.WriteLine(Settings.SYNC_INITIAL_DELAY);
                 clock.Start(status.millisecondsToNextTick + Settings.SYNC_INITIAL_DELAY);

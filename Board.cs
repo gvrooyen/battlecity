@@ -21,11 +21,11 @@ namespace battlecity
             this.destroyed = false;
         }
 
-        public Tank(int _x, int _y, ChallengeService.direction _direction, int _id)
+        public Tank(int x, int y, ChallengeService.direction direction, int id)
         {
-            this.x = _x;
-            this.y = _y;
-            this.id = _id;
+            this.x = x;
+            this.y = y;
+            this.id = id;
             this.direction = direction;
             this.destroyed = false;
         }
@@ -41,6 +41,8 @@ namespace battlecity
     {
         private static Dictionary<ChallengeService.state?, string> icon;
         private ChallengeService.state?[][] board;
+        public int xsize { get; private set; }
+        public int ysize { get; private set; }
 
         public string playerName { get; set; }
         public string opponentName { get; set; }
@@ -78,8 +80,8 @@ namespace battlecity
             {
                 {ChallengeService.state.FULL, "#"},
                 {ChallengeService.state.EMPTY, " "},
-                {ChallengeService.state.NONE, "%"},
-                {ChallengeService.state.OUT_OF_BOUNDS, "@"}
+                {ChallengeService.state.NONE, "?"},
+                {ChallengeService.state.OUT_OF_BOUNDS, "%"}
             };
             this.playerTank = new Tank[2];
             this.opponentTank = new Tank[2];
@@ -96,17 +98,21 @@ namespace battlecity
         {
             this.Initialize();
             this.board = board;
+            this.xsize = board.Length;
+            if (this.xsize > 0)
+                this.ysize = board[0].Length;
+            else
+                this.ysize = 0;
         }
 
         public override string ToString()
         {
             string S = "";
-            foreach (ChallengeService.state?[] row in board)
+
+            for (int y = 0; y < this.ysize; y++)
             {
-                foreach (ChallengeService.state? element in row)
-                {
-                    S += icon[element];
-                }
+                for (int x = 0; x < this.xsize; x++)
+                    S += icon[this.board[x][y]];
                 S += "\n";
             }
             return S;
@@ -132,7 +138,7 @@ namespace battlecity
             if (event_list.unitEvents != null)
                 foreach (ChallengeService.unitEvent e in event_list.unitEvents)
                 {
-                    Console.WriteLine(e.ToString());
+                    Console.WriteLine("UNIT EVENT: {0}", e.ToString());
                 }
         }
     }

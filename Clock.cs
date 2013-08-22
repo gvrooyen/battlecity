@@ -43,10 +43,10 @@ namespace battlecity
         // Time balance remaining for the current cycle
         private long balance;
 
-        public Clock(long _period = 1000, long _deltaPeriod = 10)
+        public Clock(long period = 1000, long deltaPeriod = 10)
         {
-            period = _period;
-            deltaPeriod = _deltaPeriod;
+            this.period = period;
+            this.deltaPeriod = deltaPeriod;
             alive = true;
             running = false;
             thread = null;
@@ -182,6 +182,8 @@ namespace battlecity
 
             // TODO: Test this method
             // TODO: Implement/remove applySchedule field
+            // BUG: Throws a thread-based exception when called
+
             alive = false;
             running = false;
             thread.Join();

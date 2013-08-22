@@ -46,6 +46,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="AI.cs" />
     <Compile Include="Board.cs" />
     <Compile Include="Clock.cs" />
     <Compile Include="Diagnostics.cs" />

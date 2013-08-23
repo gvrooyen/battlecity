@@ -100,7 +100,7 @@ namespace battlecity
             /* Post the best move found so far. This is done in case the postFinalMove()
              * handler does not get serviced before the current tick ends.
              */
-            System.Console.WriteLine("postEarlyMove()");
+            bot.postEarlyMove();
         }
 
         static void postFinalMove()
@@ -113,6 +113,7 @@ namespace battlecity
         static void Main(string[] args)
         {
             var info = new Microsoft.VisualBasic.Devices.ComputerInfo();
+            string botname = "random";
 
             System.Console.WriteLine(info.OSFullName);
             System.Console.WriteLine("Memory usage: {0}%", info.AvailablePhysicalMemory*100/info.TotalPhysicalMemory);
@@ -121,6 +122,10 @@ namespace battlecity
             if (args.Length > 0)
             {
                 endpoint = args[0];
+            }
+            if (args.Length > 1)
+            {
+                botname = args[1].ToLower();
             }
 
             System.ServiceModel.BasicHttpBinding binding = new System.ServiceModel.BasicHttpBinding();
@@ -185,7 +190,15 @@ namespace battlecity
                         u.id, u.x, u.y, u.direction);
                 }
 
-                bot = new AI_Random(board, client);
+                switch (botname)
+                {
+                    case "random":
+                        bot = new AI_Random(board, client);
+                        break;
+                    default:
+                        bot = new AI_Random(board, client);
+                        break;
+                }
 
                 Console.WriteLine(Settings.SYNC_INITIAL_DELAY);
                 clock.Start(status.millisecondsToNextTick + Settings.SYNC_INITIAL_DELAY);

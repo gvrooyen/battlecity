@@ -141,5 +141,10 @@ namespace battlecity
                     Console.WriteLine("UNIT EVENT: {0}", e.ToString());
                 }
         }
+
+        public ChallengeService.state getState(int x, int y)
+        {
+            return (ChallengeService.state) board[x][y];
+        }
     }
 }

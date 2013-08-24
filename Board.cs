@@ -16,8 +16,8 @@ namespace battlecity
 
         public Tank()
         {
-            this.x = 0;
-            this.y = 0;
+            this.x = -1;
+            this.y = -1;
             this.destroyed = false;
         }
 
@@ -35,6 +35,12 @@ namespace battlecity
     {
         public int x { get; set; }
         public int y { get; set; }
+
+        public Base()
+        {
+            x = -1;
+            y = -1;
+        }
     }
 
     class Board
@@ -112,31 +118,91 @@ namespace battlecity
             for (int y = 0; y < this.ysize; y++)
             {
                 for (int x = 0; x < this.xsize; x++)
-                    S += icon[this.board[x][y]];
-                S += "\n";
+                {
+                    if (((x == playerBase.x) && (y == playerBase.y)) || ((x == opponentBase.x) && (y == opponentBase.y)))
+                        S += "$";
+                    // TODO: Correct this so that the *whole* tank is sketched; not just the centerpoint
+                    else if ((playerTank.Length > 0) && (((playerTank[0] != null) && !playerTank[0].destroyed && (x == playerTank[0].x) && (y == playerTank[0].y)) ||
+                        ((playerTank[1] != null) && !playerTank[1].destroyed && (x == playerTank[1].x) && (y == playerTank[1].y))))
+                        S += "X";
+                    else if ((opponentTank.Length > 0) && (((opponentTank[0] != null) && !opponentTank[0].destroyed && (x == opponentTank[0].x) && (y == opponentTank[0].y)) ||
+                        ((opponentTank[1] != null) && !opponentTank[1].destroyed && (x == opponentTank[1].x) && (y == opponentTank[1].y))))
+                        S += "Y";
+                    else
+                        S += icon[this.board[x][y]];
+                }
+                S += Environment.NewLine;
             }
             return S;
         }
 
-        public void Update(ChallengeService.events event_list)
+        public void Update(ChallengeService.game status)
         {
-            if (event_list == null)
+            if (playerName == null)     // First time update is called
+            {
+                playerName = status.playerName;
+                if (status.players[0].name == status.playerName)
+                    playerID = 0;
+                else if (status.players[1].name == status.playerName)
+                    playerID = 1;
+                else
+                    throw new ArgumentException("Player '{0}' not found in player list.", status.playerName);
+
+                playerBase.x = status.players[playerID].@base.x;
+                playerBase.y = status.players[playerID].@base.y;
+                opponentBase.x = status.players[opponentID].@base.x;
+                opponentBase.y = status.players[opponentID].@base.y;
+
+                Console.WriteLine("Welcome, {0} (#{1})", playerName, playerID);
+
+                if ((status.players[playerID].bullets == null) && (status.players[opponentID].bullets == null))
+                    Console.WriteLine("No bullets in play yet.");
+                else
+                    Console.WriteLine("WARNING: bullets already in play!");
+                int i = 0;
+                foreach (ChallengeService.unit u in status.players[playerID].units)
+                {
+                    playerTank[i++] = new Tank(u.x, u.y, u.direction, u.id);
+                    Console.WriteLine("Player tank ID {0} starts at ({1},{2}), facing {3}.",
+                        u.id, u.x, u.y, u.direction);
+                }
+
+                i = 0;
+                foreach (ChallengeService.unit u in status.players[opponentID].units)
+                {
+                    opponentTank[i++] = new Tank(u.x, u.y, u.direction, u.id);
+                    Console.WriteLine("Opponent tank ID {0} starts at ({1},{2}), facing {3}.",
+                        u.id, u.x, u.y, u.direction);
+                }
+            }
+
+            // Update tank positions
+            playerTank[0].x = status.players[playerID].units[0].x;
+            playerTank[0].y = status.players[playerID].units[0].y;
+            playerTank[1].x = status.players[playerID].units[1].x;
+            playerTank[1].y = status.players[playerID].units[1].y;
+            opponentTank[0].x = status.players[opponentID].units[0].x;
+            opponentTank[0].y = status.players[opponentID].units[0].y;
+            opponentTank[1].x = status.players[opponentID].units[1].x;
+            opponentTank[1].y = status.players[opponentID].units[1].y;
+            
+            if (status.events == null)
             {
                 // Console.WriteLine("No events.");
                 return;
             }
             else
             {
-                // Console.WriteLine(event_list.ToString());
+                // Console.WriteLine(state.events.ToString());
             }
-            if (event_list.blockEvents != null)
-                foreach (ChallengeService.blockEvent e in event_list.blockEvents)
+            if (status.events.blockEvents != null)
+                foreach (ChallengeService.blockEvent e in status.events.blockEvents)
                 {
                     board[e.point.x][e.point.y] = e.newState;
                     Console.WriteLine("Block at ({0},{1}) changed to {2}.", e.point.x, e.point.y, e.newState);
                 }
-            if (event_list.unitEvents != null)
-                foreach (ChallengeService.unitEvent e in event_list.unitEvents)
+            if (status.events.unitEvents != null)
+                foreach (ChallengeService.unitEvent e in status.events.unitEvents)
                 {
                     Console.WriteLine("UNIT EVENT: {0}", e.ToString());
                 }

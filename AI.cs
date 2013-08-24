@@ -58,6 +58,18 @@ namespace battlecity
             }
         }
 
+        protected ChallengeService.action MoveOrFire(Tank tank, ChallengeService.direction direction)
+        {
+            /* Return an action which instructs a tank to fire in the specified direction,
+             * first performing a move in that direction, if necessary.
+             */
+
+            if (tank.direction == direction)
+                return ChallengeService.action.FIRE;
+            else
+                return MoveDirection(direction);
+        }
+
     }
 
     class AI_Random: AI
@@ -117,6 +129,9 @@ namespace battlecity
             Tank tank1 = board.playerTank[1];
             ChallengeService.direction targetDirection;
 
+            A1 = ChallengeService.action.NONE;
+            A2 = ChallengeService.action.NONE;
+
             // If both tanks exist, one goes for the base, and one goes for an enemy tank
             if (!tank0.destroyed && !tank1.destroyed)
             {
@@ -125,16 +140,37 @@ namespace battlecity
                 dy = board.opponentBase.y - tank0.y;
 
                 // If we're in line, start firing
-
-                // TODO: Add firing logic
-
-                // Take the shortest path (even if it has obstructions)
-                if (Math.Abs(dx) >= Math.Abs(dy))
+                if (dx == 0)
                 {
-                    if (board.opponentBase.x > tank0.x)
-                        targetDirection = ChallengeService.direction.RIGHT;
+                    if (dy < 0)
+                        A1 = MoveOrFire(tank0, ChallengeService.direction.UP);
                     else
-                        targetDirection = ChallengeService.direction.LEFT;
+                        A1 = MoveOrFire(tank0, ChallengeService.direction.DOWN);
+                }
+                else if (dy == 0)
+                {
+                    if (dx < 0)
+                        A1 = MoveOrFire(tank0, ChallengeService.direction.LEFT);
+                    else
+                        A1 = MoveOrFire(tank0, ChallengeService.direction.RIGHT);
+                }
+                else
+                {
+                    // Not in line yet. Take the shortest path (even if it has obstructions)
+                    if (Math.Abs(dx) >= Math.Abs(dy))
+                    {
+                        if (board.opponentBase.y > tank0.y)
+                            targetDirection = ChallengeService.direction.DOWN;
+                        else
+                            targetDirection = ChallengeService.direction.UP;
+                    }
+                    else
+                    {
+                        if (board.opponentBase.x > tank0.x)
+                            targetDirection = ChallengeService.direction.RIGHT;
+                        else
+                            targetDirection = ChallengeService.direction.LEFT;
+                    }
 
                     if (tank0.direction != targetDirection)
                         // Always move or at least point our guns in the right direction.
@@ -150,16 +186,21 @@ namespace battlecity
                     }
                 }
             }
+
+
         }
 
         public override void postFinalMove()
         {
             lock (client)
             {
+                System.Console.WriteLine("Tank 1 {0}; Tank 2 {1}", A1, A2);
                 if (!board.playerTank[0].destroyed)
-                    client.setAction(board.playerTank[0].id, A1);
+                    lock (client)
+                        client.setAction(board.playerTank[0].id, A1);
                 if (!board.playerTank[1].destroyed)
-                    client.setAction(board.playerTank[1].id, A2);
+                    lock (client)
+                        client.setAction(board.playerTank[1].id, A2);
             }
         }
 

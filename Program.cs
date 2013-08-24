@@ -9,6 +9,8 @@ namespace battlecity
 {
     class Program
     {
+        static bool debug = true;
+
         static Clock clock;
         static ChallengeService.ChallengeClient client;
         static int lastTick = 0;
@@ -34,7 +36,7 @@ namespace battlecity
             lock(client)
             {
                 status = client.getStatus();
-                board.Update(status.events);
+                board.Update(status);
             }
 
             ms = status.millisecondsToNextTick;
@@ -56,7 +58,7 @@ namespace battlecity
                     lock (client)
                     {
                         status = client.getStatus();
-                        board.Update(status.events);
+                        board.Update(status);
                     }
                 }
             }
@@ -93,6 +95,9 @@ namespace battlecity
 
             if (ms > 0)
                 Diagnostics.Sync.addTickPeriod(ms);
+
+            if (debug)
+                System.IO.File.WriteAllText(board.playerName+".txt", board.ToString());
         }
 
         static void postEarlyMove()
@@ -155,7 +160,7 @@ namespace battlecity
                 // In the first tick, the server status is read, and the clock is started based
                 // on the reported millisecondsToNextTick.
                 ChallengeService.game status = client.getStatus();
-                board.Update(status.events);
+                board.Update(status);
                 board.playerName = status.playerName;
                 if (status.players[0].name == status.playerName)
                     board.playerID = 0;
@@ -166,6 +171,8 @@ namespace battlecity
 
                 board.playerBase.x = status.players[board.playerID].@base.x;
                 board.playerBase.y = status.players[board.playerID].@base.y;
+                board.opponentBase.x = status.players[board.opponentID].@base.x;
+                board.opponentBase.y = status.players[board.opponentID].@base.y;
 
                 Console.WriteLine("Welcome, {0} (#{1})", board.playerName, board.playerID);
 
@@ -190,10 +197,16 @@ namespace battlecity
                         u.id, u.x, u.y, u.direction);
                 }
 
+                if (board.playerName == "Player One")
+                    botname = "aggro";
+
                 switch (botname)
                 {
                     case "random":
                         bot = new AI_Random(board, client);
+                        break;
+                    case "aggro":
+                        bot = new AI_Aggro(board, client);
                         break;
                     default:
                         bot = new AI_Random(board, client);

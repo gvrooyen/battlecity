@@ -121,13 +121,38 @@ namespace battlecity
                 {
                     if (((x == playerBase.x) && (y == playerBase.y)) || ((x == opponentBase.x) && (y == opponentBase.y)))
                         S += "$";
-                    // TODO: Correct this so that the *whole* tank is sketched; not just the centerpoint
-                    else if ((playerTank.Length > 0) && (((playerTank[0] != null) && !playerTank[0].destroyed && (x == playerTank[0].x) && (y == playerTank[0].y)) ||
-                        ((playerTank[1] != null) && !playerTank[1].destroyed && (x == playerTank[1].x) && (y == playerTank[1].y))))
-                        S += "X";
-                    else if ((opponentTank.Length > 0) && (((opponentTank[0] != null) && !opponentTank[0].destroyed && (x == opponentTank[0].x) && (y == opponentTank[0].y)) ||
-                        ((opponentTank[1] != null) && !opponentTank[1].destroyed && (x == opponentTank[1].x) && (y == opponentTank[1].y))))
-                        S += "Y";
+                    else if ((playerTank.Length > 0) &&
+                             (((playerTank[0] != null) && !playerTank[0].destroyed &&
+                               (Math.Abs(x - playerTank[0].x) <= 2) && (Math.Abs(y - playerTank[0].y) <= 2)) ||
+                              ((playerTank[1] != null) && !playerTank[1].destroyed &&
+                               (Math.Abs(x - playerTank[1].x) <= 2) && (Math.Abs(y - playerTank[1].y) <= 2))))
+                        if (((x - playerTank[0].x == 2) && (y == playerTank[0].y) && (playerTank[0].direction == ChallengeService.direction.RIGHT)) ||
+                            ((x - playerTank[0].x == -2) && (y == playerTank[0].y) && (playerTank[0].direction == ChallengeService.direction.LEFT)) ||
+                            ((y - playerTank[0].y == 2) && (x == playerTank[0].x) && (playerTank[0].direction == ChallengeService.direction.DOWN)) ||
+                            ((y - playerTank[0].y == -2) && (x == playerTank[0].x) && (playerTank[0].direction == ChallengeService.direction.UP)) ||
+                            ((x - playerTank[1].x == 2) && (y == playerTank[1].y) && (playerTank[1].direction == ChallengeService.direction.RIGHT)) ||
+                            ((x - playerTank[1].x == -2) && (y == playerTank[1].y) && (playerTank[1].direction == ChallengeService.direction.LEFT)) ||
+                            ((y - playerTank[1].y == 2) && (x == playerTank[1].x) && (playerTank[1].direction == ChallengeService.direction.DOWN)) ||
+                            ((y - playerTank[1].y == -2) && (x == playerTank[1].x) && (playerTank[1].direction == ChallengeService.direction.UP)))
+                            S += "O";
+                        else
+                            S += "X";
+                    else if ((opponentTank.Length > 0) &&
+                             (((opponentTank[0] != null) && !opponentTank[0].destroyed &&
+                               (Math.Abs(x - opponentTank[0].x) <= 2) && (Math.Abs(y - opponentTank[0].y) <= 2)) ||
+                              ((opponentTank[1] != null) && !opponentTank[1].destroyed &&
+                               (Math.Abs(x - opponentTank[1].x) <= 2) && (Math.Abs(y - opponentTank[1].y) <= 2))))
+                        if (((x - opponentTank[0].x == 2) && (y == opponentTank[0].y) && (opponentTank[0].direction == ChallengeService.direction.RIGHT)) ||
+                            ((x - opponentTank[0].x == -2) && (y == opponentTank[0].y) && (opponentTank[0].direction == ChallengeService.direction.LEFT)) ||
+                            ((y - opponentTank[0].y == 2) && (x == opponentTank[0].x) && (opponentTank[0].direction == ChallengeService.direction.DOWN)) ||
+                            ((y - opponentTank[0].y == -2) && (x == opponentTank[0].x) && (opponentTank[0].direction == ChallengeService.direction.UP)) ||
+                            ((x - opponentTank[1].x == 2) && (y == opponentTank[1].y) && (opponentTank[1].direction == ChallengeService.direction.RIGHT)) ||
+                            ((x - opponentTank[1].x == -2) && (y == opponentTank[1].y) && (opponentTank[1].direction == ChallengeService.direction.LEFT)) ||
+                            ((y - opponentTank[1].y == 2) && (x == opponentTank[1].x) && (opponentTank[1].direction == ChallengeService.direction.DOWN)) ||
+                            ((y - opponentTank[1].y == -2) && (x == opponentTank[1].x) && (opponentTank[1].direction == ChallengeService.direction.UP)))
+                            S += "O";
+                        else
+                            S += "Y";
                     else
                         S += icon[this.board[x][y]];
                 }
@@ -179,12 +204,16 @@ namespace battlecity
             // Update tank positions
             playerTank[0].x = status.players[playerID].units[0].x;
             playerTank[0].y = status.players[playerID].units[0].y;
+            playerTank[0].direction = status.players[playerID].units[0].direction;
             playerTank[1].x = status.players[playerID].units[1].x;
             playerTank[1].y = status.players[playerID].units[1].y;
+            playerTank[1].direction = status.players[playerID].units[1].direction;
             opponentTank[0].x = status.players[opponentID].units[0].x;
             opponentTank[0].y = status.players[opponentID].units[0].y;
+            opponentTank[0].direction = status.players[opponentID].units[0].direction;
             opponentTank[1].x = status.players[opponentID].units[1].x;
             opponentTank[1].y = status.players[opponentID].units[1].y;
+            opponentTank[1].direction = status.players[opponentID].units[1].direction;
             
             if (status.events == null)
             {

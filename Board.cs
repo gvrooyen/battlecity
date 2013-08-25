@@ -126,6 +126,7 @@ namespace battlecity
                                (Math.Abs(x - playerTank[0].x) <= 2) && (Math.Abs(y - playerTank[0].y) <= 2)) ||
                               ((playerTank[1] != null) && !playerTank[1].destroyed &&
                                (Math.Abs(x - playerTank[1].x) <= 2) && (Math.Abs(y - playerTank[1].y) <= 2))))
+                        // This is a bit silly. We should really just paint in the tanks after the main loop.
                         if (((x - playerTank[0].x == 2) && (y == playerTank[0].y) && (playerTank[0].direction == ChallengeService.direction.RIGHT)) ||
                             ((x - playerTank[0].x == -2) && (y == playerTank[0].y) && (playerTank[0].direction == ChallengeService.direction.LEFT)) ||
                             ((y - playerTank[0].y == 2) && (x == playerTank[0].x) && (playerTank[0].direction == ChallengeService.direction.DOWN)) ||
@@ -158,6 +159,9 @@ namespace battlecity
                 }
                 S += Environment.NewLine;
             }
+
+            // TODO: Paint in bullets
+
             return S;
         }
 
@@ -214,6 +218,10 @@ namespace battlecity
             opponentTank[1].x = status.players[opponentID].units[1].x;
             opponentTank[1].y = status.players[opponentID].units[1].y;
             opponentTank[1].direction = status.players[opponentID].units[1].direction;
+
+            // TODO: Update bullet positions
+            // Bullets don't indicate which player they belong to. We need extra logic to capture a bullet's
+            // ID in the tick after the FIRE action, in order to associate it with the correct tank.
             
             if (status.events == null)
             {

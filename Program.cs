@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Diagnostics;
 using System.Threading;
+using System.IO;
 
 namespace battlecity
 {
@@ -97,7 +98,12 @@ namespace battlecity
                 Diagnostics.Sync.addTickPeriod(ms);
 
             if (debug)
-                System.IO.File.WriteAllText(board.playerName+".txt", board.ToString());
+            {
+                // System.IO.File.WriteAllText(board.playerName + ".txt", board.ToString());
+                StreamWriter file = new StreamWriter(File.Open(board.playerName + ".txt", FileMode.Open, FileAccess.Write, FileShare.ReadWrite));
+                file.WriteLine(board.ToString());
+                file.Close();
+            }
         }
 
         static void postEarlyMove()

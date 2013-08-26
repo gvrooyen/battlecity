@@ -16,9 +16,11 @@ namespace battlecity
 
         public Tank()
         {
-            this.x = -1;
-            this.y = -1;
-            this.destroyed = false;
+            x = -1;
+            y = -1;
+            destroyed = false;
+            id = -1;
+            direction = ChallengeService.direction.NONE;
         }
 
         public Tank(int x, int y, ChallengeService.direction direction, int id)
@@ -40,6 +42,32 @@ namespace battlecity
         {
             x = -1;
             y = -1;
+        }
+    }
+
+    class Bullet
+    {
+        public int x { get; set; }
+        public int y { get; set; }
+        public int id { get; set; }
+        public ChallengeService.direction direction { get; set; }
+        public Tank owner { get; set; }
+
+        public Bullet()
+        {
+            x = -1;
+            y = -1;
+            id = -1;
+            direction = ChallengeService.direction.NONE;
+            owner = null;
+        }
+
+        public Bullet(int x, int y, ChallengeService.direction direction, int id)
+        {
+            this.x = x;
+            this.y = y;
+            this.direction = direction;
+            this.id = id;
         }
     }
 
@@ -80,6 +108,11 @@ namespace battlecity
         public Base playerBase { get; set; }
         public Base opponentBase { get; set; }
 
+        // Bullets are stored in a dictionary, indexed by ID. This makes it easier to track bullets' appearance
+        // and disappearance in game client updates.
+        public Dictionary<int, Bullet> playerBullet { get; private set; }
+        public Dictionary<int, Bullet> opponentBullet { get; private set; }
+
         private void Initialize()
         {
             icon = new Dictionary<ChallengeService.state?, string>
@@ -89,26 +122,28 @@ namespace battlecity
                 {ChallengeService.state.NONE, "?"},
                 {ChallengeService.state.OUT_OF_BOUNDS, "%"}
             };
-            this.playerTank = new Tank[2];
-            this.opponentTank = new Tank[2];
-            this.playerBase = new Base();
-            this.opponentBase = new Base();
+            playerTank = new Tank[2];
+            opponentTank = new Tank[2];
+            playerBase = new Base();
+            opponentBase = new Base();
+            playerBullet = new Dictionary<int, Bullet>();
+            opponentBullet = new Dictionary<int, Bullet>();
         }
 
         public Board()
         {
-            this.Initialize();
+            Initialize();
         }
 
         public Board(ChallengeService.state?[][] board)
         {
-            this.Initialize();
+            Initialize();
             this.board = board;
-            this.xsize = board.Length;
-            if (this.xsize > 0)
-                this.ysize = board[0].Length;
+            xsize = board.Length;
+            if (xsize > 0)
+                ysize = board[0].Length;
             else
-                this.ysize = 0;
+                ysize = 0;
         }
 
         public override string ToString()
@@ -220,8 +255,130 @@ namespace battlecity
             opponentTank[1].direction = status.players[opponentID].units[1].direction;
 
             // TODO: Update bullet positions
-            // Bullets don't indicate which player they belong to. We need extra logic to capture a bullet's
+            // Bullets don't indicate which tank they belong to. We need extra logic to capture a bullet's
             // ID in the tick after the FIRE action, in order to associate it with the correct tank.
+
+            if (status.players[playerID].bullets != null)
+                foreach (ChallengeService.bullet b in status.players[playerID].bullets)
+                {
+                    Bullet myBullet;
+                    if (playerBullet.TryGetValue(b.id, out myBullet))
+                    {
+                        // This is a bullet we know. Update its position.
+                        myBullet.x = b.x;
+                        myBullet.y = b.y;
+                        if (myBullet.direction != b.direction)
+                            Console.WriteLine("ERROR: Player bullet #{0} changed direction from {1} to {2}!",
+                                myBullet.direction, b.direction);
+                    }
+                    else
+                    {
+                        // This is a bullet that has just been fired. Create a new entry, and find out who its daddy is.
+
+                        Bullet newBullet = new Bullet(b.x, b.y, b.direction, b.id);
+                        int ownerX, ownerY;
+                        switch (b.direction)
+                        {
+                            case ChallengeService.direction.DOWN:
+                                ownerX = b.x;
+                                ownerY = b.y - 3;
+                                break;
+                            case ChallengeService.direction.LEFT:
+                                ownerX = b.x + 3;
+                                ownerY = b.y;
+                                break;
+                            case ChallengeService.direction.RIGHT:
+                                ownerX = b.x - 3;
+                                ownerY = b.y;
+                                break;
+                            case ChallengeService.direction.UP:
+                                ownerX = b.x;
+                                ownerY = b.y + 3;
+                                break;
+                            default:
+                                ownerX = b.x;
+                                ownerY = b.y;
+                                Console.WriteLine("ERROR: Player bullet #{0} created without firing direction.", b.direction);
+                                break;
+                        }
+                        if (!playerTank[0].destroyed && (playerTank[0].x == ownerX) && (playerTank[0].y == ownerY))
+                            newBullet.owner = playerTank[0];
+                        else if (!playerTank[1].destroyed && (playerTank[1].x == ownerX) && (playerTank[1].y == ownerY))
+                            newBullet.owner = playerTank[1];
+                        else if ((Math.Abs(playerTank[0].x - ownerX) <= 2) && (Math.Abs(playerTank[0].y - ownerY) <= 2))
+                        {
+                            Console.WriteLine("WARNING: Player bullet #{0} created too far from closest active tank; taking the best guess.", b.id);
+                            newBullet.owner = playerTank[0];
+                        }
+                        else if ((Math.Abs(playerTank[1].x - ownerX) <= 2) && (Math.Abs(playerTank[1].y - ownerY) <= 2))
+                        {
+                            Console.WriteLine("WARNING: Player bullet #{0} created too far from closest active tank; taking the best guess.", b.id);
+                            newBullet.owner = playerTank[1];
+                        }
+                        playerBullet[b.id] = newBullet;
+                    }
+                }
+
+            if (status.players[opponentID].bullets != null)
+                foreach (ChallengeService.bullet b in status.players[opponentID].bullets)
+                {
+                    Bullet myBullet;
+                    if (opponentBullet.TryGetValue(b.id, out myBullet))
+                    {
+                        // This is a bullet we know. Update its position.
+                        myBullet.x = b.x;
+                        myBullet.y = b.y;
+                        if (myBullet.direction != b.direction)
+                            Console.WriteLine("ERROR: Opponent bullet #{0} changed direction from {1} to {2}!",
+                                myBullet.direction, b.direction);
+                    }
+                    else
+                    {
+                        // This is a bullet that has just been fired. Create a new entry, and find out who its daddy is.
+
+                        Bullet newBullet = new Bullet(b.x, b.y, b.direction, b.id);
+                        int ownerX, ownerY;
+                        switch (b.direction)
+                        {
+                            case ChallengeService.direction.DOWN:
+                                ownerX = b.x;
+                                ownerY = b.y - 3;
+                                break;
+                            case ChallengeService.direction.LEFT:
+                                ownerX = b.x + 3;
+                                ownerY = b.y;
+                                break;
+                            case ChallengeService.direction.RIGHT:
+                                ownerX = b.x - 3;
+                                ownerY = b.y;
+                                break;
+                            case ChallengeService.direction.UP:
+                                ownerX = b.x;
+                                ownerY = b.y + 3;
+                                break;
+                            default:
+                                ownerX = b.x;
+                                ownerY = b.y;
+                                Console.WriteLine("ERROR: Opponent bullet #{0} created without firing direction.", b.direction);
+                                break;
+                        }
+                        if (!opponentTank[0].destroyed && (opponentTank[0].x == ownerX) && (opponentTank[0].y == ownerY))
+                            newBullet.owner = opponentTank[0];
+                        else if (!opponentTank[1].destroyed && (opponentTank[1].x == ownerX) && (opponentTank[1].y == ownerY))
+                            newBullet.owner = opponentTank[1];
+                        else if ((Math.Abs(opponentTank[0].x - ownerX) <= 2) && (Math.Abs(opponentTank[0].y - ownerY) <= 2))
+                        {
+                            Console.WriteLine("WARNING: Opponent bullet #{0} created too far from closest active tank; taking the best guess.", b.id);
+                            newBullet.owner = opponentTank[0];
+                        }
+                        else if ((Math.Abs(opponentTank[1].x - ownerX) <= 2) && (Math.Abs(opponentTank[1].y - ownerY) <= 2))
+                        {
+                            Console.WriteLine("WARNING: Opponent bullet #{0} created too far from closest active tank; taking the best guess.", b.id);
+                            newBullet.owner = opponentTank[1];
+                        }
+                        opponentBullet[b.id] = newBullet;
+                    }
+                }
             
             if (status.events == null)
             {

@@ -148,14 +148,15 @@ namespace battlecity
 
         public override string ToString()
         {
-            string S = "";
+            List<StringBuilder> lines = new List<StringBuilder>();
 
             for (int y = 0; y < this.ysize; y++)
             {
+                StringBuilder S = new StringBuilder("");
                 for (int x = 0; x < this.xsize; x++)
                 {
                     if (((x == playerBase.x) && (y == playerBase.y)) || ((x == opponentBase.x) && (y == opponentBase.y)))
-                        S += "$";
+                        S.Append("$");
                     else if ((playerTank.Length > 0) &&
                              (((playerTank[0] != null) && !playerTank[0].destroyed &&
                                (Math.Abs(x - playerTank[0].x) <= 2) && (Math.Abs(y - playerTank[0].y) <= 2)) ||
@@ -170,9 +171,9 @@ namespace battlecity
                             ((x - playerTank[1].x == -2) && (y == playerTank[1].y) && (playerTank[1].direction == ChallengeService.direction.LEFT)) ||
                             ((y - playerTank[1].y == 2) && (x == playerTank[1].x) && (playerTank[1].direction == ChallengeService.direction.DOWN)) ||
                             ((y - playerTank[1].y == -2) && (x == playerTank[1].x) && (playerTank[1].direction == ChallengeService.direction.UP)))
-                            S += "O";
+                            S.Append("O");
                         else
-                            S += "X";
+                            S.Append("X");
                     else if ((opponentTank.Length > 0) &&
                              (((opponentTank[0] != null) && !opponentTank[0].destroyed &&
                                (Math.Abs(x - opponentTank[0].x) <= 2) && (Math.Abs(y - opponentTank[0].y) <= 2)) ||
@@ -186,18 +187,31 @@ namespace battlecity
                             ((x - opponentTank[1].x == -2) && (y == opponentTank[1].y) && (opponentTank[1].direction == ChallengeService.direction.LEFT)) ||
                             ((y - opponentTank[1].y == 2) && (x == opponentTank[1].x) && (opponentTank[1].direction == ChallengeService.direction.DOWN)) ||
                             ((y - opponentTank[1].y == -2) && (x == opponentTank[1].x) && (opponentTank[1].direction == ChallengeService.direction.UP)))
-                            S += "O";
+                            S.Append("O");
                         else
-                            S += "Y";
+                            S.Append("Y");
                     else
-                        S += icon[this.board[x][y]];
+                        S.Append(icon[this.board[x][y]]);
                 }
-                S += Environment.NewLine;
+                lines.Add(S);
             }
 
-            // TODO: Paint in bullets
+            foreach (KeyValuePair<int, Bullet> b in playerBullet)
+            {
+                lines[b.Value.y][b.Value.x] = '*';
+            }
+            foreach (KeyValuePair<int, Bullet> b in opponentBullet)
+            {
+                lines[b.Value.y][b.Value.x] = '*';
+            }
 
-            return S;
+            string result = "";
+            foreach (StringBuilder line in lines)
+            {
+                result += line.ToString() + Environment.NewLine;
+            }
+
+            return result;
         }
 
         public void Update(ChallengeService.game status)

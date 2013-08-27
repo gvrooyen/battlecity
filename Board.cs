@@ -14,6 +14,9 @@ namespace battlecity
         public int id { get; set; }
         public ChallengeService.direction direction { get; set; }
 
+        // Tanks' positions get updated every tick. If an update is skipped, it means the tank is destroyed.
+        public bool updated { get; set; }
+
         public Tank()
         {
             x = -1;
@@ -21,6 +24,7 @@ namespace battlecity
             destroyed = false;
             id = -1;
             direction = ChallengeService.direction.NONE;
+            updated = false;
         }
 
         public Tank(int x, int y, ChallengeService.direction direction, int id)
@@ -30,6 +34,7 @@ namespace battlecity
             this.id = id;
             this.direction = direction;
             this.destroyed = false;
+            this.updated = true;
         }
     }
 
@@ -53,6 +58,9 @@ namespace battlecity
         public ChallengeService.direction direction { get; set; }
         public Tank owner { get; set; }
 
+        // Bullets' positions get updated every tick. If an update is skipped, it means the bullet is destroyed.
+        public bool updated { get; set; }
+
         public Bullet()
         {
             x = -1;
@@ -60,6 +68,7 @@ namespace battlecity
             id = -1;
             direction = ChallengeService.direction.NONE;
             owner = null;
+            updated = false;
         }
 
         public Bullet(int x, int y, ChallengeService.direction direction, int id)
@@ -68,6 +77,7 @@ namespace battlecity
             this.y = y;
             this.direction = direction;
             this.id = id;
+            this.updated = true;
         }
     }
 
@@ -268,9 +278,12 @@ namespace battlecity
             opponentTank[1].y = status.players[opponentID].units[1].y;
             opponentTank[1].direction = status.players[opponentID].units[1].direction;
 
-            // TODO: Update bullet positions
-            // Bullets don't indicate which tank they belong to. We need extra logic to capture a bullet's
-            // ID in the tick after the FIRE action, in order to associate it with the correct tank.
+            // Update bullet positions, and capture new ones.
+
+            foreach (KeyValuePair<int, Bullet> bullet in playerBullet)
+                // For each bullet that we're tracking, clear its updated status. If it doesn't get updated
+                // in the latest status report, we know that it's been destroyed.
+                bullet.Value.updated = false;
 
             if (status.players[playerID].bullets != null)
                 foreach (ChallengeService.bullet b in status.players[playerID].bullets)
@@ -284,6 +297,7 @@ namespace battlecity
                         if (myBullet.direction != b.direction)
                             Console.WriteLine("ERROR: Player bullet #{0} changed direction from {1} to {2}!",
                                 myBullet.direction, b.direction);
+                        myBullet.updated = true;
                     }
                     else
                     {
@@ -333,6 +347,15 @@ namespace battlecity
                     }
                 }
 
+            playerBullet = playerBullet.Where(pair => pair.Value.updated == true)
+                                       .ToDictionary(pair => pair.Key,
+                                                     pair => pair.Value);
+
+            foreach (KeyValuePair<int, Bullet> bullet in opponentBullet)
+                // For each bullet that we're tracking, clear its updated status. If it doesn't get updated
+                // in the latest status report, we know that it's been destroyed.
+                bullet.Value.updated = false;
+
             if (status.players[opponentID].bullets != null)
                 foreach (ChallengeService.bullet b in status.players[opponentID].bullets)
                 {
@@ -345,6 +368,7 @@ namespace battlecity
                         if (myBullet.direction != b.direction)
                             Console.WriteLine("ERROR: Opponent bullet #{0} changed direction from {1} to {2}!",
                                 myBullet.direction, b.direction);
+                        myBullet.updated = true;
                     }
                     else
                     {
@@ -393,6 +417,10 @@ namespace battlecity
                         opponentBullet[b.id] = newBullet;
                     }
                 }
+
+            opponentBullet = opponentBullet.Where(pair => pair.Value.updated == true)
+                                       .ToDictionary(pair => pair.Key,
+                                                     pair => pair.Value);
             
             if (status.events == null)
             {
@@ -412,7 +440,8 @@ namespace battlecity
             if (status.events.unitEvents != null)
                 foreach (ChallengeService.unitEvent e in status.events.unitEvents)
                 {
-                    Console.WriteLine("UNIT EVENT: {0}", e.ToString());
+                    // These don't seem to do anything, so just ignore it.
+                    Console.WriteLine("WARNING: UNIT EVENT: {0}", e.ToString());
                 }
         }
 

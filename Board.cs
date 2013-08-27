@@ -17,6 +17,9 @@ namespace battlecity
         // Tanks' positions get updated every tick. If an update is skipped, it means the tank is destroyed.
         public bool updated { get; set; }
 
+        // The bullet fired by this tank (null if no bullet is in play)
+        public Bullet bullet { get; set; }
+
         public Tank()
         {
             x = -1;
@@ -25,6 +28,7 @@ namespace battlecity
             id = -1;
             direction = ChallengeService.direction.NONE;
             updated = false;
+            bullet = null;
         }
 
         public Tank(int x, int y, ChallengeService.direction direction, int id)
@@ -35,6 +39,7 @@ namespace battlecity
             this.direction = direction;
             this.destroyed = false;
             this.updated = true;
+            this.bullet = null;
         }
     }
 
@@ -330,26 +335,46 @@ namespace battlecity
                                 break;
                         }
                         if (!playerTank[0].destroyed && (playerTank[0].x == ownerX) && (playerTank[0].y == ownerY))
+                        {
                             newBullet.owner = playerTank[0];
+                            playerTank[0].bullet = newBullet;
+                        }
                         else if (!playerTank[1].destroyed && (playerTank[1].x == ownerX) && (playerTank[1].y == ownerY))
+                        {
                             newBullet.owner = playerTank[1];
+                            playerTank[1].bullet = newBullet;
+                        }
                         else if ((Math.Abs(playerTank[0].x - ownerX) <= 2) && (Math.Abs(playerTank[0].y - ownerY) <= 2))
                         {
                             Console.WriteLine("WARNING: Player bullet #{0} created too far from closest active tank; taking the best guess.", b.id);
                             newBullet.owner = playerTank[0];
+                            playerTank[0].bullet = newBullet;
                         }
                         else if ((Math.Abs(playerTank[1].x - ownerX) <= 2) && (Math.Abs(playerTank[1].y - ownerY) <= 2))
                         {
                             Console.WriteLine("WARNING: Player bullet #{0} created too far from closest active tank; taking the best guess.", b.id);
                             newBullet.owner = playerTank[1];
+                            playerTank[1].bullet = newBullet;
                         }
+                        // REFACTOR: We're actually violating DRY here, since we're keeping two separate lists of bullets
+                        // (one inside the player/opponent bullet lists, another inside the tank objects themselves. It
+                        // could perhaps be cleaner just to store the bullet objects in the tank object.
                         playerBullet[b.id] = newBullet;
                     }
                 }
 
-            playerBullet = playerBullet.Where(pair => pair.Value.updated == true)
-                                       .ToDictionary(pair => pair.Key,
-                                                     pair => pair.Value);
+            List<int> destroyedBullets = new List<int>();
+            foreach (KeyValuePair<int, Bullet> bullet in playerBullet)
+                if (bullet.Value.updated == false)
+                {
+                    // This bullet has not been updated this round, so it must have been destroyed.
+                    // Remove the tank's reference to it.
+                    bullet.Value.owner.bullet = null;
+                    // We can't remove it from the dictionary inside the loop, so take note of the destroyed bullets.
+                    destroyedBullets.Add(bullet.Key);
+                }
+            foreach (int key in destroyedBullets)
+                playerBullet.Remove(key);
 
             foreach (KeyValuePair<int, Bullet> bullet in opponentBullet)
                 // For each bullet that we're tracking, clear its updated status. If it doesn't get updated
@@ -401,26 +426,43 @@ namespace battlecity
                                 break;
                         }
                         if (!opponentTank[0].destroyed && (opponentTank[0].x == ownerX) && (opponentTank[0].y == ownerY))
+                        {
                             newBullet.owner = opponentTank[0];
+                            opponentTank[0].bullet = newBullet;
+                        }
                         else if (!opponentTank[1].destroyed && (opponentTank[1].x == ownerX) && (opponentTank[1].y == ownerY))
+                        {
                             newBullet.owner = opponentTank[1];
+                            opponentTank[1].bullet = newBullet;
+                        }
                         else if ((Math.Abs(opponentTank[0].x - ownerX) <= 2) && (Math.Abs(opponentTank[0].y - ownerY) <= 2))
                         {
                             Console.WriteLine("WARNING: Opponent bullet #{0} created too far from closest active tank; taking the best guess.", b.id);
                             newBullet.owner = opponentTank[0];
+                            opponentTank[0].bullet = newBullet;
                         }
                         else if ((Math.Abs(opponentTank[1].x - ownerX) <= 2) && (Math.Abs(opponentTank[1].y - ownerY) <= 2))
                         {
                             Console.WriteLine("WARNING: Opponent bullet #{0} created too far from closest active tank; taking the best guess.", b.id);
                             newBullet.owner = opponentTank[1];
+                            opponentTank[1].bullet = newBullet;
                         }
                         opponentBullet[b.id] = newBullet;
                     }
                 }
 
-            opponentBullet = opponentBullet.Where(pair => pair.Value.updated == true)
-                                       .ToDictionary(pair => pair.Key,
-                                                     pair => pair.Value);
+            destroyedBullets = new List<int>();
+            foreach (KeyValuePair<int, Bullet> bullet in opponentBullet)
+                if (bullet.Value.updated == false)
+                {
+                    // This bullet has not been updated this round, so it must have been destroyed.
+                    // Remove the tank's reference to it.
+                    bullet.Value.owner.bullet = null;
+                    // We can't remove it from the dictionary inside the loop, so take note of the destroyed bullets.
+                    destroyedBullets.Add(bullet.Key);
+                }
+            foreach (int key in destroyedBullets)
+                opponentBullet.Remove(key);
             
             if (status.events == null)
             {

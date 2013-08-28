@@ -123,11 +123,11 @@ namespace battlecity
 
         static void Main(string[] args)
         {
-            var info = new Microsoft.VisualBasic.Devices.ComputerInfo();
+            // var info = new Microsoft.VisualBasic.Devices.ComputerInfo();
             string botname = "random";
 
-            System.Console.WriteLine(info.OSFullName);
-            System.Console.WriteLine("Memory usage: {0}%", info.AvailablePhysicalMemory*100/info.TotalPhysicalMemory);
+            // System.Console.WriteLine(info.OSFullName);
+            // System.Console.WriteLine("Memory usage: {0}%", info.AvailablePhysicalMemory*100/info.TotalPhysicalMemory);
 
             var endpoint = "http://localhost:7070/Challenge/ChallengeService";
             if (args.Length > 0)

@@ -6,7 +6,7 @@ using System.Text;
 namespace battlecity
 {
 
-    class Tank
+    public class Tank
     {
         public int x { get; set; }
         public int y { get; set; }
@@ -43,7 +43,7 @@ namespace battlecity
         }
     }
 
-    class Base
+    public class Base
     {
         public int x { get; set; }
         public int y { get; set; }
@@ -55,7 +55,7 @@ namespace battlecity
         }
     }
 
-    class Bullet
+    public class Bullet
     {
         public int x { get; set; }
         public int y { get; set; }
@@ -86,10 +86,10 @@ namespace battlecity
         }
     }
 
-    class Board
+    public class Board
     {
         private static Dictionary<ChallengeService.state?, string> icon;
-        private ChallengeService.state?[][] board;
+        public ChallengeService.state?[][] board { get; private set; }
         public int xsize { get; private set; }
         public int ysize { get; private set; }
 

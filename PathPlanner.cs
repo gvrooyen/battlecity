@@ -1,5 +1,6 @@
 using System;
 using Games.Pathfinding;
+using System.Collections;
 
 namespace battlecity
 {
@@ -30,6 +31,8 @@ namespace battlecity
 		}
 		private int FY;
 
+        public int[,] map { get; set; }
+
 		// Constructor for a node in a 2-dimensional map
 		public AStarNodeBC(AStarNode AParent, AStarNode AGoalNode, double ACost, int AX, int AY) : base(AParent, AGoalNode, ACost)
 		{
@@ -40,7 +43,7 @@ namespace battlecity
 		// Adds a successor to a list if it is not impassible or the parent node
 		private void AddSuccessor(ArrayList ASuccessors, int AX, int AY) 
 		{
-			int CurrentCost = MainClass.GetMap(AX, AY);
+			int CurrentCost = map[AX, AY];
 			if (CurrentCost == -1)
 			{
 				return;
@@ -69,8 +72,8 @@ namespace battlecity
 		{
 			if (GoalNode != null) 
 			{
-				double xd = FX - ((AStarNode2D)GoalNode).X;
-				double yd = FY - ((AStarNode2D)GoalNode).Y;
+				double xd = FX - ((AStarNodeBC)GoalNode).X;
+				double yd = FY - ((AStarNodeBC)GoalNode).Y;
 				// "Euclidean distance" - Used when search can move at any angle.
 				//GoalEstimate = Math.Sqrt((xd*xd) + (yd*yd));
 				// "Manhattan Distance" - Used when search can only move vertically and 
@@ -134,13 +137,19 @@ namespace battlecity
 		
 		public void mapBoard(Board board)
 		{
+            map = new int[board.xsize - 4, board.ysize - 4];
+
 			/* Scan through the board and apply the kernel, and use that to create a map of movement
 			 * costs for the A* algorithm.
 			 */
 			for (int x = 2; x < board.xsize - 2; x++)
 				for (int y = 2; y < board.ysize -2; x++)
-				{
-				}
+                {
+                    map[x-2, y-2] = 0;
+                    for (int dx = -2; dx < 5; x++)
+                        for (int dy = -2; dy < 5; y++)
+                            map[x - 2, y - 2] += (int)board.board[x + dx][y + dy] * kernel[dx+2, dy+2];
+                }
 		}
 	}
 }

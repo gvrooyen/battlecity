@@ -20,7 +20,7 @@ namespace battlecity
         public abstract void postEarlyMove();
         public abstract void postFinalMove();
 
-        protected bool ObstructionsExist(int x1, int y1, int x2, int y2)
+        protected bool FireObstructionsExist(int x1, int y1, int x2, int y2)
         {
             if (y1 == y2)
             {
@@ -28,6 +28,40 @@ namespace battlecity
                 for (int x = x1; x <= x2; x += dx)
                     if (board.getState(x,y1) == ChallengeService.state.FULL)
                         return true;
+            }
+            else if (x1 == x2)
+            {
+                int dy = (y2 > y1) ? 1 : -1;
+                for (int y = y1; y <= y2; y += dy)
+                    if (board.getState(x1, y) == ChallengeService.state.FULL)
+                        return true;
+            }
+            else
+            {
+                Console.WriteLine("WARNING: Can only check for obstructions in a straight horizontal/vertical line.");
+            }
+            return false;
+        }
+
+        protected bool MoveObstructionsExit(int x1, int y1, int x2, int y2, out int xo, out int yo)
+        {
+            // default "not found" values for the output variables
+            xo = -1; 
+            yo = -1;
+
+            if (y1 == y2)
+            {
+                int dx = (x2 > x1) ? 1 : -1;
+                for (int x = x1; x <= x2; x += dx)
+                    // TODO: It's worthwhile here to inspect coordinates in the order dy = {0, \pm1, \pm2}, because
+                    //       that implies the lowest movement cost to remove obstructions.
+                    for (int dy = -2; dy <= 2; dy++)
+                        if (board.getState(x, y1 + dy) == ChallengeService.state.FULL)
+                        {
+                            xo = x;
+                            xo = y1 + dy;
+                            return true;
+                        }
             }
             else if (x1 == x2)
             {
@@ -177,7 +211,7 @@ namespace battlecity
                         A1 = MoveDirection(targetDirection);
                     else
                     {
-                        if (ObstructionsExist(tank0.x, tank0.y, board.opponentBase.x, tank0.y))
+                        if (FireObstructionsExist(tank0.x, tank0.y, board.opponentBase.x, tank0.y))
                             // Get rid of the blocks in the way first
                             A1 = ChallengeService.action.FIRE;
                         else

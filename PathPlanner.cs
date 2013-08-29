@@ -146,8 +146,8 @@ namespace battlecity
 				for (int y = 2; y < board.ysize -2; x++)
                 {
                     map[x-2, y-2] = 0;
-                    for (int dx = -2; dx < 5; x++)
-                        for (int dy = -2; dy < 5; y++)
+                    for (int dx = -2; dx <= 2; x++)
+                        for (int dy = -2; dy <= 2; y++)
                             map[x - 2, y - 2] += (int)board.board[x + dx][y + dy] * kernel[dx+2, dy+2];
                 }
 		}

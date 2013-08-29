@@ -182,7 +182,6 @@ namespace battlecity
 
             // TODO: Test this method
             // TODO: Implement/remove applySchedule field
-            // BUG: Throws a thread-based exception when called
 
             alive = false;
             running = false;
@@ -190,6 +189,7 @@ namespace battlecity
             currentScheduleOutdated = true;
             balance = delay;
             alive = true;
+            thread = new Thread(Run);
             running = true;
             thread.Start();
         }

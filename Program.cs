@@ -226,19 +226,11 @@ namespace battlecity
 
                 Console.WriteLine(Settings.SYNC_INITIAL_DELAY);
                 clock.Start(status.millisecondsToNextTick + Settings.SYNC_INITIAL_DELAY);
+                Console.WriteLine("The clock has been started");
 
-                while (true)
-                {
-                    // Now everything runs in the background.
-                }
             }
-            finally
+            catch (Exception e)
             {
-                System.Console.WriteLine("-------------------------------------------------");
-                System.Console.WriteLine("DIAGNOSTICS -- SYNCHRONISATION");
-                System.Console.WriteLine("Average usable tick period: {0}", Diagnostics.Sync.avgTickPeriod);
-                System.Console.WriteLine("Number of duped ticks: {0}", Diagnostics.Sync.dupedTicks);
-                System.Console.WriteLine("Number of missed ticks: {0}", Diagnostics.Sync.missedTicks);
             }
         }
     }

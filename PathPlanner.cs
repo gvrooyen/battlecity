@@ -76,13 +76,8 @@ namespace battlecity
 			{
 				double xd = FX - ((AStarNodeBC)GoalNode).X;
 				double yd = FY - ((AStarNodeBC)GoalNode).Y;
-				// "Euclidean distance" - Used when search can move at any angle.
-				//GoalEstimate = Math.Sqrt((xd*xd) + (yd*yd));
-				// "Manhattan Distance" - Used when search can only move vertically and 
-				// horizontally.
+				// "Manhattan Distance" - Used when search can only move vertically and horizontally.
 				GoalEstimate = Math.Abs(xd) + Math.Abs(yd); 
-				// "Diagonal Distance" - Used when the search can move in 8 directions.
-				//GoalEstimate = Math.Max(Math.Abs(xd),Math.Abs(yd));
 			}
 			else
 			{
@@ -95,13 +90,9 @@ namespace battlecity
 		{
 			ASuccessors.Clear();
 			AddSuccessor(ASuccessors, FX-1, FY  );
-			// AddSuccessor(ASuccessors,FX-1,FY-1);
 			AddSuccessor(ASuccessors, FX  , FY-1);
-			// AddSuccessor(ASuccessors,FX+1,FY-1);
 			AddSuccessor(ASuccessors, FX+1, FY  );
-			// AddSuccessor(ASuccessors,FX+1,FY+1);
 			AddSuccessor(ASuccessors, FX  , FY+1);
-			// AddSuccessor(ASuccessors,FX-1,FY+1);
 		}	
 
 		// Prints information about the current node

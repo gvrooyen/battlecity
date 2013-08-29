@@ -141,7 +141,7 @@ namespace battlecity
 				 {3,2,2,2,3},
 				 {3,3,3,3,3}};
 			
-			enemyClearance = new int[] {9,6,3};
+			enemyClearance = new int[] {30,25,20,15,10,5};
 			
 			lastUpdate = -2;
 		}
@@ -205,101 +205,102 @@ namespace battlecity
                             break;
                     }
 
-					// Next, we can paint in "no-go" areas, e.g. where we don't want to collide with our
-				    // own base or a friendly tank, or to keep a safe distance from an enemy tank.
-				
-					/* TODO: It may be possible to adapt A* to dodge bullets.
-					 *       If there are any bullets currently in flight, coordinates through which a bullet
-					 *       will pass should be no-go areas i.t.o. routing *for that tick*. This would require
-					 *       a way to annotate the map with movement-number-dependent weights, and the
-					 *       algorithm would have to be adapted to take these into account.
-					 */
-				
-				    /* Calculating collisions:
-				     * 
-				     * ············
-				     * ·XXXXXYYYYY·
-				     * ·XXXXXYYYYY·
-				     * ·XXAXXYYBYY·
-				     * ·XXXXXYYYYY·
-				     * ·XXXXXYYYYY·
-				     * ············
-				     * 
-				     * X is the player's tank, and Y the opponent's. Their respective centerpoints are at
-				     * A and B. Abs(A.x - B.x) == 5 is the point where the tanks just touch.
-				     * Abs(A.x - B.x) - 5 gives the clearance between the tanks.
-				     * 
-				     * Everything in a radius of 4 units (9x9 square) around a tank is a collision (no-go)
-				     * for another tank. For enemy tanks, concentric squares around this 9x9 area may also be
-				     * penalised by the elements of this.enemyClearance.
-				     * 
-				     */
-
-					foreach (Tank t in board.playerTank)
-                        if (!t.destroyed)
-                            for (int dx = -4; dx <= 4; dx++)
-						        for (int dy = -4; dy <= 4; dy++)
-                                    if ((t.x - 2 + dx >= 0) && (t.x - 2 + dx < map.GetLength(0)) &&
-                                        (t.y - 2 + dy >= 0) && (t.y - 2 + dy < map.GetLength(1)))
-                                    {
-                                        try
-                                        {
-                                            map[t.x - 2 + dx, t.y - 2 + dy] = -1;
-                                        }
-                                        catch (IndexOutOfRangeException e)
-                                        {
-                                            Console.WriteLine("ERROR: Player tank ({0},{1}) out of bounds at ({2},{3}) during path planning",
-                                                t.x, t.y, t.x - 2 + dx, t.y - 2 + dy);
-                                        }
-                                    }
-				
-					foreach (Tank t in board.opponentTank)
-                        if (!t.destroyed)
-    					    for (int dx = -4-enemyClearance.Length; dx <= 4+enemyClearance.Length; dx++)
-						        for (int dy = -4-enemyClearance.Length; dy <= 4+enemyClearance.Length; dy++)
-						        {
-                                    if ((t.x - 2 + dx >= 0) && (t.x - 2 + dx < map.GetLength(0)) &&
-                                        (t.y - 2 + dy >= 0) && (t.y - 2 + dy < map.GetLength(1)))
-                                    {
-                                        int clearance = Math.Min(Math.Abs(dx) - 5, Math.Abs(dy) - 5);
-                                        try
-                                        {
-                                            if ((clearance >= 0) && (map[t.x - 2 + dx, t.y - 2 + dy] != -1))
-                                                map[t.x - 2 + dx, t.y - 2 + dy] += enemyClearance[clearance];
-                                            else if (clearance < 0)
-                                                map[t.x - 2 + dx, t.y - 2 + dy] = -1;
-                                        }
-                                        catch (IndexOutOfRangeException e)
-                                        {
-                                            Console.WriteLine("ERROR: Opponent tank ({0},{1}) out of bounds at ({2},{3}) during path planning, clearance {4}",
-                                                t.x, t.y, t.x - 2 + dx, t.y - 2 + dy, clearance); 
-                                        }
-                                    }
-						        }
-
-				    /* Don't crash into our own base:
-				     * 
-				     * ········
-				     * ·XXXXX··
-				     * ·XXXXX··
-				     * ·XXAXXB·
-				     * ·XXXXX··
-				     * ·XXXXX··
-				     * ········
-				     * 
-				     * X is the player's tank (with centerpoint A) and B is the player's base.
-                     * The safe clearance needs to be at least 3 (just touching the base). Everything
-                     * in a radius of 2 units (5x5 square) around the base is a collision (no-go) for
-                     * the player's tanks.
-                     */
-
-                    for (int dx = -2; dx <= 2; dx++)
-                        for (int dy = -2; dy <= 2; dy++)
-                            if ((board.playerBase.x + dx >= 0) && (board.playerBase.x + dx < map.GetLength(0)) &&
-                                (board.playerBase.y + dy >= 0) && (board.playerBase.y + dy < map.GetLength(1)))
-                                map[board.playerBase.x + dx, board.playerBase.y + dy] = -1;
                 }
-		}
+
+            // Next, we can paint in "no-go" areas, e.g. where we don't want to collide with our
+            // own base or a friendly tank, or to keep a safe distance from an enemy tank.
+
+            /* TODO: It may be possible to adapt A* to dodge bullets.
+             *       If there are any bullets currently in flight, coordinates through which a bullet
+             *       will pass should be no-go areas i.t.o. routing *for that tick*. This would require
+             *       a way to annotate the map with movement-number-dependent weights, and the
+             *       algorithm would have to be adapted to take these into account.
+             */
+
+            /* Calculating collisions:
+             * 
+             * ············
+             * ·XXXXXYYYYY·
+             * ·XXXXXYYYYY·
+             * ·XXAXXYYBYY·
+             * ·XXXXXYYYYY·
+             * ·XXXXXYYYYY·
+             * ············
+             * 
+             * X is the player's tank, and Y the opponent's. Their respective centerpoints are at
+             * A and B. Abs(A.x - B.x) == 5 is the point where the tanks just touch.
+             * Abs(A.x - B.x) - 5 gives the clearance between the tanks.
+             * 
+             * Everything in a radius of 4 units (9x9 square) around a tank is a collision (no-go)
+             * for another tank. For enemy tanks, concentric squares around this 9x9 area may also be
+             * penalised by the elements of this.enemyClearance.
+             * 
+             */
+
+            foreach (Tank t in board.playerTank)
+                if (!t.destroyed)
+                    for (int dx = -4; dx <= 4; dx++)
+                        for (int dy = -4; dy <= 4; dy++)
+                            if ((t.x - 2 + dx >= 0) && (t.x - 2 + dx < map.GetLength(0)) &&
+                                (t.y - 2 + dy >= 0) && (t.y - 2 + dy < map.GetLength(1)))
+                            {
+                                try
+                                {
+                                    map[t.x - 2 + dx, t.y - 2 + dy] = -1;
+                                }
+                                catch (IndexOutOfRangeException e)
+                                {
+                                    Console.WriteLine("ERROR: Player tank ({0},{1}) out of bounds at ({2},{3}) during path planning",
+                                        t.x, t.y, t.x - 2 + dx, t.y - 2 + dy);
+                                }
+                            }
+
+            foreach (Tank t in board.opponentTank)
+                if (!t.destroyed)
+                    for (int dx = -4 - enemyClearance.Length; dx <= 4 + enemyClearance.Length; dx++)
+                        for (int dy = -4 - enemyClearance.Length; dy <= 4 + enemyClearance.Length; dy++)
+                        {
+                            if ((t.x - 2 + dx >= 0) && (t.x - 2 + dx < map.GetLength(0)) &&
+                                (t.y - 2 + dy >= 0) && (t.y - 2 + dy < map.GetLength(1)))
+                            {
+                                int clearance = Math.Max(Math.Abs(dx) - 5, Math.Abs(dy) - 5);
+                                try
+                                {
+                                    if ((clearance >= 0) && (map[t.x - 2 + dx, t.y - 2 + dy] != -1))
+                                        map[t.x - 2 + dx, t.y - 2 + dy] += enemyClearance[clearance];
+                                    else if (clearance < 0)
+                                        map[t.x - 2 + dx, t.y - 2 + dy] = -1;
+                                }
+                                catch (IndexOutOfRangeException e)
+                                {
+                                    Console.WriteLine("ERROR: Opponent tank ({0},{1}) out of bounds at ({2},{3}) during path planning, clearance {4}",
+                                        t.x, t.y, t.x - 2 + dx, t.y - 2 + dy, clearance);
+                                }
+                            }
+                        }
+
+            /* Don't crash into our own base:
+             * 
+             * ········
+             * ·XXXXX··
+             * ·XXXXX··
+             * ·XXAXXB·
+             * ·XXXXX··
+             * ·XXXXX··
+             * ········
+             * 
+             * X is the player's tank (with centerpoint A) and B is the player's base.
+             * The safe clearance needs to be at least 3 (just touching the base). Everything
+             * in a radius of 2 units (5x5 square) around the base is a collision (no-go) for
+             * the player's tanks.
+             */
+
+            for (int dx = -2; dx <= 2; dx++)
+                for (int dy = -2; dy <= 2; dy++)
+                    if ((board.playerBase.x + dx - 2 >= 0) && (board.playerBase.x + dx - 2 < map.GetLength(0)) &&
+                        (board.playerBase.y + dy - 2 >= 0) && (board.playerBase.y + dy - 2 < map.GetLength(1)))
+                        map[board.playerBase.x + dx - 2, board.playerBase.y + dy - 2] = -1;
+        }
 
         public void renderMap(Board board, string filename)
         {
@@ -315,7 +316,7 @@ namespace battlecity
                         {
                             int green = 0;
                             int blue = 0;
-                            int red = map[x,y]*16;
+                            int red = map[x,y]*8;
                             if (red > 255)
                                 red = 255;
                             else if (red < 0)

@@ -164,15 +164,44 @@ namespace battlecity
 			for (int x = 2; x < board.xsize - 2; x++)
 				for (int y = 2; y < board.ysize -2; x++)
                 {
-                    map[x-2, y-2] = 0;
+                    // Always start with a cost of one (the actual movement cost to enter the square)
+                    map[x-2, y-2] = 1;
+
+                    // Next, calculate the estimated movement penalty due to obstructions
                     for (int dx = -2; dx <= 2; x++)
+                    {
                         for (int dy = -2; dy <= 2; y++)
+                        {
 						    // First, calculate map movement cost just based on the blocks in the terrain
 							// BUG: This should use 0 when the terrain is clear, 1 when it's a wall, and
 						    //      add 1 for actual movement cost.
-						    throw new NotImplementedException();
-                            map[x - 2, y - 2] += (int)board.board[x + dx][y + dy] * kernel[dx+2, dy+2];
-				
+
+                            int cost = 0;
+
+                            switch (board.board[x + dx][y + dy])
+                            {
+                                case (ChallengeService.state.FULL):
+                                    cost = 1;
+                                    break;
+                                case (ChallengeService.state.NONE):
+                                case (ChallengeService.state.OUT_OF_BOUNDS):
+                                    cost = -1;
+                                    break;
+                            }
+
+                            if (cost == -1)
+                            {
+                                map[x-2, y-2] = -1;
+                                break;
+                            }
+                            
+                            map[x-2, y-2] += (int)board.board[x + dx][y + dy] * kernel[dx+2, dy+2];
+                        }
+                        if (map[x-2, y-2] == -1)
+                            // Once it's impassible, there's no way to recover
+                            break;
+                    }
+
 					// Next, we can paint in "no-go" areas, e.g. where we don't want to collide with our
 				    // own base or a friendly tank, or to keep a safe distance from an enemy tank.
 				
@@ -185,13 +214,13 @@ namespace battlecity
 				
 				    /* Calculating collisions:
 				     * 
-				     * Â·Â·Â·Â·Â·Â·Â·Â·Â·Â·Â·Â·
-				     * Â·XXXXXYYYYYÂ·
-				     * Â·XXXXXYYYYYÂ·
-				     * Â·XXAXXYYBYYÂ·
-				     * Â·XXXXXYYYYYÂ·
-				     * Â·XXXXXYYYYYÂ·
-				     * Â·Â·Â·Â·Â·Â·Â·Â·Â·Â·Â·Â·
+				     * ············
+				     * ·XXXXXYYYYY·
+				     * ·XXXXXYYYYY·
+				     * ·XXAXXYYBYY·
+				     * ·XXXXXYYYYY·
+				     * ·XXXXXYYYYY·
+				     * ············
 				     * 
 				     * X is the player's tank, and Y the opponent's. Their respective centerpoints are at
 				     * A and B. Abs(A.x - B.x) == 5 is the point where the tanks just touch.
@@ -213,8 +242,32 @@ namespace battlecity
 					  for (int dx = -4-enemyClearance.Length; dx <= 4+enemyClearance.Length; dx++)
 						for (int dy = -4-enemyClearance.Length; dy <= 4+enemyClearance.Length; dy++)
 						{
-							int clearance = Math.Min (Math.Abs(dx)-4, Math.Abs(dy)-4)
+                            int clearance = Math.Min(Math.Abs(dx) - 4, Math.Abs(dy) - 4);
+                            if ((clearance >= 0) && (map[t.x - 2 + dx, t.y - 2 + dy] != -1))
+                                map[t.x - 2 + dx, t.y - 2 + dy] += enemyClearance[clearance];
+                            else if (clearance < 0)
+                                map[t.x - 2 + dx, t.y - 2 + dy] = -1;
 						}
+
+				    /* Don't crash into our own base:
+				     * 
+				     * ········
+				     * ·XXXXX··
+				     * ·XXXXX··
+				     * ·XXAXXB·
+				     * ·XXXXX··
+				     * ·XXXXX··
+				     * ········
+				     * 
+				     * X is the player's tank (with centerpoint A) and B is the player's base.
+                     * The safe clearance needs to be at least 3 (just touching the base). Everything
+                     * in a radius of 2 units (5x5 square) around the base is a collision (no-go) for
+                     * the player's tanks.
+                     */
+
+                    for (int dx = -2; dx <= 2; dx++)
+                        for (int dy = -2; dy <= 2; dy++)
+                            map[board.playerBase.x + dx, board.playerBase.y + dy] = -1;
                 }
 		}
 	}

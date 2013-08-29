@@ -476,7 +476,7 @@ namespace Tanis.Collections
 			if (FList.Count > 0)
 			{
 				RetInt = 0;
-				object RetObj = FList[0];
+				// object RetObj = FList[0];
 			}
 			return RetInt;
 		}
@@ -491,7 +491,7 @@ namespace Tanis.Collections
 			if(FList.Count > 0)
 			{
 				RetInt = FList.Count-1;
-				object RetObj = FList[FList.Count-1];
+				// object RetObj = FList[FList.Count-1];
 			}
 			return RetInt;
 		}

@@ -193,7 +193,7 @@ namespace Games.Pathfinding {
 		#region Private Fields
 
 		private AStarNode FStartNode;
-		private AStarNode FGoalNode;
+		// private AStarNode FGoalNode;
 		private Heap FOpenList;
 		private Heap FClosedList;
 		private ArrayList FSuccessors;
@@ -256,7 +256,7 @@ namespace Games.Pathfinding {
 		public void FindPath(AStarNode AStartNode,AStarNode AGoalNode)
 		{
 			FStartNode = AStartNode;
-			FGoalNode = AGoalNode;
+			// FGoalNode = AGoalNode;
 
 			FOpenList.Add(FStartNode);
 			while(FOpenList.Count > 0) 

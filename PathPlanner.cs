@@ -115,6 +115,15 @@ namespace battlecity
 		public int[,] kernel;
 		private int[,] map;
 		
+		// Tick number of the last update (to avoid re-scanning the board in the same round).
+		private int lastUpdate;
+		
+		// A vector describing the added routing penalty close to an enemy tank. Element 0
+		// is the penalty for moving directly adjacent to an enemy tank, Element 1 the penalty
+		// at 1 block clearance, Element 2 at 2 blocks clearance, etc. Clearance is defined as
+		// the smallest of the x or the y clearance (i.e. diagonal distance is not considered).
+		public int[] enemyClearance;
+		
 		private void Initialize()
 		{
 			/* The kernel is used to estimate the movement cost of having the 5x5 tank's center
@@ -129,14 +138,24 @@ namespace battlecity
 				 {3,2,1,2,3},
 				 {3,2,2,2,3},
 				 {3,3,3,3,3}};
+			
+			enemyClearance = new int[] {9,6,3};
+			
+			lastUpdate = -2;
 		}
 		
 		public PathPlanner ()
 		{			
 		}
 		
-		public void mapBoard(Board board)
+		public void mapBoard(Board board, int tick = -1)
 		{
+			// If tick is -1, force an update. Otherwise, check that we haven't already updated the map
+			// this round.
+			if ((tick != -1) && (tick <= lastUpdate))
+				return;
+			
+			lastUpdate = tick;
             map = new int[board.xsize - 4, board.ysize - 4];
 
 			/* Scan through the board and apply the kernel, and use that to create a map of movement
@@ -148,7 +167,54 @@ namespace battlecity
                     map[x-2, y-2] = 0;
                     for (int dx = -2; dx <= 2; x++)
                         for (int dy = -2; dy <= 2; y++)
+						    // First, calculate map movement cost just based on the blocks in the terrain
+							// BUG: This should use 0 when the terrain is clear, 1 when it's a wall, and
+						    //      add 1 for actual movement cost.
+						    throw new NotImplementedException();
                             map[x - 2, y - 2] += (int)board.board[x + dx][y + dy] * kernel[dx+2, dy+2];
+				
+					// Next, we can paint in "no-go" areas, e.g. where we don't want to collide with our
+				    // own base or a friendly tank, or to keep a safe distance from an enemy tank.
+				
+					/* TODO: It may be possible to adapt A* to dodge bullets.
+					 *       If there are any bullets currently in flight, coordinates through which a bullet
+					 *       will pass should be no-go areas i.t.o. routing *for that tick*. This would require
+					 *       a way to annotate the map with movement-number-dependent weights, and the
+					 *       algorithm would have to be adapted to take these into account.
+					 */
+				
+				    /* Calculating collisions:
+				     * 
+				     * ············
+				     * ·XXXXXYYYYY·
+				     * ·XXXXXYYYYY·
+				     * ·XXAXXYYBYY·
+				     * ·XXXXXYYYYY·
+				     * ·XXXXXYYYYY·
+				     * ············
+				     * 
+				     * X is the player's tank, and Y the opponent's. Their respective centerpoints are at
+				     * A and B. Abs(A.x - B.x) == 5 is the point where the tanks just touch.
+				     * Abs(A.x - B.x) - 5 gives the clearance between the tanks.
+				     * 
+				     * Everything in a radius of 4 units (9x9 square) around a tank is a collision (no-go)
+				     * for another tank. For enemy tanks, concentric squares around this 9x9 area may also be
+				     * penalised by the elements of this.enemyClearance.
+				     * 
+				     */
+				
+					foreach (Tank t in board.playerTank)
+					  for (int dx = -4; dx <= 4; dx++)
+						for (int dy = -4; dy <= 4; dy++)
+							if (!t.destroyed)
+								map[t.x-2 + dx, t.y-2 + dy] = -1;
+				
+					foreach (Tank t in board.opponentTank)
+					  for (int dx = -4-enemyClearance.Length; dx <= 4+enemyClearance.Length; dx++)
+						for (int dy = -4-enemyClearance.Length; dy <= 4+enemyClearance.Length; dy++)
+						{
+							int clearance = Math.Min (Math.Abs(dx)-4, Math.Abs(dy)-4)
+						}
                 }
 		}
 	}

@@ -203,6 +203,11 @@ namespace battlecity
                         u.id, u.x, u.y, u.direction);
                 }
 
+                Console.WriteLine("Testing path planner");
+                PathPlanner planner = new PathPlanner();
+                planner.mapBoard(board);
+                planner.renderMap(board, board.playerName + ".png");
+
                 if (board.playerName == "Player One")
                     botname = "aggro";
 

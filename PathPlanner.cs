@@ -1,6 +1,8 @@
 using System;
 using Games.Pathfinding;
 using System.Collections;
+using System.Drawing;
+using System.Drawing.Imaging;
 
 namespace battlecity
 {
@@ -145,7 +147,8 @@ namespace battlecity
 		}
 		
 		public PathPlanner ()
-		{			
+		{
+            Initialize();
 		}
 		
 		public void mapBoard(Board board, int tick = -1)
@@ -162,15 +165,15 @@ namespace battlecity
 			 * costs for the A* algorithm.
 			 */
 			for (int x = 2; x < board.xsize - 2; x++)
-				for (int y = 2; y < board.ysize -2; x++)
+				for (int y = 2; y < board.ysize -2; y++)
                 {
                     // Always start with a cost of one (the actual movement cost to enter the square)
                     map[x-2, y-2] = 1;
 
                     // Next, calculate the estimated movement penalty due to obstructions
-                    for (int dx = -2; dx <= 2; x++)
+                    for (int dx = -2; dx <= 2; dx++)
                     {
-                        for (int dy = -2; dy <= 2; y++)
+                        for (int dy = -2; dy <= 2; dy++)
                         {
 						    // First, calculate map movement cost just based on the blocks in the terrain
 							// BUG: This should use 0 when the terrain is clear, 1 when it's a wall, and
@@ -195,7 +198,7 @@ namespace battlecity
                                 break;
                             }
                             
-                            map[x-2, y-2] += (int)board.board[x + dx][y + dy] * kernel[dx+2, dy+2];
+                            map[x-2, y-2] += cost * kernel[dx+2, dy+2];
                         }
                         if (map[x-2, y-2] == -1)
                             // Once it's impassible, there's no way to recover
@@ -231,23 +234,48 @@ namespace battlecity
 				     * penalised by the elements of this.enemyClearance.
 				     * 
 				     */
-				
+
 					foreach (Tank t in board.playerTank)
-					  for (int dx = -4; dx <= 4; dx++)
-						for (int dy = -4; dy <= 4; dy++)
-							if (!t.destroyed)
-								map[t.x-2 + dx, t.y-2 + dy] = -1;
+                        if (!t.destroyed)
+                            for (int dx = -4; dx <= 4; dx++)
+						        for (int dy = -4; dy <= 4; dy++)
+                                    if ((t.x - 2 + dx >= 0) && (t.x - 2 + dx < map.GetLength(0)) &&
+                                        (t.y - 2 + dy >= 0) && (t.y - 2 + dy < map.GetLength(1)))
+                                    {
+                                        try
+                                        {
+                                            map[t.x - 2 + dx, t.y - 2 + dy] = -1;
+                                        }
+                                        catch (IndexOutOfRangeException e)
+                                        {
+                                            Console.WriteLine("ERROR: Player tank ({0},{1}) out of bounds at ({2},{3}) during path planning",
+                                                t.x, t.y, t.x - 2 + dx, t.y - 2 + dy);
+                                        }
+                                    }
 				
 					foreach (Tank t in board.opponentTank)
-					  for (int dx = -4-enemyClearance.Length; dx <= 4+enemyClearance.Length; dx++)
-						for (int dy = -4-enemyClearance.Length; dy <= 4+enemyClearance.Length; dy++)
-						{
-                            int clearance = Math.Min(Math.Abs(dx) - 4, Math.Abs(dy) - 4);
-                            if ((clearance >= 0) && (map[t.x - 2 + dx, t.y - 2 + dy] != -1))
-                                map[t.x - 2 + dx, t.y - 2 + dy] += enemyClearance[clearance];
-                            else if (clearance < 0)
-                                map[t.x - 2 + dx, t.y - 2 + dy] = -1;
-						}
+                        if (!t.destroyed)
+    					    for (int dx = -4-enemyClearance.Length; dx <= 4+enemyClearance.Length; dx++)
+						        for (int dy = -4-enemyClearance.Length; dy <= 4+enemyClearance.Length; dy++)
+						        {
+                                    if ((t.x - 2 + dx >= 0) && (t.x - 2 + dx < map.GetLength(0)) &&
+                                        (t.y - 2 + dy >= 0) && (t.y - 2 + dy < map.GetLength(1)))
+                                    {
+                                        int clearance = Math.Min(Math.Abs(dx) - 5, Math.Abs(dy) - 5);
+                                        try
+                                        {
+                                            if ((clearance >= 0) && (map[t.x - 2 + dx, t.y - 2 + dy] != -1))
+                                                map[t.x - 2 + dx, t.y - 2 + dy] += enemyClearance[clearance];
+                                            else if (clearance < 0)
+                                                map[t.x - 2 + dx, t.y - 2 + dy] = -1;
+                                        }
+                                        catch (IndexOutOfRangeException e)
+                                        {
+                                            Console.WriteLine("ERROR: Opponent tank ({0},{1}) out of bounds at ({2},{3}) during path planning, clearance {4}",
+                                                t.x, t.y, t.x - 2 + dx, t.y - 2 + dy, clearance); 
+                                        }
+                                    }
+						        }
 
 				    /* Don't crash into our own base:
 				     * 
@@ -267,9 +295,42 @@ namespace battlecity
 
                     for (int dx = -2; dx <= 2; dx++)
                         for (int dy = -2; dy <= 2; dy++)
-                            map[board.playerBase.x + dx, board.playerBase.y + dy] = -1;
+                            if ((board.playerBase.x + dx >= 0) && (board.playerBase.x + dx < map.GetLength(0)) &&
+                                (board.playerBase.y + dy >= 0) && (board.playerBase.y + dy < map.GetLength(1)))
+                                map[board.playerBase.x + dx, board.playerBase.y + dy] = -1;
                 }
 		}
+
+        public void renderMap(Board board, string filename)
+        {
+            Console.WriteLine("Writing image");
+            // Create a rendering of the cost map, superimposed onto the board.
+            using (Bitmap b = new Bitmap(board.xsize*8, board.ysize*8))
+            {
+                using (Graphics g = Graphics.FromImage(b))
+                {
+                    g.Clear(Color.FromArgb(255, 0, 0));
+                    for (int x = 0; x < map.GetLength(0); x++)
+                        for (int y = 0; y < map.GetLength(1); y++)
+                        {
+                            int green = 0;
+                            int blue = 0;
+                            int red = map[x,y]*16;
+                            if (red > 255)
+                                red = 255;
+                            else if (red < 0)
+                            {
+                                red = 255;
+                                green = 255;
+                                blue = 255;
+                            }
+                            Rectangle rect = new Rectangle( (x+2)*8, (y+2)*8, 8, 8 );
+                            g.FillRectangle(new SolidBrush(Color.FromArgb(red, green, blue)), rect);
+                        }
+                }
+                b.Save(filename, ImageFormat.Png);
+            }
+        }
 	}
 }
 

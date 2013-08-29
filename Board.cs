@@ -270,6 +270,12 @@ namespace battlecity
             }
 
             // Update tank positions
+
+            // BUG: These assume that tanks are never destroyed! This is the point where the
+            //      number of tanks in the status list should be checked, and if one has disappeared,
+            //      its associated board object should be marked as destroyed. It's critical to
+            //      track tanks by ID, rather than by their order in the list.
+
             playerTank[0].x = status.players[playerID].units[0].x;
             playerTank[0].y = status.players[playerID].units[0].y;
             playerTank[0].direction = status.players[playerID].units[0].direction;

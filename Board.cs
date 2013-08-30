@@ -276,18 +276,51 @@ namespace battlecity
             //      its associated board object should be marked as destroyed. It's critical to
             //      track tanks by ID, rather than by their order in the list.
 
-            playerTank[0].x = status.players[playerID].units[0].x;
-            playerTank[0].y = status.players[playerID].units[0].y;
-            playerTank[0].direction = status.players[playerID].units[0].direction;
-            playerTank[1].x = status.players[playerID].units[1].x;
-            playerTank[1].y = status.players[playerID].units[1].y;
-            playerTank[1].direction = status.players[playerID].units[1].direction;
-            opponentTank[0].x = status.players[opponentID].units[0].x;
-            opponentTank[0].y = status.players[opponentID].units[0].y;
-            opponentTank[0].direction = status.players[opponentID].units[0].direction;
-            opponentTank[1].x = status.players[opponentID].units[1].x;
-            opponentTank[1].y = status.players[opponentID].units[1].y;
-            opponentTank[1].direction = status.players[opponentID].units[1].direction;
+            foreach (Tank t in playerTank)
+            {
+                t.destroyed = true;
+                ChallengeService.unit[] serverUnit = status.players[playerID].units;
+                if ((serverUnit.Length > 0) && (serverUnit[0].id == t.id))
+                {
+                    t.x = serverUnit[0].x;
+                    t.y = serverUnit[0].y;
+                    t.direction = serverUnit[0].direction;
+                    t.destroyed = false;
+                } else if ((serverUnit.Length > 1) && (serverUnit[1].id == t.id))
+                {
+                    t.x = serverUnit[1].x;
+                    t.y = serverUnit[1].y;
+                    t.direction = serverUnit[1].direction;
+                    t.destroyed = false;
+                } else
+                {
+                    Console.WriteLine("WARNING: Unknown player tank ID reported in server unit list");
+                }
+            }
+
+            foreach (Tank t in opponentTank)
+            {
+                t.destroyed = true;
+                ChallengeService.unit[] serverUnit = status.players[opponentID].units;
+                if ((serverUnit.Length > 0) && (serverUnit[0].id == t.id))
+                {
+                    t.x = serverUnit[0].x;
+                    t.y = serverUnit[0].y;
+                    t.direction = serverUnit[0].direction;
+                    t.destroyed = false;
+                }
+                else if ((serverUnit.Length > 1) && (serverUnit[1].id == t.id))
+                {
+                    t.x = serverUnit[1].x;
+                    t.y = serverUnit[1].y;
+                    t.direction = serverUnit[1].direction;
+                    t.destroyed = false;
+                }
+                else
+                {
+                    Console.WriteLine("WARNING: Unknown opponent tank ID reported in server unit list");
+                }
+            }
 
             // Update bullet positions, and capture new ones.
 

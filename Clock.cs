@@ -142,14 +142,14 @@ namespace battlecity
             }
         }
 
-        public void Push(int factor = 1)
+        public void Push()
         {
-            delta = (short)(-1*factor);
+            delta = -1;
         }
 
-        public void Pull(int factor = 1)
+        public void Pull()
         {
-            delta = (short)(+1*factor);
+            delta = +1;
         }
 
         public void Start(long initialPeriod = 0)

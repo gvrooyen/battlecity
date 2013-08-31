@@ -211,6 +211,7 @@ namespace battlecity
             this.client = client;
         }
 
+        public abstract void newTick();
         public abstract void postEarlyMove();
         public abstract void postFinalMove();
 
@@ -672,7 +673,7 @@ namespace battlecity
             A2 = ChallengeService.action.NONE;
         }
 
-        public override void postEarlyMove()
+        public override void newTick()
         {
             // We'll do most of our calculations here, and just post the actions in the final move.
 
@@ -686,10 +687,14 @@ namespace battlecity
             if (!tank0.destroyed && !tank1.destroyed)
             {
                 // Tank 0 goes for the base
-                A1 = RunAndGun(tank0, board.opponentBase.x, board.opponentBase.y);
+                // A1 = RunAndGun(tank0, board.opponentBase.x, board.opponentBase.y);
+                A1 = ChallengeService.action.NONE;
             }
+        }
 
-
+        public override void postEarlyMove()
+        {
+            // Do nothing
         }
 
         public override void postFinalMove()

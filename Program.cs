@@ -67,10 +67,10 @@ namespace battlecity
             else if (status.currentTick - lastTick > 1)
             {
                 // We've completely missed a tick, so reset the clock
-                Debug.WriteLine("Missed a tick! Pulling back hard.");
+                Debug.WriteLine("Missed a tick! Pulling clock.");
                 Diagnostics.Sync.missedTicks += 1;
                 // clock.Reset(status.millisecondsToNextTick + Settings.SYNC_INITIAL_DELAY);
-                clock.Pull(5);
+                clock.Pull();
             }
             else if (status.millisecondsToNextTick <= 0)
             {
@@ -80,9 +80,9 @@ namespace battlecity
             else if ((status.currentTick > 1) && (status.millisecondsToNextTick < Settings.SYNC_TICK / 2))
             {
                 // We're completely out of sync, so reset the clock
-                Debug.WriteLine("Out of sync! Pulling back hard.");
+                Debug.WriteLine("Out of sync! Pushing clock.");
                 // clock.Reset(status.millisecondsToNextTick + Settings.SYNC_INITIAL_DELAY);
-                clock.Pull(5);
+                clock.Push();
             }
             else if (ms < Settings.SYNC_TARGET - 2 * Settings.SYNC_DELTA_STEP_LO)
             {
@@ -96,6 +96,8 @@ namespace battlecity
             }
 
             lastTick = status.currentTick;
+
+            bot.newTick();
 
             if (ms > 0)
                 Diagnostics.Sync.addTickPeriod(ms);

@@ -138,14 +138,14 @@ namespace battlecity
             }
         }
 
-        public void Push()
+        public void Push(int factor = 1)
         {
-            delta = -1;
+            delta = (short)(-1*factor);
         }
 
-        public void Pull()
+        public void Pull(int factor = 1)
         {
-            delta = +1;
+            delta = (short)(+1*factor);
         }
 
         public void Start(long initialPeriod = 0)
@@ -186,6 +186,7 @@ namespace battlecity
             alive = false;
             running = false;
             thread.Join();
+            currentSchedule.Clear();
             currentScheduleOutdated = true;
             balance = delay;
             alive = true;

@@ -30,10 +30,35 @@ namespace battlecity
             };
 
             public LinkedList<Plan> subplans { get; set; }
+            public string description { get; set; }
 
             public Plan()
             {
                 subplans = new LinkedList<Plan>();
+            }
+
+            public override string ToString()
+            {
+                StringBuilder result = new StringBuilder(this.GetType().ToString());
+                if (description != null)
+                {
+                    result.Append(": ").Append(description);
+                }
+                result.Append(Environment.NewLine);
+
+                if (subplans.First != null)
+                {
+                    foreach (Plan plan in subplans)
+                    {
+                        StringBuilder subResult = new StringBuilder(plan.ToString());
+                        // Indent all lines in the subplan description
+                        subResult.Insert(0, "    ");
+                        subResult.Replace(Environment.NewLine, Environment.NewLine + "    ", 0, subResult.Length - 1);
+                        result.Append(subResult);
+                    }
+                }
+
+                return result.ToString();
             }
         }
 
@@ -314,7 +339,18 @@ namespace battlecity
             else
                 return MoveDirection(direction);
         }
-		
+
+        public string PrintPlans()
+        {
+            StringBuilder result = new StringBuilder("");
+            foreach (var plan in plans)
+            {
+                result.Append(plan.ToString());
+                result.Append(Environment.NewLine);
+            }
+            return result.ToString();
+        }
+
 		protected ChallengeService.action RunAndGun(Tank tank, int destX, int destY, int recursionDepth = 0)
 		{
 			/* Move towards the destination coordinates (L-shaped path, longest edge first).
@@ -382,7 +418,7 @@ namespace battlecity
                 plans.AddFirst(plan);
             }
 
-            while (plan.subplans != null)
+            while (plan.subplans.First != null)
             {
                 // We already know what to do. Just do it.
 
@@ -472,9 +508,9 @@ namespace battlecity
 					// We're running vertically, so look for obstacles in a horizontal line.
 					foreach (int i in scanOrder)
 					{
-						if (board.board[x+scanOrder[i]][y] == ChallengeService.state.FULL)
+						if ((x+i >= 0) && (x+i < board.xsize) && (y >= 0) && (y < board.ysize) && (board.board[x+i][y] == ChallengeService.state.FULL))
 						{
-							obstX = x + scanOrder[i];
+							obstX = x + i;
 							obstY = y;
 							break;
 						}
@@ -485,10 +521,10 @@ namespace battlecity
 					// We're running horizontally, so look for obstacles in a vertical line.
 					foreach (int i in scanOrder)
 					{
-						if (board.board[x][y+scanOrder[i]] == ChallengeService.state.FULL)
+						if ((y+i >= 0) && (y+i < board.ysize) && (x >= 0) && (x < board.xsize) && (board.board[x][y+i] == ChallengeService.state.FULL))
 						{
 							obstX = x;
-							obstY = y + scanOrder[i];
+							obstY = y + i;
 							break;
 						}
 					}
@@ -641,10 +677,8 @@ namespace battlecity
         {
             // We'll do most of our calculations here, and just post the actions in the final move.
 
-            int dx, dy;
             Tank tank0 = board.playerTank[0];
             Tank tank1 = board.playerTank[1];
-            ChallengeService.direction targetDirection;
 
             A1 = ChallengeService.action.NONE;
             A2 = ChallengeService.action.NONE;
@@ -653,55 +687,7 @@ namespace battlecity
             if (!tank0.destroyed && !tank1.destroyed)
             {
                 // Tank 0 goes for the base
-                dx = board.opponentBase.x - tank0.x;
-                dy = board.opponentBase.y - tank0.y;
-
-                // If we're in line, start firing
-                if (dx == 0)
-                {
-                    if (dy < 0)
-                        A1 = MoveOrFire(tank0, ChallengeService.direction.UP);
-                    else
-                        A1 = MoveOrFire(tank0, ChallengeService.direction.DOWN);
-                }
-                else if (dy == 0)
-                {
-                    if (dx < 0)
-                        A1 = MoveOrFire(tank0, ChallengeService.direction.LEFT);
-                    else
-                        A1 = MoveOrFire(tank0, ChallengeService.direction.RIGHT);
-                }
-                else
-                {
-                    // Not in line yet. Take the shortest path (even if it has obstructions)
-                    if (Math.Abs(dx) >= Math.Abs(dy))
-                    {
-                        if (board.opponentBase.y > tank0.y)
-                            targetDirection = ChallengeService.direction.DOWN;
-                        else
-                            targetDirection = ChallengeService.direction.UP;
-                    }
-                    else
-                    {
-                        if (board.opponentBase.x > tank0.x)
-                            targetDirection = ChallengeService.direction.RIGHT;
-                        else
-                            targetDirection = ChallengeService.direction.LEFT;
-                    }
-
-                    if (tank0.direction != targetDirection)
-                        // Always move or at least point our guns in the right direction.
-                        A1 = MoveDirection(targetDirection);
-                    else
-                    {
-                        if (FireObstructionsExist(tank0.x, tank0.y, board.opponentBase.x, tank0.y))
-                            // Get rid of the blocks in the way first
-                            A1 = ChallengeService.action.FIRE;
-                        else
-                            // The line is clear, go for it!
-                            A1 = MoveDirection(targetDirection);
-                    }
-                }
+                A1 = RunAndGun(tank0, board.opponentBase.x, board.opponentBase.y);
             }
 
 
@@ -719,6 +705,8 @@ namespace battlecity
                     lock (client)
                         client.setAction(board.playerTank[1].id, A2);
             }
+
+            Console.WriteLine(PrintPlans());
         }
 
     }

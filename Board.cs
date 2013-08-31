@@ -280,13 +280,13 @@ namespace battlecity
             {
                 t.destroyed = true;
                 ChallengeService.unit[] serverUnit = status.players[playerID].units;
-                if ((serverUnit.Length > 0) && (serverUnit[0].id == t.id))
+                if ((serverUnit.Length > 0) && (serverUnit[0] != null) && (serverUnit[0].id == t.id))
                 {
                     t.x = serverUnit[0].x;
                     t.y = serverUnit[0].y;
                     t.direction = serverUnit[0].direction;
                     t.destroyed = false;
-                } else if ((serverUnit.Length > 1) && (serverUnit[1].id == t.id))
+                } else if ((serverUnit.Length > 1) && (serverUnit[1] != null) && (serverUnit[1].id == t.id))
                 {
                     t.x = serverUnit[1].x;
                     t.y = serverUnit[1].y;
@@ -302,14 +302,14 @@ namespace battlecity
             {
                 t.destroyed = true;
                 ChallengeService.unit[] serverUnit = status.players[opponentID].units;
-                if ((serverUnit.Length > 0) && (serverUnit[0].id == t.id))
+                if ((serverUnit.Length > 0) && (serverUnit[0] != null) && (serverUnit[0].id == t.id))
                 {
                     t.x = serverUnit[0].x;
                     t.y = serverUnit[0].y;
                     t.direction = serverUnit[0].direction;
                     t.destroyed = false;
                 }
-                else if ((serverUnit.Length > 1) && (serverUnit[1].id == t.id))
+                else if ((serverUnit.Length > 1) && (serverUnit[1] != null) && (serverUnit[1].id == t.id))
                 {
                     t.x = serverUnit[1].x;
                     t.y = serverUnit[1].y;

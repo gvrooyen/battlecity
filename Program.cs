@@ -126,6 +126,10 @@ namespace battlecity
             // var info = new Microsoft.VisualBasic.Devices.ComputerInfo();
             string botname = "random";
 
+            Console.BufferHeight = 4096;
+            Console.WindowWidth = 132;
+            Console.WindowHeight = 40;
+
             // System.Console.WriteLine(info.OSFullName);
             // System.Console.WriteLine("Memory usage: {0}%", info.AvailablePhysicalMemory*100/info.TotalPhysicalMemory);
 
@@ -231,6 +235,7 @@ namespace battlecity
             }
             catch (Exception e)
             {
+                Console.WriteLine(e);
             }
         }
     }

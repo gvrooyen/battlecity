@@ -239,7 +239,7 @@ namespace battlecity
                                 {
                                     map[t.x - 2 + dx, t.y - 2 + dy] = -1;
                                 }
-                                catch (IndexOutOfRangeException e)
+                                catch (IndexOutOfRangeException)
                                 {
                                     Console.WriteLine("ERROR: Player tank ({0},{1}) out of bounds at ({2},{3}) during path planning",
                                         t.x, t.y, t.x - 2 + dx, t.y - 2 + dy);
@@ -262,7 +262,7 @@ namespace battlecity
                                     else if (clearance < 0)
                                         map[t.x - 2 + dx, t.y - 2 + dy] = -1;
                                 }
-                                catch (IndexOutOfRangeException e)
+                                catch (IndexOutOfRangeException)
                                 {
                                     Console.WriteLine("ERROR: Opponent tank ({0},{1}) out of bounds at ({2},{3}) during path planning, clearance {4}",
                                         t.x, t.y, t.x - 2 + dx, t.y - 2 + dy, clearance);

@@ -5,6 +5,7 @@ using System.Text;
 using System.Diagnostics;
 using System.Threading;
 using System.IO;
+using System.Threading.Tasks;
 
 namespace battlecity
 {
@@ -232,17 +233,26 @@ namespace battlecity
 
                 Console.WriteLine(Settings.SYNC_INITIAL_DELAY);
                 clock.Start(status.millisecondsToNextTick + Settings.SYNC_INITIAL_DELAY);
-                Console.WriteLine("The clock has been started");
-
-            }
-            catch (System.ServiceModel.EndpointNotFoundException)
-            {
-                Console.WriteLine("GAME OVER");
             }
             catch (Exception e)
             {
                 Console.WriteLine(e);
             }
         }
+
+        public static void ExceptionHandler(Task t)
+        {
+            AggregateException e = t.Exception;
+            if (e.InnerException.GetType() == typeof(System.ServiceModel.EndpointNotFoundException))
+            {
+                Console.WriteLine(Environment.NewLine + "GAME OVER!");
+                Program.clock.Abort();
+            }
+            else
+            {
+                Console.WriteLine("CRITICAL: Caught {0}", e.InnerException.GetType());
+            }
+        }
+
     }
 }

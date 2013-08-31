@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Collections;
+using System.Threading.Tasks;
 
 namespace battlecity
 {
@@ -18,11 +19,11 @@ namespace battlecity
         private Thread thread;
 
         // The master schedule keeps track of the events that have been added to this clock
-        private SortedList<long, ThreadStart> masterSchedule;
+        private SortedList<long, Action> masterSchedule;
 
         // The current schedule is updated per cycle, in order to correctly schedule
         // before-end-of cycle (negative time offset) events for the current cycle's period.
-        private SortedList<long, ThreadStart> currentSchedule;
+        private SortedList<long, Action> currentSchedule;
 
         // true if the current schedule needs to be updated (typically because it hasn't been
         // done before, or because this.balance has changed).
@@ -51,8 +52,8 @@ namespace battlecity
             running = false;
             thread = null;
             currentScheduleOutdated = true;
-            masterSchedule = new SortedList<long, ThreadStart>();
-            currentSchedule = new SortedList<long, ThreadStart>();
+            masterSchedule = new SortedList<long, Action>();
+            currentSchedule = new SortedList<long, Action>();
         }
 
         ~Clock()
@@ -77,7 +78,7 @@ namespace battlecity
 
                     if (currentScheduleOutdated)
                     {
-                        foreach (KeyValuePair<long, ThreadStart> s in masterSchedule)
+                        foreach (KeyValuePair<long, Action> s in masterSchedule)
                         {
                             if ((s.Key >= 0) && (s.Key <= balance))
                             {
@@ -97,7 +98,7 @@ namespace battlecity
                     long currentTime = 0;
                     long sleepTime = 0;
 
-                    foreach (KeyValuePair<long, ThreadStart> s in currentSchedule)
+                    foreach (KeyValuePair<long, Action> s in currentSchedule)
                     {
                         if (s.Key > currentTime)
                         {
@@ -106,7 +107,9 @@ namespace battlecity
                             currentTime += sleepTime;
                         }
 
-                        Thread t = new Thread(s.Value);
+                        // Thread t = new Thread(s.Value);
+                        Task t = new Task(s.Value);
+                        t.ContinueWith(battlecity.Program.ExceptionHandler, TaskContinuationOptions.OnlyOnFaulted);
                         t.Start();
                     }
 
@@ -166,6 +169,13 @@ namespace battlecity
             running = false;
         }
 
+        public void Abort()
+        {
+            running = false;
+            alive = false;
+            thread.Abort();
+        }
+
         public void Resume()
         {
             running = true;
@@ -195,7 +205,7 @@ namespace battlecity
             thread.Start();
         }
 
-        public void AddTask(long time, ThreadStart callBack)
+        public void AddTask(long time, Action callBack)
         {
             /* Add a task to the clock's schedule. Tasks can be scheduled with a positive time
              * stamp, indicating the delay (in milliseconds) after the start of the period at

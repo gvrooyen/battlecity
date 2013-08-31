@@ -92,8 +92,6 @@ namespace battlecity
 
         public class RunAndGun : Navigate
         {
-            public ChallengeService.direction currentDirection { get; set; }
-
             private void Initialize()
             {
                 currentDirection = ChallengeService.direction.NONE;

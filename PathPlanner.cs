@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics;
 using Games.Pathfinding;
 using System.Collections;
 using System.Drawing;
@@ -98,7 +99,7 @@ namespace battlecity
 		// Prints information about the current node
 		public override void PrintNodeInfo()
 		{
-			Console.WriteLine("X:\t{0}\tY:\t{1}\tCost:\t{2}\tEst:\t{3}\tTotal:\t{4}",
+			Debug.WriteLine("X:\t{0}\tY:\t{1}\tCost:\t{2}\tEst:\t{3}\tTotal:\t{4}",
 			                  FX, FY, Cost, GoalEstimate, TotalCost);
 		}
 	}
@@ -241,7 +242,7 @@ namespace battlecity
                                 }
                                 catch (IndexOutOfRangeException)
                                 {
-                                    Console.WriteLine("ERROR: Player tank ({0},{1}) out of bounds at ({2},{3}) during path planning",
+                                    Debug.WriteLine("ERROR: Player tank ({0},{1}) out of bounds at ({2},{3}) during path planning",
                                         t.x, t.y, t.x - 2 + dx, t.y - 2 + dy);
                                 }
                             }
@@ -264,7 +265,7 @@ namespace battlecity
                                 }
                                 catch (IndexOutOfRangeException)
                                 {
-                                    Console.WriteLine("ERROR: Opponent tank ({0},{1}) out of bounds at ({2},{3}) during path planning, clearance {4}",
+                                    Debug.WriteLine("ERROR: Opponent tank ({0},{1}) out of bounds at ({2},{3}) during path planning, clearance {4}",
                                         t.x, t.y, t.x - 2 + dx, t.y - 2 + dy, clearance);
                                 }
                             }
@@ -295,7 +296,7 @@ namespace battlecity
 
         public void renderMap(Board board, string filename)
         {
-            Console.WriteLine("Writing image");
+            Debug.WriteLine("Writing image");
             // Create a rendering of the cost map, superimposed onto the board.
             using (Bitmap b = new Bitmap(board.xsize*8, board.ysize*8))
             {

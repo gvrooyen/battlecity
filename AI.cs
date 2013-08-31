@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Diagnostics;
 
 namespace battlecity
 {
@@ -272,7 +273,7 @@ namespace battlecity
             }
             else
             {
-                Console.WriteLine("WARNING: Can only check for obstructions in a straight horizontal/vertical line.");
+                Debug.WriteLine("WARNING: Can only check for obstructions in a straight horizontal/vertical line.");
             }
             return false;
         }
@@ -306,7 +307,7 @@ namespace battlecity
             }
             else
             {
-                Console.WriteLine("WARNING: Can only check for obstructions in a straight horizontal/vertical line.");
+                Debug.WriteLine("WARNING: Can only check for obstructions in a straight horizontal/vertical line.");
             }
             return false;
         }
@@ -429,7 +430,7 @@ namespace battlecity
                 }
                 else
                 {
-                    Console.WriteLine("ERROR: Subplan action {0} is not a concrete action in RunAndGun(); removing it.",
+                    Debug.WriteLine("ERROR: Subplan action {0} is not a concrete action in RunAndGun(); removing it.",
                         plan.subplans.First.GetType());
                 }
             }
@@ -617,7 +618,7 @@ namespace battlecity
 
             }
 
-            Console.WriteLine("ERROR: RunAndGun() found no valid action to execute.");
+            Debug.WriteLine("ERROR: RunAndGun() found no valid action to execute.");
             return ChallengeService.action.NONE;
 		}
 
@@ -644,7 +645,7 @@ namespace battlecity
             Array actions = Enum.GetValues(typeof(ChallengeService.action));
             ChallengeService.action A1 = (ChallengeService.action)actions.GetValue(random.Next(actions.Length));
             ChallengeService.action A2 = (ChallengeService.action)actions.GetValue(random.Next(actions.Length));
-            System.Console.WriteLine("Tank 1 {0}; Tank 2 {1}", A1, A2);
+            Debug.WriteLine("Tank 1 {0}; Tank 2 {1}", A1, A2);
             lock (client)
             {
                 // client.setActions(A1, A2);
@@ -695,7 +696,7 @@ namespace battlecity
         {
             lock (client)
             {
-                System.Console.WriteLine("Tank 1 {0}; Tank 2 {1}", A1, A2);
+                Debug.WriteLine("Tank 1 {0}; Tank 2 {1}", A1, A2);
                 if (!board.playerTank[0].destroyed)
                     lock (client)
                         client.setAction(board.playerTank[0].id, A1);
@@ -704,7 +705,7 @@ namespace battlecity
                         client.setAction(board.playerTank[1].id, A2);
             }
 
-            Console.WriteLine(PrintPlans());
+            Debug.WriteLine(PrintPlans());
         }
 
     }

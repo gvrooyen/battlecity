@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading;
 using System.Collections;
 using System.Threading.Tasks;
+using System.Diagnostics;
 
 namespace battlecity
 {
@@ -73,7 +74,7 @@ namespace battlecity
                      * with a time offset relative to the end of the cycle) into the current schedule
                      * for this cycle.
                      */
-                    Console.WriteLine("--- TICK -----------------------------", balance);
+                    Debug.WriteLine("--- TICK -----------------------------", balance);
                     delta = 0;
 
                     if (currentScheduleOutdated)
@@ -118,7 +119,7 @@ namespace battlecity
 
                         Thread.Sleep((int)sleepTime);
                     else
-                        Console.WriteLine("Schedule exceeded current clock cycle's period by {0} ms", -sleepTime);
+                        Debug.WriteLine("Schedule exceeded current clock cycle's period by {0} ms", -sleepTime);
 
                     if (delta == 0)
                     {
@@ -153,7 +154,7 @@ namespace battlecity
 
         public void Start(long initialPeriod = 0)
         {
-            Console.WriteLine("Starting with a first period of {0} ms", initialPeriod);
+            Debug.WriteLine("Starting with a first period of {0} ms", initialPeriod);
             if (initialPeriod > 0)
                 balance = initialPeriod;
             else

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Diagnostics;
 
 namespace battlecity
 {
@@ -246,17 +247,17 @@ namespace battlecity
                 opponentBase.x = status.players[opponentID].@base.x;
                 opponentBase.y = status.players[opponentID].@base.y;
 
-                Console.WriteLine("Welcome, {0} (#{1})", playerName, playerID);
+                Debug.WriteLine("Welcome, {0} (#{1})", playerName, playerID);
 
                 if ((status.players[playerID].bullets == null) && (status.players[opponentID].bullets == null))
-                    Console.WriteLine("No bullets in play yet.");
+                    Debug.WriteLine("No bullets in play yet.");
                 else
-                    Console.WriteLine("WARNING: bullets already in play!");
+                    Debug.WriteLine("WARNING: bullets already in play!");
                 int i = 0;
                 foreach (ChallengeService.unit u in status.players[playerID].units)
                 {
                     playerTank[i++] = new Tank(u.x, u.y, u.direction, u.id);
-                    Console.WriteLine("Player tank ID {0} starts at ({1},{2}), facing {3}.",
+                    Debug.WriteLine("Player tank ID {0} starts at ({1},{2}), facing {3}.",
                         u.id, u.x, u.y, u.direction);
                 }
 
@@ -264,7 +265,7 @@ namespace battlecity
                 foreach (ChallengeService.unit u in status.players[opponentID].units)
                 {
                     opponentTank[i++] = new Tank(u.x, u.y, u.direction, u.id);
-                    Console.WriteLine("Opponent tank ID {0} starts at ({1},{2}), facing {3}.",
+                    Debug.WriteLine("Opponent tank ID {0} starts at ({1},{2}), facing {3}.",
                         u.id, u.x, u.y, u.direction);
                 }
             }
@@ -294,7 +295,7 @@ namespace battlecity
                     t.destroyed = false;
                 } else
                 {
-                    Console.WriteLine("WARNING: Unknown player tank ID reported in server unit list");
+                    Debug.WriteLine("WARNING: Unknown player tank ID reported in server unit list");
                 }
             }
 
@@ -318,7 +319,7 @@ namespace battlecity
                 }
                 else
                 {
-                    Console.WriteLine("WARNING: Unknown opponent tank ID reported in server unit list");
+                    Debug.WriteLine("WARNING: Unknown opponent tank ID reported in server unit list");
                 }
             }
 
@@ -339,7 +340,7 @@ namespace battlecity
                         myBullet.x = b.x;
                         myBullet.y = b.y;
                         if (myBullet.direction != b.direction)
-                            Console.WriteLine("ERROR: Player bullet #{0} changed direction from {1} to {2}!",
+                            Debug.WriteLine("ERROR: Player bullet #{0} changed direction from {1} to {2}!",
                                 myBullet.direction, b.direction);
                         myBullet.updated = true;
                     }
@@ -370,7 +371,7 @@ namespace battlecity
                             default:
                                 ownerX = b.x;
                                 ownerY = b.y;
-                                Console.WriteLine("ERROR: Player bullet #{0} created without firing direction.", b.direction);
+                                Debug.WriteLine("ERROR: Player bullet #{0} created without firing direction.", b.direction);
                                 break;
                         }
                         if (!playerTank[0].destroyed && (playerTank[0].x == ownerX) && (playerTank[0].y == ownerY))
@@ -385,13 +386,13 @@ namespace battlecity
                         }
                         else if ((Math.Abs(playerTank[0].x - ownerX) <= 2) && (Math.Abs(playerTank[0].y - ownerY) <= 2))
                         {
-                            Console.WriteLine("WARNING: Player bullet #{0} created too far from closest active tank; taking the best guess.", b.id);
+                            Debug.WriteLine("WARNING: Player bullet #{0} created too far from closest active tank; taking the best guess.", b.id);
                             newBullet.owner = playerTank[0];
                             playerTank[0].bullet = newBullet;
                         }
                         else if ((Math.Abs(playerTank[1].x - ownerX) <= 2) && (Math.Abs(playerTank[1].y - ownerY) <= 2))
                         {
-                            Console.WriteLine("WARNING: Player bullet #{0} created too far from closest active tank; taking the best guess.", b.id);
+                            Debug.WriteLine("WARNING: Player bullet #{0} created too far from closest active tank; taking the best guess.", b.id);
                             newBullet.owner = playerTank[1];
                             playerTank[1].bullet = newBullet;
                         }
@@ -430,7 +431,7 @@ namespace battlecity
                         myBullet.x = b.x;
                         myBullet.y = b.y;
                         if (myBullet.direction != b.direction)
-                            Console.WriteLine("ERROR: Opponent bullet #{0} changed direction from {1} to {2}!",
+                            Debug.WriteLine("ERROR: Opponent bullet #{0} changed direction from {1} to {2}!",
                                 myBullet.direction, b.direction);
                         myBullet.updated = true;
                     }
@@ -461,7 +462,7 @@ namespace battlecity
                             default:
                                 ownerX = b.x;
                                 ownerY = b.y;
-                                Console.WriteLine("ERROR: Opponent bullet #{0} created without firing direction.", b.direction);
+                                Debug.WriteLine("ERROR: Opponent bullet #{0} created without firing direction.", b.direction);
                                 break;
                         }
                         if (!opponentTank[0].destroyed && (opponentTank[0].x == ownerX) && (opponentTank[0].y == ownerY))
@@ -476,13 +477,13 @@ namespace battlecity
                         }
                         else if ((Math.Abs(opponentTank[0].x - ownerX) <= 2) && (Math.Abs(opponentTank[0].y - ownerY) <= 2))
                         {
-                            Console.WriteLine("WARNING: Opponent bullet #{0} created too far from closest active tank; taking the best guess.", b.id);
+                            Debug.WriteLine("WARNING: Opponent bullet #{0} created too far from closest active tank; taking the best guess.", b.id);
                             newBullet.owner = opponentTank[0];
                             opponentTank[0].bullet = newBullet;
                         }
                         else if ((Math.Abs(opponentTank[1].x - ownerX) <= 2) && (Math.Abs(opponentTank[1].y - ownerY) <= 2))
                         {
-                            Console.WriteLine("WARNING: Opponent bullet #{0} created too far from closest active tank; taking the best guess.", b.id);
+                            Debug.WriteLine("WARNING: Opponent bullet #{0} created too far from closest active tank; taking the best guess.", b.id);
                             newBullet.owner = opponentTank[1];
                             opponentTank[1].bullet = newBullet;
                         }
@@ -505,24 +506,24 @@ namespace battlecity
             
             if (status.events == null)
             {
-                // Console.WriteLine("No events.");
+                // Debug.WriteLine("No events.");
                 return;
             }
             else
             {
-                // Console.WriteLine(state.events.ToString());
+                // Debug.WriteLine(state.events.ToString());
             }
             if (status.events.blockEvents != null)
                 foreach (ChallengeService.blockEvent e in status.events.blockEvents)
                 {
                     board[e.point.x][e.point.y] = e.newState;
-                    Console.WriteLine("Block at ({0},{1}) changed to {2}.", e.point.x, e.point.y, e.newState);
+                    Debug.WriteLine("Block at ({0},{1}) changed to {2}.", e.point.x, e.point.y, e.newState);
                 }
             if (status.events.unitEvents != null)
                 foreach (ChallengeService.unitEvent e in status.events.unitEvents)
                 {
                     // These don't seem to do anything, so just ignore it.
-                    Console.WriteLine("WARNING: UNIT EVENT: {0}", e.ToString());
+                    Debug.WriteLine("WARNING: UNIT EVENT: {0}", e.ToString());
                 }
         }
 

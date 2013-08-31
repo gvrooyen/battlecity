@@ -4,6 +4,7 @@
 using System;
 using System.Collections;
 using Tanis.Collections;
+using System.Diagnostics;
 
 namespace Games.Pathfinding {
 
@@ -236,12 +237,12 @@ namespace Games.Pathfinding {
 		/// <param name="ANodeList">List to print</param>
 		private void PrintNodeList(object ANodeList)
 		{
-			Console.WriteLine("Node list:");
+			Debug.WriteLine("Node list:");
 			foreach(AStarNode n in (ANodeList as IEnumerable)) 
 			{
 				n.PrintNodeInfo();
 			}
-			Console.WriteLine("=====");
+			Debug.WriteLine("=====");
 		}
 
 		#endregion

@@ -492,46 +492,82 @@ namespace battlecity
 			
 			int obstX = -1;
 			int obstY = -1;
-			
-			for (int x = tank.x + dx*3, y = tank.y + dy*3; 
-			     (x <= destX + dx*2) && (destY <= destY + dy*2);
-			     x += dx, y += dy)
-			{
-				/* Depending on whether we're scanning horizontally or vertically, we look for
-				 * obstacles in a vertical or horizontal line. We start looking for obstacles at
-				 * the center point first, because these are easiest to destroy (and will take out
-				 * any neighbouring blocks).
-				 */
-				
-				if (dx == 0)
-				{
-					// We're running vertically, so look for obstacles in a horizontal line.
-					foreach (int i in scanOrder)
-					{
-						if ((x+i >= 0) && (x+i < board.xsize) && (y >= 0) && (y < board.ysize) && (board.board[x+i][y] == ChallengeService.state.FULL))
-						{
-							obstX = x + i;
-							obstY = y;
-							break;
-						}
-					}
-				}
-				else
-				{
-					// We're running horizontally, so look for obstacles in a vertical line.
-					foreach (int i in scanOrder)
-					{
-						if ((y+i >= 0) && (y+i < board.ysize) && (x >= 0) && (x < board.xsize) && (board.board[x][y+i] == ChallengeService.state.FULL))
-						{
-							obstX = x;
-							obstY = y + i;
-							break;
-						}
-					}
-				}
-				
-			}
-						
+
+            /* Depending on whether we're scanning horizontally or vertically, we look for
+             * obstacles in a vertical or horizontal line. We start looking for obstacles at
+             * the center point first, because these are easiest to destroy (and will take out
+             * any neighbouring blocks).
+             */
+
+            if ((dx == 0) && (dy == -1))
+            {
+                int x = tank.x;
+                // We're running up, so look for obstacles in a horizontal line upwards.
+                for (int y = tank.y - 3; y >= destY - 2; y--)
+                {
+                    foreach (int i in scanOrder)
+                    {
+                        if ((x + i >= 0) && (x + i < board.xsize) && (y >= 0) && (y < board.ysize) && (board.board[x + i][y] == ChallengeService.state.FULL))
+                        {
+                            obstX = x + i;
+                            obstY = y;
+                            break;
+                        }
+                    }
+                }
+            }
+            else if ((dx == 0) && (dy == 1))
+            {
+                // We're running down, so look for obstacles in a horizontal line downwards.
+                int x = tank.x;
+                for (int y = tank.y + 3; y <= destY + 2; y++)
+                {
+                    foreach (int i in scanOrder)
+                    {
+                        if ((x + i >= 0) && (x + i < board.xsize) && (y >= 0) && (y < board.ysize) && (board.board[x + i][y] == ChallengeService.state.FULL))
+                        {
+                            obstX = x + i;
+                            obstY = y;
+                            break;
+                        }
+                    }
+                }
+            }
+            else if ((dy == 0) && (dx == -1))
+            {
+                // We're running left, so look for obstacles in a vertical line leftwards.
+                int y = tank.y;
+                for (int x = tank.x - 3; x >= destX - 2; x--)
+                {
+                    foreach (int i in scanOrder)
+                    {
+                        if ((y + i >= 0) && (y + i < board.ysize) && (x >= 0) && (x < board.xsize) && (board.board[x][y + i] == ChallengeService.state.FULL))
+                        {
+                            obstX = x;
+                            obstY = y + i;
+                            break;
+                        }
+                    }
+                }
+            }
+            else if ((dy == 0) && (dx == 1))
+            {
+                // We're running right, so look for obstacles in a vertical line rightwards.
+                int y = tank.y;
+                for (int x = tank.x - 3; x >= destX - 2; x--)
+                {
+                    foreach (int i in scanOrder)
+                    {
+                        if ((y + i >= 0) && (y + i < board.ysize) && (x >= 0) && (x < board.xsize) && (board.board[x][y + i] == ChallengeService.state.FULL))
+                        {
+                            obstX = x;
+                            obstY = y + i;
+                            break;
+                        }
+                    }
+                }
+            }
+									
 			if ((obstX == -1) || (obstY == -1))
 				// The path's clear!
 				if (dx == -1)
@@ -636,6 +672,11 @@ namespace battlecity
         public AI_Random() : base() { }
         public AI_Random(Board board, ChallengeService.ChallengeClient client) : base(board, client) { }
 
+        public override void newTick()
+        {
+            // do nothing
+        }
+
         public override void postEarlyMove()
         {
             // do nothing
@@ -687,8 +728,9 @@ namespace battlecity
             if (!tank0.destroyed && !tank1.destroyed)
             {
                 // Tank 0 goes for the base
-                // A1 = RunAndGun(tank0, board.opponentBase.x, board.opponentBase.y);
-                A1 = ChallengeService.action.NONE;
+                Debug.WriteLine("Calculating next move...");
+                A1 = RunAndGun(tank0, board.opponentBase.x, board.opponentBase.y);
+                Debug.WriteLine("Settled on action {0}", A1);
             }
         }
 

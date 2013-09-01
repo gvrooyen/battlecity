@@ -254,7 +254,7 @@ namespace battlecity
 
     namespace Role
     {
-        abstract class Role { }
+        public abstract class Role { }
 
         class DefendBase : Role { /* Defend the player base */ }
         class AttackBase : Role { /* Attack the opponent's base */ }
@@ -278,12 +278,9 @@ namespace battlecity
     {
         protected Board board;
         protected ChallengeService.ChallengeClient client;
-        protected LinkedList<Plan.Plan> plans;
-        protected Role.Role role;
 
         private void Initialize()
         {
-            plans = new LinkedList<Plan.Plan>();
         }
 
         public AI()
@@ -427,17 +424,6 @@ namespace battlecity
                 return MoveDirection(direction);
         }
 
-        public string PrintPlans()
-        {
-            StringBuilder result = new StringBuilder("");
-            foreach (var plan in plans)
-            {
-                result.Append(plan.ToString());
-                result.Append(Environment.NewLine);
-            }
-            return result.ToString();
-        }
-
 		protected ChallengeService.action RunAndGun(Tank tank, int destX, int destY, int recursionDepth = 0, bool checkFinalGoal = true)
 		{
 			/* Move towards the destination coordinates (L-shaped path, longest edge first).
@@ -479,46 +465,46 @@ namespace battlecity
             if (recursionDepth > 0)
             {
                 // Subplans are in play, so we don't need to do much here.
-                plan = (Plan.RunAndGun)plans.First.Value;
+                plan = (Plan.RunAndGun)tank.plans.First.Value;
                 plan.description = "Moving into subplans";
             }
-            else if ((plans.First == null) || (plans.First.Value.GetType() == typeof(Plan.Separator)))
+            else if ((tank.plans.First == null) || (tank.plans.First.Value.GetType() == typeof(Plan.Separator)))
             {
                 // Option 1: We have no plans yet. This is the first one. Remember it.
                 // Option 2: We should start executing a new RunAndGun plan, before executing the next plan.
                 plan = new Plan.RunAndGun(destX, destY);
                 plan.description = "New plan";
-                plans.AddFirst(plan);
+                tank.plans.AddFirst(plan);
             }
-            else if (plans.First.Value.GetType() == typeof(Plan.RunAndGun))
+            else if (tank.plans.First.Value.GetType() == typeof(Plan.RunAndGun))
             {
                 // We're currently executing a run-and-gun plan, but the destination may have changed.
                 // Here we inspect the LAST plan in the chain, because that represents the ultimate goal.
                 // TODO: Add support for separators; the last plain in the chain is the one just before the first separator.
-                plan = (Plan.RunAndGun)plans.Last.Value;
+                plan = (Plan.RunAndGun)tank.plans.Last.Value;
                 if (checkFinalGoal && ((plan.destX != destX) || (plan.destY != destY)))
                 {
                     // A new destination has been specified, so ditch the previous plans and create a new one.
-                    plans.Clear();
+                    tank.plans.Clear();
                     plan = new Plan.RunAndGun(destX, destY);
                     plan.description = "New destination specified";
-                    plans.AddFirst(plan);
+                    tank.plans.AddFirst(plan);
                 }
                 else
                 {
                     // We've now established that we're still chasing the same goal. Now we need to execute on
                     // the FIRST plan in the list.
                     plan.description = "Continuing the current plan";
-                    plan = (Plan.RunAndGun)plans.First.Value;
+                    plan = (Plan.RunAndGun)tank.plans.First.Value;
                     destX = plan.destX;
                     destY = plan.destY;
                 }
             } else {
                 // Replace the old plans with a new one.
-                plans.Clear();
+                tank.plans.Clear();
                 plan = new Plan.RunAndGun(destX, destY);
                 plan.description = "Replacing obsolete plan";
-                plans.AddFirst(plan);
+                tank.plans.AddFirst(plan);
             }
 
             while (plan.subplans.First != null)
@@ -536,7 +522,7 @@ namespace battlecity
                 {
                     // This is typically to get us to move back to a specified location.
                     // Move it to the front of the main list of plans, and execute it.
-                    plans.AddFirst(subplan);
+                    tank.plans.AddFirst(subplan);
                     plan = (Plan.RunAndGun)subplan;
                     destX = plan.destX;
                     destY = plan.destY;
@@ -557,12 +543,12 @@ namespace battlecity
 			if ((Lx == 0) && (Ly == 0))
             {
                 // We've reached our goal. Move on to the next part of the plan, or wait for new instructions.
-                plans.RemoveFirst();
-                if (plans.First == null)
+                tank.plans.RemoveFirst();
+                if (tank.plans.First == null)
 				    return ChallengeService.action.NONE;
-                else if (plans.First.Value.GetType() == typeof(Plan.RunAndGun))
+                else if (tank.plans.First.Value.GetType() == typeof(Plan.RunAndGun))
                 {
-                    Plan.RunAndGun nextPlan = (Plan.RunAndGun)plans.First.Value;
+                    Plan.RunAndGun nextPlan = (Plan.RunAndGun)tank.plans.First.Value;
 
                     // We effectively reset the recursion depth in the next call,
                     // because we've popped out of a subplan.
@@ -941,7 +927,7 @@ namespace battlecity
                 subplan = new Plan.RunAndGun();
                 subplan.description = "Recurse to get in line with the obstacle";
 
-                plans.AddFirst(subplan);   // We're going to recurse
+                tank.plans.AddFirst(subplan);   // We're going to recurse
 
                 return RunAndGun(tank, newX, newY, recursionDepth + 1, checkFinalGoal: false);
             }
@@ -1042,14 +1028,17 @@ namespace battlecity
                 {
                     lock (client)
                         client.setAction(board.playerTank[0].id, A1);
+                    Debug.WriteLine("Tank 1's plans:");
+                    Debug.WriteLine(board.playerTank[0].PrintPlans());
                 }
                 if (!board.playerTank[1].destroyed)
+                {
                     lock (client)
                         client.setAction(board.playerTank[1].id, A2);
+                    Debug.WriteLine("Tank 2's plans:");
+                    Debug.WriteLine(board.playerTank[1].PrintPlans());
+                }
             }
-
-            // DEBUG: Why aren't plans associated with a specific tank?
-            Debug.WriteLine(PrintPlans());
         }
 
     }

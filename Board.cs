@@ -21,6 +21,12 @@ namespace battlecity
         // The bullet fired by this tank (null if no bullet is in play)
         public Bullet bullet { get; set; }
 
+        // The tank's current role in the battle
+        public Role.Role role { get; set; }
+
+        // The tank's plans for the future
+        public LinkedList<Plan.Plan> plans;
+
         public Tank()
         {
             x = -1;
@@ -30,6 +36,7 @@ namespace battlecity
             direction = ChallengeService.direction.NONE;
             updated = false;
             bullet = null;
+            plans = new LinkedList<Plan.Plan>();
         }
 
         public Tank(int x, int y, ChallengeService.direction direction, int id)
@@ -38,10 +45,24 @@ namespace battlecity
             this.y = y;
             this.id = id;
             this.direction = direction;
-            this.destroyed = false;
-            this.updated = true;
-            this.bullet = null;
+            destroyed = false;
+            updated = true;
+            bullet = null;
+            role = null;
+            plans = new LinkedList<Plan.Plan>();
         }
+
+        public string PrintPlans()
+        {
+            StringBuilder result = new StringBuilder("");
+            foreach (var plan in plans)
+            {
+                result.Append(plan.ToString());
+                result.Append(Environment.NewLine);
+            }
+            return result.ToString();
+        }
+
     }
 
     public class Base

@@ -199,6 +199,9 @@ namespace battlecity
                 else
                     Debug.WriteLine("WARNING: bullets already in play!");
 
+                Debug.WriteLine("Player base is at ({0},{1}).", board.playerBase.x, board.playerBase.y);
+                Debug.WriteLine("Opponent base is at ({0},{1}).", board.opponentBase.x, board.opponentBase.y);
+
                 int i = 0;
                 foreach (ChallengeService.unit u in status.players[board.playerID].units)
                 {

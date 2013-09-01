@@ -164,12 +164,26 @@ namespace battlecity
 
         public override string ToString()
         {
+            return PrintArea();
+        }
+
+        public string PrintArea(int x1 = 0, int y1 = 0, int x2 = int.MaxValue, int y2 = int.MaxValue)
+        {
             List<StringBuilder> lines = new List<StringBuilder>();
 
-            for (int y = 0; y < this.ysize; y++)
+            if (x1 < 0)
+                x1 = 0;
+            if (x2 > this.xsize)
+                x2 = this.xsize;
+            if (y1 < 0)
+                y1 = 0;
+            if (y2 > this.ysize)
+                y2 = this.ysize;
+
+            for (int y = y1; y < y2; y++)
             {
                 StringBuilder S = new StringBuilder("");
-                for (int x = 0; x < this.xsize; x++)
+                for (int x = x1; x < x2; x++)
                 {
                     if (((x == playerBase.x) && (y == playerBase.y)) || ((x == opponentBase.x) && (y == opponentBase.y)))
                         S.Append("$");
@@ -214,11 +228,17 @@ namespace battlecity
 
             foreach (KeyValuePair<int, Bullet> b in playerBullet)
             {
-                lines[b.Value.y][b.Value.x] = '*';
+                if ((b.Value.x >= x1) && (b.Value.x < x2) && (b.Value.y >= y1) && (b.Value.y < y2))
+                {
+                    lines[b.Value.y - y1][b.Value.x - x1] = '*';
+                }
             }
             foreach (KeyValuePair<int, Bullet> b in opponentBullet)
             {
-                lines[b.Value.y][b.Value.x] = '*';
+                if ((b.Value.x >= x1) && (b.Value.x < x2) && (b.Value.y >= y1) && (b.Value.y < y2))
+                {
+                    lines[b.Value.y - y1][b.Value.x - x1] = '*';
+                }
             }
 
             string result = "";

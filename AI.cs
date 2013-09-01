@@ -422,6 +422,7 @@ namespace battlecity
                 // Option 1: We have no plans yet. This is the first one. Remember it.
                 // Option 2: We should start executing a new RunAndGun plan, before executing the next plan.
                 plan = new Plan.RunAndGun(destX, destY);
+                plan.description = "New plan";
                 plans.AddFirst(plan);
             }
             else if (plans.First.Value.GetType() == typeof(Plan.RunAndGun))
@@ -433,12 +434,14 @@ namespace battlecity
                     // A new destination has been specified, so ditch the previous plan and create a new one.
                     plans.RemoveFirst();
                     plan = new Plan.RunAndGun(destX, destY);
+                    plan.description = "New destination specified";
                     plans.AddFirst(plan);
                 }
             } else {
                 // Replace the old plan with a new one.
                 plans.RemoveFirst();
                 plan = new Plan.RunAndGun(destX, destY);
+                plan.description = "Replacing obsolete plan";
                 plans.AddFirst(plan);
             }
 
@@ -540,6 +543,8 @@ namespace battlecity
                             break;
                         }
                     }
+                    if ((obstX != -1) && (obstY != -1))
+                        break;
                 }
             }
             else if ((dx == 0) && (dy == 1))
@@ -557,6 +562,8 @@ namespace battlecity
                             break;
                         }
                     }
+                    if ((obstX != -1) && (obstY != -1))
+                        break;
                 }
             }
             else if ((dy == 0) && (dx == -1))
@@ -574,6 +581,8 @@ namespace battlecity
                             break;
                         }
                     }
+                    if ((obstX != -1) && (obstY != -1))
+                        break;
                 }
             }
             else if ((dy == 0) && (dx == 1))
@@ -591,6 +600,8 @@ namespace battlecity
                             break;
                         }
                     }
+                    if ((obstX != -1) && (obstY != -1))
+                        break;
                 }
             }
 									
@@ -656,18 +667,28 @@ namespace battlecity
                  * they are popped in the order described above.
                  */
 
+                Plan.Plan subplan;
+
                 // 4. Move back to the current position
-                plan.subplans.AddFirst(new Plan.RunAndGun(tank.x, tank.y));
+                subplan = new Plan.RunAndGun(tank.x, tank.y);
+                subplan.description = "Move back in position";
+                plan.subplans.AddFirst(subplan);
 
                 // 3. Fire to destroy the obstacle
-                plan.subplans.AddFirst(new Plan.Fire());
+                subplan = new Plan.Fire();
+                subplan.description = "Fire at obstacle";
+                plan.subplans.AddFirst(subplan);
 
                 // 2. Move in the direction of the obstacle to point the turret
-                plan.subplans.AddFirst(new Plan.Move(plan.currentDirection));
+                subplan = new Plan.Move(plan.currentDirection);
+                subplan.description = "Point turret";
+                plan.subplans.AddFirst(subplan);
 
                 // 1. Move (recursive RunAndGun) laterally to get in line with the obstacle.
+                subplan = new Plan.RunAndGun();
+                subplan.description = "Recurse to get in line with the obstacle";
 
-                plans.AddFirst(new Plan.RunAndGun());   // We're going to recurse
+                plans.AddFirst(subplan);   // We're going to recurse
                 if (dx != 0)
                 {
                     // We're moving horizontally, so get in line with the obstacle by moving vertically
@@ -755,6 +776,7 @@ namespace battlecity
             {
                 // Tank 0 goes for the base
                 Debug.WriteLine("Calculating next move...");
+                Debug.WriteLine(board.PrintArea(tank0.x - 8, tank0.y - 8, tank0.x + 9, tank0.y + 9));
                 A1 = RunAndGun(tank0, board.opponentBase.x, board.opponentBase.y);
                 Debug.WriteLine("Settled on action {0}", A1);
             }
@@ -771,13 +793,16 @@ namespace battlecity
             {
                 Debug.WriteLine("Tank 1 {0}; Tank 2 {1}", A1, A2);
                 if (!board.playerTank[0].destroyed)
+                {
                     lock (client)
                         client.setAction(board.playerTank[0].id, A1);
+                }
                 if (!board.playerTank[1].destroyed)
                     lock (client)
                         client.setAction(board.playerTank[1].id, A2);
             }
 
+            // DEBUG: Why aren't plans associated with a specific tank?
             Debug.WriteLine(PrintPlans());
         }
 

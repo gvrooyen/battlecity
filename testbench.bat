@@ -3,7 +3,7 @@ copy ..\monitor\bin\Debug\monitor.exe .
 set pwd=%~dp0
 echo Cleaning old battles...
 cd ../../harness
-rmdir battle*-*
+rmdir battle*-* /s /q
 echo Launching battlecity harness...
 start launch.bat
 choice /C X /T 3 /D X > nul

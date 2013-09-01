@@ -192,6 +192,7 @@ namespace battlecity
                 board.opponentBase.y = status.players[board.opponentID].@base.y;
 
                 Debug.WriteLine("Welcome, {0} (#{1})", board.playerName, board.playerID);
+                Console.Title = board.playerName;
 
                 if ((status.players[board.playerID].bullets == null) && (status.players[board.opponentID].bullets == null))
                     Debug.WriteLine("No bullets in play yet.");
@@ -235,7 +236,6 @@ namespace battlecity
                         break;
                 }
 
-                Debug.WriteLine(Settings.SYNC_INITIAL_DELAY);
                 clock.Start(status.millisecondsToNextTick + Settings.SYNC_INITIAL_DELAY);
                 Debug.Flush();
             }
@@ -250,12 +250,20 @@ namespace battlecity
             AggregateException e = t.Exception;
             if (e.InnerException.GetType() == typeof(System.ServiceModel.EndpointNotFoundException))
             {
-                Debug.WriteLine(Environment.NewLine + "GAME OVER!");
+                Debug.WriteLine(Environment.NewLine + "--=[ GAME OVER! ]=--");
                 Program.clock.Abort();
             }
             else
             {
-                Debug.WriteLine("CRITICAL: Caught {0}", e.InnerException.GetType());
+                StackTrace s = new StackTrace(e.InnerException, true);
+                StackFrame[] frames = s.GetFrames();
+                foreach (StackFrame frame in frames)
+                    if (frame.GetFileLineNumber() != 0)
+                    {
+                        Debug.WriteLine("CRITICAL: Caught {0} at {1}:{2}", e.InnerException.GetType(),
+                            System.IO.Path.GetFileName(frame.GetFileName()), frame.GetFileLineNumber());
+                        break;
+                    }
             }
         }
 

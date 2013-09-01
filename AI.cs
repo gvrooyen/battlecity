@@ -38,9 +38,21 @@ namespace battlecity
                 subplans = new LinkedList<Plan>();
             }
 
+            public virtual string PrintParameters()
+            {
+                return null;
+            }
+
             public override string ToString()
             {
                 StringBuilder result = new StringBuilder(this.GetType().ToString());
+
+                string parameters = PrintParameters();
+                if (parameters != null)
+                {
+                    result.Append(" - ").Append(parameters);
+                }
+
                 if (description != null)
                 {
                     result.Append(": ").Append(description);
@@ -88,6 +100,18 @@ namespace battlecity
             {
                 this.destX = destX;
                 this.destY = destY;
+            }
+
+            public override string PrintParameters()
+            {
+                StringBuilder result = new StringBuilder(base.PrintParameters());
+                if (result.Length > 0)
+                    result.Append(", ");
+                if (currentDirection != ChallengeService.direction.NONE)
+                    result.Append(String.Format("heading {0} towards ({1},{2})", currentDirection, destX, destY));
+                else
+                    result.Append(String.Format("heading towards ({0},{1})", destX, destY));
+                return result.ToString();
             }
         }
 
@@ -485,7 +509,9 @@ namespace battlecity
                     dy = Math.Sign(Ly);
             }
 
-            // Save the direction we're moving in, in the plan.
+            // Save the current target and the direction we're moving in, in the plan.
+            plan.destX = destX;
+            plan.destY = destY;
             plan.currentDirection = xyToDirection(dx, dy);
 			
 			// Do a search along the 5-blocks-wide path for obstacles

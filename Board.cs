@@ -292,13 +292,10 @@ namespace battlecity
 
             // Update tank positions
 
-            // BUG: These assume that tanks are never destroyed! This is the point where the
-            //      number of tanks in the status list should be checked, and if one has disappeared,
-            //      its associated board object should be marked as destroyed. It's critical to
-            //      track tanks by ID, rather than by their order in the list.
 
             foreach (Tank t in playerTank)
             {
+                bool wasDestroyed = t.destroyed;
                 t.destroyed = true;
                 ChallengeService.unit[] serverUnit = status.players[playerID].units;
                 if ((serverUnit.Length > 0) && (serverUnit[0] != null) && (serverUnit[0].id == t.id))
@@ -315,12 +312,14 @@ namespace battlecity
                     t.destroyed = false;
                 } else
                 {
-                    Debug.WriteLine("WARNING: Unknown player tank ID reported in server unit list");
+                    if (!wasDestroyed)
+                        Debug.WriteLine("Player tank (id={0}) destroyed!", t.id);
                 }
             }
 
             foreach (Tank t in opponentTank)
             {
+                bool wasDestroyed = t.destroyed;
                 t.destroyed = true;
                 ChallengeService.unit[] serverUnit = status.players[opponentID].units;
                 if ((serverUnit.Length > 0) && (serverUnit[0] != null) && (serverUnit[0].id == t.id))
@@ -339,7 +338,8 @@ namespace battlecity
                 }
                 else
                 {
-                    Debug.WriteLine("WARNING: Unknown opponent tank ID reported in server unit list");
+                    if (!wasDestroyed)
+                        Debug.WriteLine("Opponent tank (id={0}) destroyed!", t.id);
                 }
             }
 
@@ -517,7 +517,8 @@ namespace battlecity
                 {
                     // This bullet has not been updated this round, so it must have been destroyed.
                     // Remove the tank's reference to it.
-                    bullet.Value.owner.bullet = null;
+                    if (bullet.Value.owner != null)
+                        bullet.Value.owner.bullet = null;
                     // We can't remove it from the dictionary inside the loop, so take note of the destroyed bullets.
                     destroyedBullets.Add(bullet.Key);
                 }
@@ -543,7 +544,7 @@ namespace battlecity
                 foreach (ChallengeService.unitEvent e in status.events.unitEvents)
                 {
                     // These don't seem to do anything, so just ignore it.
-                    Debug.WriteLine("WARNING: UNIT EVENT: {0}", e.ToString());
+                    Debug.WriteLine("WARNING: UNIT EVENT: {0}", e.unit);
                 }
         }
 

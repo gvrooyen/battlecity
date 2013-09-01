@@ -30,6 +30,16 @@ namespace battlecity
                 {ChallengeService.direction.NONE, ChallengeService.action.NONE}
             };
 
+            public static Dictionary<ChallengeService.action, ChallengeService.direction> actionDirection
+                = new Dictionary<ChallengeService.action, ChallengeService.direction>
+            {
+                {ChallengeService.action.LEFT, ChallengeService.direction.LEFT},
+                {ChallengeService.action.RIGHT, ChallengeService.direction.RIGHT},
+                {ChallengeService.action.UP, ChallengeService.direction.UP},
+                {ChallengeService.action.DOWN, ChallengeService.direction.DOWN},
+                {ChallengeService.action.NONE, ChallengeService.direction.NONE}
+            };
+
             public LinkedList<Plan> subplans { get; set; }
             public string description { get; set; }
 
@@ -175,6 +185,19 @@ namespace battlecity
             public Move(ChallengeService.direction direction) : base()
             {
                 action = Plan.moveDirection[direction];
+            }
+
+            public override string PrintParameters()
+            {
+                StringBuilder result = new StringBuilder(base.PrintParameters());
+                if (result.Length > 0)
+                    result.Append(", ");
+                ChallengeService.direction direction = actionDirection[action];
+                if (direction != ChallengeService.direction.NONE)
+                    result.Append(direction.ToString());
+                else
+                    result.Append("Standing still");
+                return result.ToString();
             }
         }
 
@@ -415,9 +438,11 @@ namespace battlecity
 
             if (recursionDepth > 0)
             {
-                // Subplans are in play, so we don't need to do anything here.
+                // Subplans are in play, so we don't need to do much here.
+                plan = (Plan.RunAndGun)plans.First.Value;
+                plan.description = "Moving into subplans";
             }
-            if ((plans.First == null) || (plans.First.Value.GetType() == typeof(Plan.Separator)))
+            else if ((plans.First == null) || (plans.First.Value.GetType() == typeof(Plan.Separator)))
             {
                 // Option 1: We have no plans yet. This is the first one. Remember it.
                 // Option 2: We should start executing a new RunAndGun plan, before executing the next plan.
@@ -428,18 +453,22 @@ namespace battlecity
             else if (plans.First.Value.GetType() == typeof(Plan.RunAndGun))
             {
                 // We're currently executing a run-and-gun plan, but the destination may have changed.
-                plan = (Plan.RunAndGun)plans.First.Value;
+                // Here we inspect the LAST plan in the chain, because that represents the ultimate goal.
+                // TODO: Add support for separators; the last plain in the chain is the one just before the first separator.
+                plan = (Plan.RunAndGun)plans.Last.Value;
                 if ((plan.destX != destX) || (plan.destY != destY))
                 {
-                    // A new destination has been specified, so ditch the previous plan and create a new one.
-                    plans.RemoveFirst();
+                    // A new destination has been specified, so ditch the previous plans and create a new one.
+                    plans.Clear();
                     plan = new Plan.RunAndGun(destX, destY);
                     plan.description = "New destination specified";
                     plans.AddFirst(plan);
                 }
+                else
+                    plan.description = "Continuing the current plan";
             } else {
-                // Replace the old plan with a new one.
-                plans.RemoveFirst();
+                // Replace the old plans with a new one.
+                plans.Clear();
                 plan = new Plan.RunAndGun(destX, destY);
                 plan.description = "Replacing obsolete plan";
                 plans.AddFirst(plan);
@@ -464,7 +493,7 @@ namespace battlecity
             }
 
 			int Lx = destX - tank.x;
-			int Ly = destX - tank.y;
+			int Ly = destY - tank.y;
 			int dx = 0;
 			int dy = 0;
 			int[] scanOrder = {0,1,-1,-2,2};
@@ -495,7 +524,7 @@ namespace battlecity
             {
                 // We're vertically in line with the destination, only the horizontal leg is left
                 // This overrides any previous direction we might have had in our plan.
-                dx = Math.Sign(Ly);
+                dx = Math.Sign(Lx);
             }
             else if (plan.currentDirection != ChallengeService.direction.NONE)
             {
@@ -589,7 +618,7 @@ namespace battlecity
             {
                 // We're running right, so look for obstacles in a vertical line rightwards.
                 int y = tank.y;
-                for (int x = tank.x - 3; x >= destX - 2; x--)
+                for (int x = tank.x + 3; x <= destX + 2; x++)
                 {
                     foreach (int i in scanOrder)
                     {
@@ -618,7 +647,7 @@ namespace battlecity
 				else
 					return ChallengeService.action.NONE;
 
-            if (((dx == 0) && (obstY == tank.y)) || (dy == 0) && (obstX == tank.x))
+            if (((dx == 0) && (obstX == tank.x)) || (dy == 0) && (obstY == tank.y))
             {
                 // The next obstacle is perfectly lined up with the tank. If we're facing
                 // the right direction and no bullet is in play, fire. Otherwise, move into the right direction

@@ -105,7 +105,7 @@ namespace battlecity
             if (debug)
             {
                 // System.IO.File.WriteAllText(board.playerName + ".txt", board.ToString());
-                StreamWriter file = new StreamWriter(File.Open(board.playerName + ".txt", FileMode.Open, FileAccess.Write, FileShare.ReadWrite));
+                StreamWriter file = new StreamWriter(File.Open(board.playerName + ".txt", FileMode.Create, FileAccess.Write, FileShare.ReadWrite));
                 file.WriteLine(board.ToString());
                 file.Close();
             }
@@ -254,6 +254,7 @@ namespace battlecity
             if (e.InnerException.GetType() == typeof(System.ServiceModel.EndpointNotFoundException))
             {
                 Debug.WriteLine(Environment.NewLine + "--=[ GAME OVER! ]=--");
+                Debug.Flush();
                 Program.clock.Abort();
             }
             else
@@ -268,6 +269,7 @@ namespace battlecity
                         break;
                     }
             }
+            Debug.Flush();
         }
 
     }

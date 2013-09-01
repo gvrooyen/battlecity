@@ -196,7 +196,7 @@ namespace battlecity
                 if (direction != ChallengeService.direction.NONE)
                     result.Append(direction.ToString());
                 else
-                    result.Append("Standing still");
+                    result.Append("standing still");
                 return result.ToString();
             }
         }
@@ -207,6 +207,43 @@ namespace battlecity
             {
                 action = ChallengeService.action.FIRE;
             }
+        }
+
+        public class FireToDestroy : Fire
+        {
+            /* Fire to destroy the block at the specified coordinate. If that block is no
+             * longer FULL, this plan is ignored.
+             */
+
+            int targetX;
+            int targetY;
+
+            public FireToDestroy() : base()
+            {
+                action = ChallengeService.action.FIRE;
+                targetX = -1;
+                targetY = -1;
+            }
+
+            public FireToDestroy(int targetX, int targetY) : base()
+            {
+                action = ChallengeService.action.FIRE;
+                this.targetX = targetX;
+                this.targetY = targetY;
+            }
+
+            public override string PrintParameters()
+            {
+                StringBuilder result = new StringBuilder(base.PrintParameters());
+                if (result.Length > 0)
+                    result.Append(", ");
+                if ((targetX == -1) || (targetY == -1))
+                    result.Append(String.Format("no target specified"));
+                else
+                    result.Append(String.Format("target at ({0},{1})", targetX, targetY));
+                return result.ToString();
+            }
+
         }
     }
 
@@ -565,11 +602,10 @@ namespace battlecity
             plan.destY = destY;
             plan.currentDirection = xyToDirection(dx, dy);
 			
-			// Do a search along the 5-blocks-wide path for obstacles
-			
-			int obstX = -1;
-			int obstY = -1;
+			// Do a search along the 5-blocks-wide path for all obstacles
 
+            List<Tuple<int, int>> obstacles = new List<Tuple<int, int>>();
+			
             /* Depending on whether we're scanning horizontally or vertically, we look for
              * obstacles in a vertical or horizontal line. We start looking for obstacles at
              * the center point first, because these are easiest to destroy (and will take out
@@ -581,79 +617,39 @@ namespace battlecity
                 int x = tank.x;
                 // We're running up, so look for obstacles in a horizontal line upwards.
                 for (int y = tank.y - 3; y >= destY - 2; y--)
-                {
                     foreach (int i in scanOrder)
-                    {
                         if ((x + i >= 0) && (x + i < board.xsize) && (y >= 0) && (y < board.ysize) && (board.board[x + i][y] == ChallengeService.state.FULL))
-                        {
-                            obstX = x + i;
-                            obstY = y;
-                            break;
-                        }
-                    }
-                    if ((obstX != -1) && (obstY != -1))
-                        break;
-                }
+                            obstacles.Add(new Tuple<int, int>(x + i, y));
             }
             else if ((dx == 0) && (dy == 1))
             {
                 // We're running down, so look for obstacles in a horizontal line downwards.
                 int x = tank.x;
                 for (int y = tank.y + 3; y <= destY + 2; y++)
-                {
                     foreach (int i in scanOrder)
-                    {
                         if ((x + i >= 0) && (x + i < board.xsize) && (y >= 0) && (y < board.ysize) && (board.board[x + i][y] == ChallengeService.state.FULL))
-                        {
-                            obstX = x + i;
-                            obstY = y;
-                            break;
-                        }
-                    }
-                    if ((obstX != -1) && (obstY != -1))
-                        break;
-                }
+                            obstacles.Add(new Tuple<int, int>(x + i, y));
             }
             else if ((dy == 0) && (dx == -1))
             {
                 // We're running left, so look for obstacles in a vertical line leftwards.
                 int y = tank.y;
                 for (int x = tank.x - 3; x >= destX - 2; x--)
-                {
                     foreach (int i in scanOrder)
-                    {
                         if ((y + i >= 0) && (y + i < board.ysize) && (x >= 0) && (x < board.xsize) && (board.board[x][y + i] == ChallengeService.state.FULL))
-                        {
-                            obstX = x;
-                            obstY = y + i;
-                            break;
-                        }
-                    }
-                    if ((obstX != -1) && (obstY != -1))
-                        break;
-                }
+                            obstacles.Add(new Tuple<int, int>(x, y + i));
             }
             else if ((dy == 0) && (dx == 1))
             {
                 // We're running right, so look for obstacles in a vertical line rightwards.
                 int y = tank.y;
                 for (int x = tank.x + 3; x <= destX + 2; x++)
-                {
                     foreach (int i in scanOrder)
-                    {
                         if ((y + i >= 0) && (y + i < board.ysize) && (x >= 0) && (x < board.xsize) && (board.board[x][y + i] == ChallengeService.state.FULL))
-                        {
-                            obstX = x;
-                            obstY = y + i;
-                            break;
-                        }
-                    }
-                    if ((obstX != -1) && (obstY != -1))
-                        break;
-                }
+                            obstacles.Add(new Tuple<int, int>(x, y + i));
             }
 									
-			if ((obstX == -1) || (obstY == -1))
+			if (obstacles.Count == 0)
 				// The path's clear!
 				if (dx == -1)
 					return ChallengeService.action.LEFT;
@@ -666,7 +662,7 @@ namespace battlecity
 				else
 					return ChallengeService.action.NONE;
 
-            if (((dx == 0) && (obstX == tank.x)) || (dy == 0) && (obstY == tank.y))
+            if (((dx == 0) && (obstacles[0].Item1 == tank.x)) || (dy == 0) && (obstacles[0].Item2 == tank.y))
             {
                 // The next obstacle is perfectly lined up with the tank. If we're facing
                 // the right direction and no bullet is in play, fire. Otherwise, move into the right direction
@@ -740,12 +736,12 @@ namespace battlecity
                 if (dx != 0)
                 {
                     // We're moving horizontally, so get in line with the obstacle by moving vertically
-                    return RunAndGun(tank, tank.x, obstY, recursionDepth+1);
+                    return RunAndGun(tank, tank.x, obstacles[0].Item2, recursionDepth+1);
                 }
                 else
                 {
                     // We're moving vertically, so get in line with the obstacle by moving horizontally
-                    return RunAndGun(tank, obstX, tank.y, recursionDepth+1);
+                    return RunAndGun(tank, obstacles[0].Item1, tank.y, recursionDepth+1);
                 }
 
             }

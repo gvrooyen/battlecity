@@ -203,7 +203,10 @@ namespace battlecity
 
         public class Fire : ConcreteAction
         {
-            public Fire() : base() { }
+            public Fire() : base()
+            {
+                action = ChallengeService.action.FIRE;
+            }
         }
     }
 
@@ -465,7 +468,14 @@ namespace battlecity
                     plans.AddFirst(plan);
                 }
                 else
+                {
+                    // We've now established that we're still chasing the same goal. Now we need to execute on
+                    // the FIRST plan in the list.
                     plan.description = "Continuing the current plan";
+                    plan = (Plan.RunAndGun)plans.First.Value;
+                    destX = plan.destX;
+                    destY = plan.destY;
+                }
             } else {
                 // Replace the old plans with a new one.
                 plans.Clear();
@@ -481,14 +491,23 @@ namespace battlecity
                 Plan.Plan subplan = plan.subplans.First.Value;
                 plan.subplans.RemoveFirst();
 
-                if (subplan.GetType() == typeof(Plan.ConcreteAction))
+                if (subplan.GetType().IsSubclassOf(typeof(Plan.ConcreteAction)))
                 {
-                    return ((Plan.ConcreteAction)plan.subplans.First.Value).action;
+                    return ((Plan.ConcreteAction)subplan).action;
+                }
+                else if (subplan.GetType() == typeof(Plan.RunAndGun))
+                {
+                    // This is typically to get us to move back to a specified location.
+                    // Move it to the front of the main list of plans, and execute it.
+                    plans.AddFirst(subplan);
+                    plan = (Plan.RunAndGun)subplan;
+                    destX = plan.destX;
+                    destY = plan.destY;
                 }
                 else
                 {
-                    Debug.WriteLine("ERROR: Subplan action {0} is not a concrete action in RunAndGun(); removing it.",
-                        plan.subplans.First.GetType());
+                    Debug.WriteLine("ERROR: Subplan action {0} invalid in RunAndGun(); removing it.",
+                        subplan.GetType());
                 }
             }
 
@@ -508,9 +527,9 @@ namespace battlecity
                 {
                     Plan.RunAndGun nextPlan = (Plan.RunAndGun)plans.First.Value;
 
-                    // We effectively retain rather than increase the recursion depth in the next call,
+                    // We effectively reset the recursion depth in the next call,
                     // because we've popped out of a subplan.
-                    return RunAndGun(tank, nextPlan.destX, nextPlan.destY, recursionDepth);
+                    return RunAndGun(tank, nextPlan.destX, nextPlan.destY);
                 }
             }
 

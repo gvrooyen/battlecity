@@ -438,7 +438,7 @@ namespace battlecity
             return result.ToString();
         }
 
-		protected ChallengeService.action RunAndGun(Tank tank, int destX, int destY, int recursionDepth = 0)
+		protected ChallengeService.action RunAndGun(Tank tank, int destX, int destY, int recursionDepth = 0, bool checkFinalGoal = true)
 		{
 			/* Move towards the destination coordinates (L-shaped path, longest edge first).
 			 * If any obstructions are found en route, destroy them.
@@ -496,7 +496,7 @@ namespace battlecity
                 // Here we inspect the LAST plan in the chain, because that represents the ultimate goal.
                 // TODO: Add support for separators; the last plain in the chain is the one just before the first separator.
                 plan = (Plan.RunAndGun)plans.Last.Value;
-                if ((plan.destX != destX) || (plan.destY != destY))
+                if (checkFinalGoal && ((plan.destX != destX) || (plan.destY != destY)))
                 {
                     // A new destination has been specified, so ditch the previous plans and create a new one.
                     plans.Clear();
@@ -566,7 +566,7 @@ namespace battlecity
 
                     // We effectively reset the recursion depth in the next call,
                     // because we've popped out of a subplan.
-                    return RunAndGun(tank, nextPlan.destX, nextPlan.destY);
+                    return RunAndGun(tank, nextPlan.destX, nextPlan.destY, checkFinalGoal: false);
                 }
             }
 
@@ -604,7 +604,7 @@ namespace battlecity
 			
 			// Do a search along the 5-blocks-wide path for all obstacles
 
-            List<Tuple<int, int>> obstacles = new List<Tuple<int, int>>();
+            LinkedList<Tuple<int, int>> obstacles = new LinkedList<Tuple<int, int>>();
 			
             /* Depending on whether we're scanning horizontally or vertically, we look for
              * obstacles in a vertical or horizontal line. We start looking for obstacles at
@@ -619,7 +619,7 @@ namespace battlecity
                 for (int y = tank.y - 3; y >= destY - 2; y--)
                     foreach (int i in scanOrder)
                         if ((x + i >= 0) && (x + i < board.xsize) && (y >= 0) && (y < board.ysize) && (board.board[x + i][y] == ChallengeService.state.FULL))
-                            obstacles.Add(new Tuple<int, int>(x + i, y));
+                            obstacles.AddLast(new Tuple<int, int>(x + i, y));
             }
             else if ((dx == 0) && (dy == 1))
             {
@@ -628,7 +628,7 @@ namespace battlecity
                 for (int y = tank.y + 3; y <= destY + 2; y++)
                     foreach (int i in scanOrder)
                         if ((x + i >= 0) && (x + i < board.xsize) && (y >= 0) && (y < board.ysize) && (board.board[x + i][y] == ChallengeService.state.FULL))
-                            obstacles.Add(new Tuple<int, int>(x + i, y));
+                            obstacles.AddLast(new Tuple<int, int>(x + i, y));
             }
             else if ((dy == 0) && (dx == -1))
             {
@@ -637,7 +637,7 @@ namespace battlecity
                 for (int x = tank.x - 3; x >= destX - 2; x--)
                     foreach (int i in scanOrder)
                         if ((y + i >= 0) && (y + i < board.ysize) && (x >= 0) && (x < board.xsize) && (board.board[x][y + i] == ChallengeService.state.FULL))
-                            obstacles.Add(new Tuple<int, int>(x, y + i));
+                            obstacles.AddLast(new Tuple<int, int>(x, y + i));
             }
             else if ((dy == 0) && (dx == 1))
             {
@@ -646,7 +646,7 @@ namespace battlecity
                 for (int x = tank.x + 3; x <= destX + 2; x++)
                     foreach (int i in scanOrder)
                         if ((y + i >= 0) && (y + i < board.ysize) && (x >= 0) && (x < board.xsize) && (board.board[x][y + i] == ChallengeService.state.FULL))
-                            obstacles.Add(new Tuple<int, int>(x, y + i));
+                            obstacles.AddLast(new Tuple<int, int>(x, y + i));
             }
 									
 			if (obstacles.Count == 0)
@@ -662,7 +662,7 @@ namespace battlecity
 				else
 					return ChallengeService.action.NONE;
 
-            if (((dx == 0) && (obstacles[0].Item1 == tank.x)) || (dy == 0) && (obstacles[0].Item2 == tank.y))
+            if (((dx == 0) && (obstacles.First.Value.Item1 == tank.x)) || (dy == 0) && (obstacles.First.Value.Item2 == tank.y))
             {
                 // The next obstacle is perfectly lined up with the tank. If we're facing
                 // the right direction and no bullet is in play, fire. Otherwise, move into the right direction
@@ -702,9 +702,10 @@ namespace battlecity
                  * 
                  * The following need to happen to destroy the obstacle:
                  * 1. Move (recursive RunAndGun) laterally to get in line with the obstacle.
-                 * 2. Move in the direction of the obstacle to point the turret
-                 * 3. Fire to destroy the obstacle
-                 * 4. Move back to the current position
+                 * 2. Move in the direction of the obstacle to point the turret.
+                 * 3. Fire to destroy the obstacle, and all other obstacles that happen to be conveniently
+                 *    reachable from where we are.
+                 * 4. Move back to the current position.
                  * and continue with the main plan.
                  * 
                  * The above actions are added pushed into the planning queue in reverse order, so that
@@ -713,15 +714,223 @@ namespace battlecity
 
                 Plan.Plan subplan;
 
+                int newX = -1;
+                int newY = -1;
+
+                if (dx != 0)
+                {
+                    // We're moving horizontally, so get in line with the obstacle by moving vertically
+                    newX = tank.x;
+                    newY = obstacles.First.Value.Item2;
+                }
+                else
+                {
+                    // We're moving vertically, so get in line with the obstacle by moving horizontally
+                    newX = obstacles.First.Value.Item1;
+                    newY = tank.y;
+                }
+
                 // 4. Move back to the current position
-                subplan = new Plan.RunAndGun(tank.x, tank.y);
+                //    Note that we most likely had to move one step ahead in our desired direction, in
+                //    order to turn the tank to fire it. So rather move back one step ahead of the current
+                //    position.
+
+                subplan = new Plan.RunAndGun(tank.x + dx, tank.y + dy);
                 subplan.description = "Move back in position";
                 plan.subplans.AddFirst(subplan);
 
                 // 3. Fire to destroy the obstacle
-                subplan = new Plan.Fire();
-                subplan.description = "Fire at obstacle";
+
+                // Add the primary obstacle first
+
+                int firstObstX = obstacles.First.Value.Item1;
+                int firstObstY = obstacles.First.Value.Item2;
+                subplan = new Plan.FireToDestroy(firstObstX, firstObstY);
+                subplan.description = "Remove obstacle";
                 plan.subplans.AddFirst(subplan);
+                obstacles.RemoveFirst();
+
+                LinkedListNode<Plan.Plan> index = plan.subplans.First;
+
+                /* Next, we need to figure out what other obstacles we can opportunistically remove while
+                 * we're at this vantage point. From just beyond the first obstacle, scan through the board
+                 * in a straight line, looking for other FULL squares. For each one found, cycle through
+                 * the list of obstacles. Remove all obstacles that are "behind" this bullet trace
+                 * from the list. If an obstacle would be destroyed by firing at the target square, add
+                 * a FireToDestroy plan on the target square.
+                 * 
+                 * It can also happen that no obstacles would be destroyed by firing at a specific FULL
+                 * square, but that subsequent squares could destroy obstacles (i.e. useful targets are
+                 * hidden behind a useless one). For this reason, useless targets are added to a "tentative"
+                 * list. As soon as a useful target is found, all targets in the tentative list are also
+                 * added.
+                 */
+
+                LinkedList<Plan.Plan> tentativePlans = new LinkedList<Plan.Plan>();
+
+                // There's probably an elegant way to do this is a single loop, but let's rather be
+                // verbose and avoid bugs.
+
+                if (dx == 1)
+                {
+                    int y = firstObstY;
+                    for (int x = firstObstX+1; x <= destX; x++)
+                    {
+                        if (board.board[x][y] == ChallengeService.state.FULL)
+                        {
+                            // There's a block to destroy. Let's see if it will take out any obstacles with it.
+                            LinkedListNode<Tuple<int,int>> obst = obstacles.First;
+                            LinkedListNode<Tuple<int,int>> nextObst = null;
+                            LinkedListNode<Plan.Plan> newNode = new LinkedListNode<Plan.Plan>(new Plan.FireToDestroy(x, y));
+                            while (obst != null)
+                            {
+                                nextObst = obst.Next;
+                                if (obst.Value.Item1 < x)
+                                    obstacles.Remove(obst);
+                                else if ((obst.Value.Item1 == x) && (Math.Abs(obst.Value.Item2 - y) <= 2))
+                                {
+                                    // This block should be blasted! Add any blocks on the tentative list first.
+                                    foreach (Plan.Plan p in tentativePlans)
+                                    {
+                                        plan.subplans.AddAfter(index, p);
+                                        index = index.Next;
+                                    }
+                                    tentativePlans.Clear();
+                                    plan.subplans.AddAfter(index, newNode);
+                                    index = index.Next;
+                                    break;
+                                }
+                                if (nextObst == null)
+                                {
+                                    // We've cycled through the obstacles without finding one that will be removed by
+                                    // destroying this block. So add this block to the tentative list.
+                                    tentativePlans.AddLast(newNode);
+                                }
+                                obst = nextObst;
+                            }
+                        }
+                    }
+                }
+                if (dx == -1)
+                {
+                    int y = firstObstY;
+                    for (int x = firstObstX - 1; x >= destX; x--)
+                    {
+                        if (board.board[x][y] == ChallengeService.state.FULL)
+                        {
+                            // There's a block to destroy. Let's see if it will take out any obstacles with it.
+                            LinkedListNode<Tuple<int, int>> obst = obstacles.First;
+                            LinkedListNode<Tuple<int, int>> nextObst = null;
+                            LinkedListNode<Plan.Plan> newNode = new LinkedListNode<Plan.Plan>(new Plan.FireToDestroy(x, y));
+                            while (obst != null)
+                            {
+                                nextObst = obst.Next;
+                                if (obst.Value.Item1 > x)
+                                    obstacles.Remove(obst);
+                                else if ((obst.Value.Item1 == x) && (Math.Abs(obst.Value.Item2 - y) <= 2))
+                                {
+                                    // This block should be blasted! Add any blocks on the tentative list first.
+                                    foreach (Plan.Plan p in tentativePlans)
+                                    {
+                                        plan.subplans.AddAfter(index, p);
+                                        index = index.Next;
+                                    }
+                                    tentativePlans.Clear();
+                                    plan.subplans.AddAfter(index, newNode);
+                                    index = index.Next;
+                                    break;
+                                }
+                                if (nextObst == null)
+                                {
+                                    // We've cycled through the obstacles without finding one that will be removed by
+                                    // destroying this block. So add this block to the tentative list.
+                                    tentativePlans.AddLast(newNode);
+                                }
+                                obst = nextObst;
+                            }
+                        }
+                    }
+                }
+                if (dy == 1)
+                {
+                    int x = firstObstX;
+                    for (int y = firstObstY + 1; y <= destY; y++)
+                    {
+                        if (board.board[x][y] == ChallengeService.state.FULL)
+                        {
+                            // There's a block to destroy. Let's see if it will take out any obstacles with it.
+                            LinkedListNode<Tuple<int, int>> obst = obstacles.First;
+                            LinkedListNode<Tuple<int, int>> nextObst = null;
+                            LinkedListNode<Plan.Plan> newNode = new LinkedListNode<Plan.Plan>(new Plan.FireToDestroy(x, y));
+                            while (obst != null)
+                            {
+                                nextObst = obst.Next;
+                                if (obst.Value.Item2 < y)
+                                    obstacles.Remove(obst);
+                                else if ((obst.Value.Item2 == y) && (Math.Abs(obst.Value.Item1 - x) <= 2))
+                                {
+                                    // This block should be blasted! Add any blocks on the tentative list first.
+                                    foreach (Plan.Plan p in tentativePlans)
+                                    {
+                                        plan.subplans.AddAfter(index, p);
+                                        index = index.Next;
+                                    }
+                                    tentativePlans.Clear();
+                                    plan.subplans.AddAfter(index, newNode);
+                                    index = index.Next;
+                                    break;
+                                }
+                                if (nextObst == null)
+                                {
+                                    // We've cycled through the obstacles without finding one that will be removed by
+                                    // destroying this block. So add this block to the tentative list.
+                                    tentativePlans.AddLast(newNode);
+                                }
+                                obst = nextObst;
+                            }
+                        }
+                    }
+                }
+                if (dy == -1)
+                {
+                    int x = firstObstX;
+                    for (int y = firstObstY - 1; y >= destY; y--)
+                    {
+                        if (board.board[x][y] == ChallengeService.state.FULL)
+                        {
+                            // There's a block to destroy. Let's see if it will take out any obstacles with it.
+                            LinkedListNode<Tuple<int, int>> obst = obstacles.First;
+                            LinkedListNode<Tuple<int, int>> nextObst = null;
+                            LinkedListNode<Plan.Plan> newNode = new LinkedListNode<Plan.Plan>(new Plan.FireToDestroy(x, y));
+                            while (obst != null)
+                            {
+                                nextObst = obst.Next;
+                                if (obst.Value.Item2 > y)
+                                    obstacles.Remove(obst);
+                                else if ((obst.Value.Item2 == y) && (Math.Abs(obst.Value.Item1 - x) <= 2))
+                                {
+                                    // This block should be blasted! Add any blocks on the tentative list first.
+                                    foreach (Plan.Plan p in tentativePlans)
+                                    {
+                                        plan.subplans.AddAfter(index, p);
+                                        index = index.Next;
+                                    }
+                                    tentativePlans.Clear();
+                                    plan.subplans.AddAfter(index, newNode);
+                                    index = index.Next;
+                                    break;
+                                }
+                                if (nextObst == null)
+                                {
+                                    // We've cycled through the obstacles without finding one that will be removed by
+                                    // destroying this block. So add this block to the tentative list.
+                                    tentativePlans.AddLast(newNode);
+                                }
+                                obst = nextObst;
+                            }
+                        }
+                    }
+                }
 
                 // 2. Move in the direction of the obstacle to point the turret
                 subplan = new Plan.Move(plan.currentDirection);
@@ -733,17 +942,8 @@ namespace battlecity
                 subplan.description = "Recurse to get in line with the obstacle";
 
                 plans.AddFirst(subplan);   // We're going to recurse
-                if (dx != 0)
-                {
-                    // We're moving horizontally, so get in line with the obstacle by moving vertically
-                    return RunAndGun(tank, tank.x, obstacles[0].Item2, recursionDepth+1);
-                }
-                else
-                {
-                    // We're moving vertically, so get in line with the obstacle by moving horizontally
-                    return RunAndGun(tank, obstacles[0].Item1, tank.y, recursionDepth+1);
-                }
 
+                return RunAndGun(tank, newX, newY, recursionDepth + 1, checkFinalGoal: false);
             }
 
             Debug.WriteLine("ERROR: RunAndGun() found no valid action to execute.");
@@ -823,6 +1023,8 @@ namespace battlecity
                 Debug.WriteLine(board.PrintArea(tank0.x - 8, tank0.y - 8, tank0.x + 9, tank0.y + 9));
                 A1 = RunAndGun(tank0, board.opponentBase.x, board.opponentBase.y);
                 Debug.WriteLine("Settled on action {0}", A1);
+
+                // Tank 1 goes for the closest enemy
             }
         }
 

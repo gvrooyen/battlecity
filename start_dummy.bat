@@ -9,4 +9,4 @@ start launch.bat
 choice /C X /T 3 /D X > nul
 echo Activating opponent...
 cd %pwd%
-start start_debug.bat http://localhost:7071/Challenge/ChallengeService random
+start start_debug.bat http://localhost:7071/Challenge/ChallengeService aggro

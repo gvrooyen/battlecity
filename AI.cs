@@ -1273,8 +1273,11 @@ namespace battlecity
                     // TODO: Scan the horizontal and vertical lines from the base, to find good sniping spots.
                     //       Point in case would be the centerpoint of the board-center-counter board, which
                     //       has a long vertical corridor heading straight towards the base.
-                    var route = planner.GetPath(t.x, t.y, board.opponentBase.x, board.opponentBase.y);
-                    Debug.WriteLine("Route has length {0}", route.Count);
+                    Stopwatch sw = new Stopwatch();
+                    sw.Start();
+                    var route = planner.GetPath(t.x, t.y, board.opponentBase.x, board.opponentBase.y, 1.0);
+                    sw.Stop();
+                    Debug.WriteLine("It took {0} ms to find a route of length {0}", sw.ElapsedMilliseconds, route.Count);
                     planner.renderRoute(board, route, String.Format("route{0}.png", t.id));
                 }
                 else if (t.role.GetType() == typeof(Role.DefendBase))

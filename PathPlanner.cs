@@ -35,9 +35,12 @@ namespace battlecity
 		}
 		private int FY;
 
-        public static int[,] map { get; set; }
+        // Speedup factor (weight for the heuristic function)
+        public static double speedUp { get; set; }
 
-        static public int GetMap(int x, int y)
+        public static double[,] map { get; set; }
+
+        static public double GetMap(int x, int y)
         {
             if ((x < 0) || (x >= map.GetLength(0)))
                 return (-1);
@@ -51,13 +54,14 @@ namespace battlecity
 		{
 			FX = AX;
 			FY = AY;
+            speedUp = 1.0;
 		}
 
 		// Adds a successor to a list if it is not impassible or the parent node
 		private void AddSuccessor(ArrayList ASuccessors, int AX, int AY) 
 		{
-			int CurrentCost = GetMap(AX, AY);
-			if (CurrentCost == -1)
+			double CurrentCost = GetMap(AX, AY);
+			if (CurrentCost < 0.0)
 			{
 				return;
 			}
@@ -88,7 +92,7 @@ namespace battlecity
 				double xd = FX - ((AStarNodeBC)GoalNode).X;
 				double yd = FY - ((AStarNodeBC)GoalNode).Y;
 				// "Manhattan Distance" - Used when search can only move vertically and horizontally.
-				GoalEstimate = Math.Abs(xd) + Math.Abs(yd); 
+				GoalEstimate = speedUp * (Math.Abs(xd) + Math.Abs(yd)); 
 			}
 			else
 			{
@@ -116,7 +120,7 @@ namespace battlecity
 	
 	public class PathPlanner
 	{
-		public int[,] kernel;
+		public double[,] kernel;
 		// private int[,] map;
 		
 		// Tick number of the last update (to avoid re-scanning the board in the same round).
@@ -126,7 +130,7 @@ namespace battlecity
 		// is the penalty for moving directly adjacent to an enemy tank, Element 1 the penalty
 		// at 1 block clearance, Element 2 at 2 blocks clearance, etc. Clearance is defined as
 		// the smallest of the x or the y clearance (i.e. diagonal distance is not considered).
-		public int[] enemyClearance;
+		public double[] enemyClearance;
 		
 		private void Initialize()
 		{
@@ -137,23 +141,24 @@ namespace battlecity
 			 * its center point to the specified square.
 			 */
 			
+            /*
             kernel = new int[,]
 				{{3,3,3,3,3},
 				 {3,2,2,2,3},
 				 {3,2,1,2,3},
 				 {3,2,2,2,3},
 				 {3,3,3,3,3}};
-            /*
-            kernel = new int[,]
-				{{1,1,1,1,1},
-				 {1,1,1,1,1},
-				 {1,1,1,1,1},
-				 {1,1,1,1,1},
-				 {1,1,1,1,1}};
-			*/
+             */
+
+            kernel = new double[,]
+				{{0.03,0.03,0.03,0.03,0.03},
+				 {0.03,0.02,0.02,0.02,0.03},
+				 {0.03,0.02,0.01,0.02,0.03},
+				 {0.03,0.02,0.02,0.02,0.03},
+				 {0.03,0.03,0.03,0.03,0.03}};
 
 			
-			enemyClearance = new int[] {30,25,20,15,10,5};
+			enemyClearance = new double[] {0.1};
 			
 			lastUpdate = -2;
 		}
@@ -171,7 +176,7 @@ namespace battlecity
 				return;
 			
 			lastUpdate = tick;
-            AStarNodeBC.map = new int[board.xsize - 4, board.ysize - 4];
+            AStarNodeBC.map = new double[board.xsize - 4, board.ysize - 4];
 
 			/* Scan through the board and apply the kernel, and use that to create a map of movement
 			 * costs for the A* algorithm.
@@ -325,7 +330,7 @@ namespace battlecity
                     {
                         int green = 0;
                         int blue = 0;
-                        int red = AStarNodeBC.map[x, y] * 8;
+                        int red = (int)Math.Round((AStarNodeBC.map[x, y] - 1.0) * 200);
                         if (red > 255)
                             red = 255;
                         else if (red < 0)
@@ -367,16 +372,18 @@ namespace battlecity
             }
         }
 
-        public List<Tuple<int, int>> GetPath(int x1, int y1, int x2, int y2)
+        public List<Tuple<int, int>> GetPath(int x1, int y1, int x2, int y2, double speedUp = 1.0)
         {
             List<Tuple<int, int>> result = new List<Tuple<int, int>>();
+
+            AStarNodeBC.speedUp = speedUp;
 
             Games.Pathfinding.AStar astar = new Games.Pathfinding.AStar();
 
             AStarNodeBC GoalNode = new AStarNodeBC(null, null, 0, x2-2, y2-2);
             AStarNodeBC StartNode = new AStarNodeBC(null, GoalNode, 0, x1-2, y1-2);
             StartNode.GoalNode = GoalNode;
-            astar.FindPath(StartNode, GoalNode);
+            astar.FindPath(StartNode, GoalNode, 20000);
 
             foreach (AStarNodeBC n in astar.Solution)
                 result.Add(new Tuple<int, int>(n.X, n.Y));

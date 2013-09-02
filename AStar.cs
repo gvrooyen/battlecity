@@ -254,14 +254,19 @@ namespace Games.Pathfinding {
 		/// </summary>
 		/// <param name="AStartNode">Start node</param>
 		/// <param name="AGoalNode">Goal node</param>
-		public void FindPath(AStarNode AStartNode,AStarNode AGoalNode)
+		public void FindPath(AStarNode AStartNode,AStarNode AGoalNode, int maxIter = int.MaxValue)
 		{
 			FStartNode = AStartNode;
 			// FGoalNode = AGoalNode;
 
+            int iter = 0;
+
 			FOpenList.Add(FStartNode);
 			while(FOpenList.Count > 0) 
 			{
+                if (iter++ > maxIter)
+                    break;
+
 				// Get the node with the lowest TotalCost
 				AStarNode NodeCurrent = (AStarNode)FOpenList.Pop();
 

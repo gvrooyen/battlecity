@@ -92,24 +92,33 @@ namespace battlecity
                 yHistory.Enqueue(y);
             }
 
-            if (xHistory.Count >= 2*period)
+            while (xHistory.Count > 2 * period)
             {
-                // We've been stuck for a long time, and clearing plans haven't done much.
+                xHistory.Dequeue();
+                yHistory.Dequeue();
+            }
+
+            // Find out how long a run we've had at the same position
+            int runLength = 0;
+
+            for (int i = xHistory.Count - 2; i >= 0; i--)
+            {
+                if ((xHistory.ElementAt(i) == x) && (yHistory.ElementAt(i) == y))
+                    runLength++;
+                else
+                    break;
+            }
+
+            if (runLength >= 2*period)
+            {
+               // We've been stuck for a long time, and clearing plans haven't done much.
                 // Do random moves until we break free.
-                Debug.WriteLine("Tank (id={0}) is still stuck! Trying to wriggle free.", id);
+                Debug.WriteLine("WARNING: Tank (id={0}) is still stuck! Trying to wriggle free.", id);
                 Array actions = Enum.GetValues(typeof(ChallengeService.action));
                 return (ChallengeService.action)actions.GetValue(AI.random.Next(actions.Length));
             }
-            else if (xHistory.Count >= period)
+            else if (runLength >= period)
             {
-                int pastValue = xHistory.Peek();
-                foreach (int x in xHistory)
-                    if (x != pastValue)
-                        return ChallengeService.action.NONE;
-                pastValue = yHistory.Peek();
-                foreach (int y in yHistory)
-                    if (y != pastValue)
-                        return ChallengeService.action.NONE;
                 Debug.WriteLine("WARNING: Watchdog triggered for tank (id={0}). Clearing plans.", id);
                 plans.Clear();
                 return ChallengeService.action.NONE;

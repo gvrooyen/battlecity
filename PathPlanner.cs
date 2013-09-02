@@ -159,7 +159,7 @@ namespace battlecity
 				 {0.03,0.02,0.02,0.02,0.03},
 				 {0.03,0.03,0.03,0.03,0.03}};
 			
-			enemyClearance = new double[] {0.03, 0.02, 0.01, 0.01};
+			enemyClearance = new double[] {0.05, 0.04, 0.03, 0.02, 0.01, 0.01};
 			
 			lastUpdate = -2;
             destX = -1;

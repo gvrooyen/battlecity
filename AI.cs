@@ -1271,11 +1271,15 @@ namespace battlecity
                 // We're not going to win if only a defender survives. Geronimo!
                 Debug.WriteLine("Switching surviving player tank to assault mode.");
                 board.playerTank[1].role = new Role.AttackBase();
+                board.playerTank[1].plans.Clear();
+                route[1].Clear();
             }
             else if ((board.playerTank[1].destroyed && (board.playerTank[0].role.GetType() == typeof(Role.DefendBase))))
             {
                 Debug.WriteLine("Switching surviving player tank to assault mode.");
                 board.playerTank[0].role = new Role.AttackBase();
+                board.playerTank[0].plans.Clear();
+                route[0].Clear();
             }
             else if (!board.opponentTank[0].destroyed && !board.opponentTank[1].destroyed)
             {
@@ -1312,6 +1316,8 @@ namespace battlecity
                     {
                         Debug.WriteLine("Switching player's defending tank over to assault.");
                         board.playerTank[defender].role = new Role.AttackBase();
+                        board.playerTank[defender].plans.Clear();
+                        route[defender].Clear();
                     }
                 }
             }
@@ -1343,10 +1349,15 @@ namespace battlecity
                 // See if there's an enemy to take a pot shot at
                 ChallengeService.action potshotAction = PotShot(board.playerTank[i]);
 
+                // See if we're stuck in a rut
+                ChallengeService.action recoveryAction = t.Watchdog();
+
                 if (dodgeAction != ChallengeService.action.NONE)
                     A[i] = dodgeAction;
                 else if (potshotAction != ChallengeService.action.NONE)
                     A[i] = potshotAction;
+                else if (recoveryAction != ChallengeService.action.NONE)
+                    A[i] = recoveryAction;
                 else if (t.role.GetType() == typeof(Role.AttackBase))
                 {
                     // For now, just target the actual coordinates of the base (gun at it and run over it).
@@ -1375,6 +1386,9 @@ namespace battlecity
                 }
                 else if (t.role.GetType() == typeof(Role.DefendBase))
                 {
+                    int destX;
+                    int destY;
+
                     // Find out which of the opponents is closest to our base.
 
                     int closestDist = int.MaxValue;
@@ -1396,8 +1410,48 @@ namespace battlecity
                     if (closestOpponent != null)
                     {
                         // Target a point one third of the way between the opponent and the base.
-                        int destX = board.playerBase.x + (closestOpponent.x - board.playerBase.x) / 3;
-                        int destY = board.playerBase.y + (closestOpponent.y - board.playerBase.y) / 3;
+                        int dx = (closestOpponent.x - board.playerBase.x) / 3;
+                        int dy = (closestOpponent.y - board.playerBase.y) / 3;
+
+                        if ((Math.Abs(dx) < 3) && (Math.Abs(dy) < 3))
+                        {
+                            /* At this point, the opponent has moved too close to the base to physically
+                             * block him. Rather move to flank him.
+                             * 
+                             * There are four possible flanking destinations. Cycle through all four of
+                             * them, and move towards the closest one which doesn't imply that we're too
+                             * close to the base.
+                             */
+                            int[,] flanks = new int[,] { {closestOpponent.x - 5, closestOpponent.y    },
+                                                         {closestOpponent.x    , closestOpponent.y - 5},
+                                                         {closestOpponent.x + 5, closestOpponent.y    },
+                                                         {closestOpponent.x    , closestOpponent.y + 5}};
+                            int bestFlank = -1;
+                            int bestFlankDist = int.MaxValue;
+
+                            for (int j = 0; j < 4; j++)
+                            {
+                                int flankMarginX = Math.Abs(flanks[j, 0] - board.playerBase.x);
+                                int flankMarginY = Math.Abs(flanks[j, 1] - board.playerBase.y);
+                                if ((flankMarginX >= 3) || (flankMarginY >= 3))
+                                {
+                                    int flankDist = Math.Abs(flanks[j, 0] - t.x) + Math.Abs(flanks[j, 1] - t.y);
+                                    if (flankDist < bestFlankDist)
+                                    {
+                                        bestFlank = j;
+                                        bestFlankDist = flankDist;
+                                    }
+                                }
+                            }
+
+                            destX = flanks[bestFlank, 0];
+                            destY = flanks[bestFlank, 1];
+                        }
+                        else
+                        {
+                            destX = board.playerBase.x + dx;
+                            destY = board.playerBase.y + dy;
+                        }
 
                         /* Next, we start an asynchronous task running the path planner. We'll check its results
                          * in postEarlyMove(), and cancel it if it's not done by postFinalMove().

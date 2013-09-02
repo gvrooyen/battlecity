@@ -108,7 +108,6 @@ namespace battlecity
                             currentTime += sleepTime;
                         }
 
-                        // Thread t = new Thread(s.Value);
                         Task t = new Task(s.Value);
                         t.ContinueWith(battlecity.Program.ExceptionHandler, TaskContinuationOptions.OnlyOnFaulted);
                         t.Start();

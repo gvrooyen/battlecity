@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Diagnostics;
+using System.Threading.Tasks;
+using System.Threading;
 
 namespace battlecity
 {
@@ -1230,15 +1232,22 @@ namespace battlecity
          * opponents are also still within L/3 from the enemy base.
          */
 
-        private ChallengeService.action A1, A2;
-        private PathPlanner planner = new PathPlanner();
+        private ChallengeService.action[] A;
+        private List<Tuple<int, int>>[] route;
+        private CancellationTokenSource cancel;
+        private List<Task> taskPool;
+        private PathPlanner[] planner;
 
         public AI_CTF() : base() { }
         public AI_CTF(Board board, ChallengeService.ChallengeClient client)
             : base(board, client)
         {
-            A1 = ChallengeService.action.NONE;
-            A2 = ChallengeService.action.NONE;
+            A = new ChallengeService.action[2];
+            A[0] = ChallengeService.action.NONE;
+            A[1] = ChallengeService.action.NONE;
+            route = new List<Tuple<int, int>>[2];
+            taskPool = new List<Task>();
+            planner = new PathPlanner[2];
         }
 
         public override void newTick()
@@ -1258,14 +1267,22 @@ namespace battlecity
                 }
             }
 
-            foreach (Tank t in board.playerTank)
+            Debug.WriteLine("{0} tanks in play", board.playerTank.Length);
+            for (int i = 0; i < 2; i++)
             {
-                // Let the planner rescan the current board state. We do this separately for each tank,
+                // We create separate planners for each tank, so that they can run as parallel asynchronous
+                // tasks. We need this, because they need to work on different maps,
                 // so that the current tank can be excluded from the map (otherwise its own blocks look
                 // like no-go areas).
 
-                planner.mapBoard(board, t);
-                planner.renderMap(board, String.Format("map{0}.png", t.id));
+                Tank t = board.playerTank[i];
+
+                planner[i] = new PathPlanner();
+
+                planner[i].mapBoard(board, t);
+#if DEBUG
+                planner[i].renderMap(board, String.Format("map{0}.png", t.id));
+#endif
 
                 if (t.role.GetType() == typeof(Role.AttackBase))
                 {
@@ -1273,12 +1290,29 @@ namespace battlecity
                     // TODO: Scan the horizontal and vertical lines from the base, to find good sniping spots.
                     //       Point in case would be the centerpoint of the board-center-counter board, which
                     //       has a long vertical corridor heading straight towards the base.
-                    Stopwatch sw = new Stopwatch();
-                    sw.Start();
-                    var route = planner.GetPath(t.x, t.y, board.opponentBase.x, board.opponentBase.y);
-                    sw.Stop();
-                    Debug.WriteLine("It took {0} ms to find a route of length {0}", sw.ElapsedMilliseconds, route.Count);
-                    planner.renderRoute(board, route, String.Format("route{0}.png", t.id));
+
+                    /* Next, we start an asynchronous task running the path planner. We'll check its results
+                     * in postEarlyMove(), and cancel it if it's not done by postFinalMove().
+                     */
+
+                    cancel = new CancellationTokenSource();
+                    Debug.WriteLine("Map value: {0}", planner[i].map[20, 20]);
+
+                    Debug.WriteLine("Before the task: i={0}", i);
+                    int _i = i;
+                    Task task = new Task(() =>
+                        {
+                            Debug.WriteLine("Inside the task (start): i={0}, _i={1}", i, _i);
+                            Debug.WriteLine("Calculating route for playerTank[{0}]", _i);
+                            Debug.WriteLine("Map value: {0}", planner[_i].map[20, 20]);
+                            route[_i] = planner[_i].GetPath(t.x, t.y, board.opponentBase.x, board.opponentBase.y, cancel);
+                            Debug.WriteLine("Inside the task (end): i={0}, _i={1}", i, _i);
+                        }, cancel.Token);
+                    task.ContinueWith(battlecity.Program.ExceptionHandler, TaskContinuationOptions.OnlyOnFaulted);
+                    taskPool.Add(task);
+                    task.Start();
+
+                   //  planner.renderRoute(board, route, String.Format("route{0}.png", t.id));
                 }
                 else if (t.role.GetType() == typeof(Role.DefendBase))
                 {
@@ -1291,25 +1325,32 @@ namespace battlecity
 
         public override void postEarlyMove()
         {
-            // Do nothing
+            cancel.Cancel();
+            foreach (Task task in taskPool)
+               task.Wait(200);
+            taskPool.Clear();
+            if (route[0] != null)
+                planner[0].renderRoute(board, route[0], String.Format("route{0}.png", 0));
+            if (route[1] != null)
+                planner[1].renderRoute(board, route[1], String.Format("route{0}.png", 1));
         }
 
         public override void postFinalMove()
         {
             lock (client)
             {
-                Debug.WriteLine("Tank 1 {0}; Tank 2 {1}", A1, A2);
+                Debug.WriteLine("Tank 1 {0}; Tank 2 {1}", A[0], A[1]);
                 if (!board.playerTank[0].destroyed)
                 {
                     lock (client)
-                        client.setAction(board.playerTank[0].id, A1);
+                        client.setAction(board.playerTank[0].id, A[0]);
                     Debug.WriteLine("Tank 1's plans:");
                     Debug.WriteLine(board.playerTank[0].PrintPlans());
                 }
                 if (!board.playerTank[1].destroyed)
                 {
                     lock (client)
-                        client.setAction(board.playerTank[1].id, A2);
+                        client.setAction(board.playerTank[1].id, A[1]);
                     Debug.WriteLine("Tank 2's plans:");
                     Debug.WriteLine(board.playerTank[1].PrintPlans());
                 }

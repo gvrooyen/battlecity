@@ -5,6 +5,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Imaging;
+using System.Threading;
 
 namespace battlecity
 {
@@ -369,7 +370,7 @@ namespace battlecity
             }
         }
 
-        public List<Tuple<int, int>> GetPath(int x1, int y1, int x2, int y2)
+        public List<Tuple<int, int>> GetPath(int x1, int y1, int x2, int y2, CancellationTokenSource cancel)
         {
             List<Tuple<int, int>> result = new List<Tuple<int, int>>();
 
@@ -378,7 +379,7 @@ namespace battlecity
             AStarNodeBC GoalNode = new AStarNodeBC(null, null, 0, x2-2, y2-2, this);
             AStarNodeBC StartNode = new AStarNodeBC(null, GoalNode, 0, x1-2, y1-2, this);
             StartNode.GoalNode = GoalNode;
-            astar.FindPath(StartNode, GoalNode);
+            astar.FindPath(StartNode, GoalNode, cancel);
 
             foreach (AStarNodeBC n in astar.Solution)
                 result.Add(new Tuple<int, int>(n.X, n.Y));

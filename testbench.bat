@@ -9,9 +9,9 @@ start launch.bat
 choice /C X /T 3 /D X > nul
 echo Activating first player...
 cd %pwd%
-start start.bat http://localhost:7070/Challenge/ChallengeService
+start start_debug.bat http://localhost:7070/Challenge/ChallengeService ctf
 echo Activating second player...
-start start.bat http://localhost:7071/Challenge/ChallengeService
+start start_debug.bat http://localhost:7071/Challenge/ChallengeService random
 choice /C X /T 3 /D X > nul
 echo Starting Player One's monitor
 start run_monitor.bat

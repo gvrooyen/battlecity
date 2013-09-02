@@ -2,6 +2,7 @@ using System;
 using System.Diagnostics;
 using Games.Pathfinding;
 using System.Collections;
+using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Imaging;
 
@@ -34,7 +35,16 @@ namespace battlecity
 		}
 		private int FY;
 
-        public int[,] map { get; set; }
+        public static int[,] map { get; set; }
+
+        static public int GetMap(int x, int y)
+        {
+            if ((x < 0) || (x >= map.GetLength(0)))
+                return (-1);
+            if ((y < 0) || (y >= map.GetLength(1)))
+                return (-1);
+            return (map[x, y]);
+        }
 
 		// Constructor for a node in a 2-dimensional map
 		public AStarNodeBC(AStarNode AParent, AStarNode AGoalNode, double ACost, int AX, int AY) : base(AParent, AGoalNode, ACost)
@@ -46,7 +56,7 @@ namespace battlecity
 		// Adds a successor to a list if it is not impassible or the parent node
 		private void AddSuccessor(ArrayList ASuccessors, int AX, int AY) 
 		{
-			int CurrentCost = map[AX, AY];
+			int CurrentCost = GetMap(AX, AY);
 			if (CurrentCost == -1)
 			{
 				return;
@@ -107,7 +117,7 @@ namespace battlecity
 	public class PathPlanner
 	{
 		public int[,] kernel;
-		private int[,] map;
+		// private int[,] map;
 		
 		// Tick number of the last update (to avoid re-scanning the board in the same round).
 		private int lastUpdate;
@@ -126,12 +136,22 @@ namespace battlecity
 			 * indication of how many walls the tank would first have to destroy, before it can move
 			 * its center point to the specified square.
 			 */
-			kernel = new int[,]
+			
+            kernel = new int[,]
 				{{3,3,3,3,3},
 				 {3,2,2,2,3},
 				 {3,2,1,2,3},
 				 {3,2,2,2,3},
 				 {3,3,3,3,3}};
+            /*
+            kernel = new int[,]
+				{{1,1,1,1,1},
+				 {1,1,1,1,1},
+				 {1,1,1,1,1},
+				 {1,1,1,1,1},
+				 {1,1,1,1,1}};
+			*/
+
 			
 			enemyClearance = new int[] {30,25,20,15,10,5};
 			
@@ -143,7 +163,7 @@ namespace battlecity
             Initialize();
 		}
 		
-		public void mapBoard(Board board, int tick = -1)
+		public void mapBoard(Board board, Tank excludeTank = null, int tick = -1)
 		{
 			// If tick is -1, force an update. Otherwise, check that we haven't already updated the map
 			// this round.
@@ -151,7 +171,7 @@ namespace battlecity
 				return;
 			
 			lastUpdate = tick;
-            map = new int[board.xsize - 4, board.ysize - 4];
+            AStarNodeBC.map = new int[board.xsize - 4, board.ysize - 4];
 
 			/* Scan through the board and apply the kernel, and use that to create a map of movement
 			 * costs for the A* algorithm.
@@ -160,7 +180,7 @@ namespace battlecity
 				for (int y = 2; y < board.ysize -2; y++)
                 {
                     // Always start with a cost of one (the actual movement cost to enter the square)
-                    map[x-2, y-2] = 1;
+                    AStarNodeBC.map[x - 2, y - 2] = 1;
 
                     // Next, calculate the estimated movement penalty due to obstructions
                     for (int dx = -2; dx <= 2; dx++)
@@ -186,13 +206,13 @@ namespace battlecity
 
                             if (cost == -1)
                             {
-                                map[x-2, y-2] = -1;
+                                AStarNodeBC.map[x - 2, y - 2] = -1;
                                 break;
                             }
-                            
-                            map[x-2, y-2] += cost * kernel[dx+2, dy+2];
+
+                            AStarNodeBC.map[x - 2, y - 2] += cost * kernel[dx + 2, dy + 2];
                         }
-                        if (map[x-2, y-2] == -1)
+                        if (AStarNodeBC.map[x - 2, y - 2] == -1)
                             // Once it's impassible, there's no way to recover
                             break;
                     }
@@ -230,15 +250,15 @@ namespace battlecity
              */
 
             foreach (Tank t in board.playerTank)
-                if (!t.destroyed)
+                if (!t.destroyed && ((excludeTank == null) || (excludeTank.id != t.id)))
                     for (int dx = -4; dx <= 4; dx++)
                         for (int dy = -4; dy <= 4; dy++)
-                            if ((t.x - 2 + dx >= 0) && (t.x - 2 + dx < map.GetLength(0)) &&
-                                (t.y - 2 + dy >= 0) && (t.y - 2 + dy < map.GetLength(1)))
+                            if ((t.x - 2 + dx >= 0) && (t.x - 2 + dx < AStarNodeBC.map.GetLength(0)) &&
+                                (t.y - 2 + dy >= 0) && (t.y - 2 + dy < AStarNodeBC.map.GetLength(1)))
                             {
                                 try
                                 {
-                                    map[t.x - 2 + dx, t.y - 2 + dy] = -1;
+                                    AStarNodeBC.map[t.x - 2 + dx, t.y - 2 + dy] = -1;
                                 }
                                 catch (IndexOutOfRangeException)
                                 {
@@ -248,20 +268,20 @@ namespace battlecity
                             }
 
             foreach (Tank t in board.opponentTank)
-                if (!t.destroyed)
+                if (!t.destroyed && ((excludeTank == null) || (excludeTank.id != t.id)))
                     for (int dx = -4 - enemyClearance.Length; dx <= 4 + enemyClearance.Length; dx++)
                         for (int dy = -4 - enemyClearance.Length; dy <= 4 + enemyClearance.Length; dy++)
                         {
-                            if ((t.x - 2 + dx >= 0) && (t.x - 2 + dx < map.GetLength(0)) &&
-                                (t.y - 2 + dy >= 0) && (t.y - 2 + dy < map.GetLength(1)))
+                            if ((t.x - 2 + dx >= 0) && (t.x - 2 + dx < AStarNodeBC.map.GetLength(0)) &&
+                                (t.y - 2 + dy >= 0) && (t.y - 2 + dy < AStarNodeBC.map.GetLength(1)))
                             {
                                 int clearance = Math.Max(Math.Abs(dx) - 5, Math.Abs(dy) - 5);
                                 try
                                 {
-                                    if ((clearance >= 0) && (map[t.x - 2 + dx, t.y - 2 + dy] != -1))
-                                        map[t.x - 2 + dx, t.y - 2 + dy] += enemyClearance[clearance];
+                                    if ((clearance >= 0) && (AStarNodeBC.map[t.x - 2 + dx, t.y - 2 + dy] != -1))
+                                        AStarNodeBC.map[t.x - 2 + dx, t.y - 2 + dy] += enemyClearance[clearance];
                                     else if (clearance < 0)
-                                        map[t.x - 2 + dx, t.y - 2 + dy] = -1;
+                                        AStarNodeBC.map[t.x - 2 + dx, t.y - 2 + dy] = -1;
                                 }
                                 catch (IndexOutOfRangeException)
                                 {
@@ -289,40 +309,79 @@ namespace battlecity
 
             for (int dx = -2; dx <= 2; dx++)
                 for (int dy = -2; dy <= 2; dy++)
-                    if ((board.playerBase.x + dx - 2 >= 0) && (board.playerBase.x + dx - 2 < map.GetLength(0)) &&
-                        (board.playerBase.y + dy - 2 >= 0) && (board.playerBase.y + dy - 2 < map.GetLength(1)))
-                        map[board.playerBase.x + dx - 2, board.playerBase.y + dy - 2] = -1;
+                    if ((board.playerBase.x + dx - 2 >= 0) && (board.playerBase.x + dx - 2 < AStarNodeBC.map.GetLength(0)) &&
+                        (board.playerBase.y + dy - 2 >= 0) && (board.playerBase.y + dy - 2 < AStarNodeBC.map.GetLength(1)))
+                        AStarNodeBC.map[board.playerBase.x + dx - 2, board.playerBase.y + dy - 2] = -1;
+        }
+
+        private Bitmap drawMap(Board board)
+        {
+            Bitmap b = new Bitmap(board.xsize * 8, board.ysize * 8);
+            using (Graphics g = Graphics.FromImage(b))
+            {
+                g.Clear(Color.FromArgb(255, 0, 0));
+                for (int x = 0; x < AStarNodeBC.map.GetLength(0); x++)
+                    for (int y = 0; y < AStarNodeBC.map.GetLength(1); y++)
+                    {
+                        int green = 0;
+                        int blue = 0;
+                        int red = AStarNodeBC.map[x, y] * 8;
+                        if (red > 255)
+                            red = 255;
+                        else if (red < 0)
+                        {
+                            red = 255;
+                            green = 255;
+                            blue = 255;
+                        }
+                        Rectangle rect = new Rectangle((x + 2) * 8, (y + 2) * 8, 8, 8);
+                        g.FillRectangle(new SolidBrush(Color.FromArgb(red, green, blue)), rect);
+                    }
+            }
+            return b;
         }
 
         public void renderMap(Board board, string filename)
         {
-            Debug.WriteLine("Writing image");
             // Create a rendering of the cost map, superimposed onto the board.
-            using (Bitmap b = new Bitmap(board.xsize*8, board.ysize*8))
+            using (Bitmap b = drawMap(board))
+            {
+                b.Save(filename, ImageFormat.Png);
+            }
+        }
+
+        public void renderRoute(Board board, List<Tuple<int,int>> route, string filename)
+        {
+            // Create a rendering of the cost map, with the specified route superimposed on it.
+            using (Bitmap b = drawMap(board))
             {
                 using (Graphics g = Graphics.FromImage(b))
                 {
-                    g.Clear(Color.FromArgb(255, 0, 0));
-                    for (int x = 0; x < map.GetLength(0); x++)
-                        for (int y = 0; y < map.GetLength(1); y++)
-                        {
-                            int green = 0;
-                            int blue = 0;
-                            int red = map[x,y]*8;
-                            if (red > 255)
-                                red = 255;
-                            else if (red < 0)
-                            {
-                                red = 255;
-                                green = 255;
-                                blue = 255;
-                            }
-                            Rectangle rect = new Rectangle( (x+2)*8, (y+2)*8, 8, 8 );
-                            g.FillRectangle(new SolidBrush(Color.FromArgb(red, green, blue)), rect);
-                        }
+                    foreach (Tuple<int, int> p in route)
+                    {
+                        Rectangle rect = new Rectangle( (p.Item1 + 2) * 8 + 2, (p.Item2 + 2) * 8 + 2, 4, 4);
+                        g.FillEllipse(new SolidBrush(Color.FromArgb(0, 255, 0)), rect);
+                    }
                 }
                 b.Save(filename, ImageFormat.Png);
             }
+        }
+
+        public List<Tuple<int, int>> GetPath(int x1, int y1, int x2, int y2)
+        {
+            List<Tuple<int, int>> result = new List<Tuple<int, int>>();
+
+            Games.Pathfinding.AStar astar = new Games.Pathfinding.AStar();
+
+            AStarNodeBC GoalNode = new AStarNodeBC(null, null, 0, x2-2, y2-2);
+            AStarNodeBC StartNode = new AStarNodeBC(null, GoalNode, 0, x1-2, y1-2);
+            StartNode.GoalNode = GoalNode;
+            astar.FindPath(StartNode, GoalNode);
+
+            foreach (AStarNodeBC n in astar.Solution)
+                result.Add(new Tuple<int, int>(n.X, n.Y));
+
+            return result;
         }
 	}
 }

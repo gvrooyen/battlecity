@@ -337,13 +337,15 @@ namespace battlecity
                 opponentBase.x = status.players[opponentID].@base.x;
                 opponentBase.y = status.players[opponentID].@base.y;
 
-                Debug.WriteLine("Welcome, {0} (#{1})", playerName, playerID);
-
                 if ((status.players[playerID].bullets == null) && (status.players[opponentID].bullets == null))
                     Debug.WriteLine("No bullets in play yet.");
                 else
                     Debug.WriteLine("WARNING: bullets already in play!");
                 int i = 0;
+                Debug.WriteLine("");
+                Debug.WriteLine("Player base is at ({0},{1}).", playerBase.x, playerBase.y);
+                Debug.WriteLine("Opponent base is at ({0},{1}).", opponentBase.x, opponentBase.y);
+
                 foreach (ChallengeService.unit u in status.players[playerID].units)
                 {
                     playerTank[i++] = new Tank(u.x, u.y, u.direction, u.id);

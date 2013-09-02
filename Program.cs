@@ -11,8 +11,6 @@ namespace battlecity
 {
     class Program
     {
-        static bool debug = false;
-
         static Clock clock;
         static ChallengeService.ChallengeClient client;
         static int lastTick = 0;
@@ -102,13 +100,13 @@ namespace battlecity
             if (ms > 0)
                 Diagnostics.Sync.addTickPeriod(ms);
 
-            if (debug)
-            {
-                // System.IO.File.WriteAllText(board.playerName + ".txt", board.ToString());
-                StreamWriter file = new StreamWriter(File.Open(board.playerName + ".txt", FileMode.Create, FileAccess.Write, FileShare.ReadWrite));
-                file.WriteLine(board.ToString());
-                file.Close();
-            }
+#if DEBUG
+            // System.IO.File.WriteAllText(board.playerName + ".txt", board.ToString());
+            StreamWriter file = new StreamWriter(File.Open(board.playerName + ".txt", FileMode.Create, FileAccess.Write, FileShare.ReadWrite));
+            file.WriteLine(board.ToString());
+            file.Close();
+#endif
+
         }
 
         static void postEarlyMove()
@@ -128,20 +126,22 @@ namespace battlecity
 
         static void Main(string[] args)
         {
+            Console.Clear();
             Console.WriteLine("Battle City AI, Copyright (c) 1985 U.S. Robots and Mechanical Men, Inc.");
-            Console.WriteLine("Welcome, scalvin.");
+#if DEBUG
+            Console.WriteLine("Mode: DEBUG");
+#else
+            Console.WriteLine("Mode: RELEASE");
+#endif
+            Console.WriteLine(Environment.NewLine + "Welcome, scalvin."); 
 
-            // var info = new Microsoft.VisualBasic.Devices.ComputerInfo();
-            string botname = "random";
+            string botname = "ctf";
 
             Console.BufferHeight = 4096;
             Console.WindowWidth = 132;
             Console.WindowHeight = 40;
 
             Debug.Listeners.Add(new TextWriterTraceListener(System.Console.Out));
-
-            // System.Debug.WriteLine(info.OSFullName);
-            // System.Debug.WriteLine("Memory usage: {0}%", info.AvailablePhysicalMemory*100/info.TotalPhysicalMemory);
 
             var endpoint = "http://localhost:7070/Challenge/ChallengeService";
             if (args.Length > 0)
@@ -179,55 +179,7 @@ namespace battlecity
                 // on the reported millisecondsToNextTick.
                 ChallengeService.game status = client.getStatus();
                 board.Update(status);
-                board.playerName = status.playerName;
-                if (status.players[0].name == status.playerName)
-                    board.playerID = 0;
-                else if (status.players[1].name == status.playerName)
-                    board.playerID = 1;
-                else
-                    throw new ArgumentException("Player '{0}' not found in player list.", status.playerName);
-
-                Debug.Listeners.Add(new TextWriterTraceListener(System.IO.File.CreateText(status.playerName + ".log")));
-
-                board.playerBase.x = status.players[board.playerID].@base.x;
-                board.playerBase.y = status.players[board.playerID].@base.y;
-                board.opponentBase.x = status.players[board.opponentID].@base.x;
-                board.opponentBase.y = status.players[board.opponentID].@base.y;
-
-                Debug.WriteLine("Welcome, {0} (#{1})", board.playerName, board.playerID);
                 Console.Title = board.playerName;
-
-                if ((status.players[board.playerID].bullets == null) && (status.players[board.opponentID].bullets == null))
-                    Debug.WriteLine("No bullets in play yet.");
-                else
-                    Debug.WriteLine("WARNING: bullets already in play!");
-
-                Debug.WriteLine("Player base is at ({0},{1}).", board.playerBase.x, board.playerBase.y);
-                Debug.WriteLine("Opponent base is at ({0},{1}).", board.opponentBase.x, board.opponentBase.y);
-
-                int i = 0;
-                foreach (ChallengeService.unit u in status.players[board.playerID].units)
-                {
-                    board.playerTank[i++] = new Tank(u.x, u.y, u.direction, u.id);
-                    Debug.WriteLine("Player tank ID {0} starts at ({1},{2}), facing {3}.",
-                        u.id, u.x, u.y, u.direction);
-                }
-
-                i = 0;
-                foreach (ChallengeService.unit u in status.players[board.opponentID].units)
-                {
-                    board.opponentTank[i++] = new Tank(u.x, u.y, u.direction, u.id);
-                    Debug.WriteLine("Opponent tank ID {0} starts at ({1},{2}), facing {3}.",
-                        u.id, u.x, u.y, u.direction);
-                }
-
-                Debug.WriteLine("Testing path planner");
-                PathPlanner planner = new PathPlanner();
-                planner.mapBoard(board);
-                planner.renderMap(board, board.playerName + ".png");
-
-                // if (board.playerName == "Player One")
-                    botname = "aggro";
 
                 switch (botname)
                 {
@@ -237,12 +189,15 @@ namespace battlecity
                     case "aggro":
                         bot = new AI_Aggro(board, client);
                         break;
+                    case "ctf":
+                        bot = new AI_CTF(board, client);
+                        break;
                     default:
                         bot = new AI_Random(board, client);
                         break;
                 }
 
-                Console.WriteLine("Launching AI '{0}'", botname);
+                Console.WriteLine("Launching AI '{0}'" + Environment.NewLine, botname);
 
                 clock.Start(status.millisecondsToNextTick + Settings.SYNC_INITIAL_DELAY);
                 Debug.Flush();

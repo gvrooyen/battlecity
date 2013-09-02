@@ -1230,7 +1230,8 @@ namespace battlecity
          * opponents are also still within L/3 from the enemy base.
          */
 
-        ChallengeService.action A1, A2;
+        private ChallengeService.action A1, A2;
+        private PathPlanner planner = new PathPlanner();
 
         public AI_CTF() : base() { }
         public AI_CTF(Board board, ChallengeService.ChallengeClient client)
@@ -1255,6 +1256,33 @@ namespace battlecity
                     board.playerTank[1].role = new Role.AttackBase();
                     board.playerTank[0].role = new Role.DefendBase();
                 }
+            }
+
+            foreach (Tank t in board.playerTank)
+            {
+                // Let the planner rescan the current board state. We do this separately for each tank,
+                // so that the current tank can be excluded from the map (otherwise its own blocks look
+                // like no-go areas).
+
+                planner.mapBoard(board, t);
+                planner.renderMap(board, String.Format("map{0}.png", t.id));
+
+                if (t.role.GetType() == typeof(Role.AttackBase))
+                {
+                    // For now, just target the actual coordinates of the base (gun at it and run over it).
+                    // TODO: Scan the horizontal and vertical lines from the base, to find good sniping spots.
+                    //       Point in case would be the centerpoint of the board-center-counter board, which
+                    //       has a long vertical corridor heading straight towards the base.
+                    var route = planner.GetPath(t.x, t.y, board.opponentBase.x, board.opponentBase.y);
+                    Debug.WriteLine("Route has length {0}", route.Count);
+                    planner.renderRoute(board, route, String.Format("route{0}.png", t.id));
+                }
+                else if (t.role.GetType() == typeof(Role.DefendBase))
+                {
+
+                }
+                else
+                    Debug.WriteLine("ERROR: Player tank (id={0}) has unsupported role {1}", t.id, t.role);
             }
         }
 

@@ -1266,6 +1266,55 @@ namespace battlecity
                     board.playerTank[0].role = new Role.DefendBase();
                 }
             }
+            else if ((board.playerTank[0].destroyed && (board.playerTank[1].role.GetType() == typeof(Role.DefendBase))))
+            {
+                // We're not going to win if only a defender survives. Geronimo!
+                Debug.WriteLine("Switching surviving player tank to assault mode.");
+                board.playerTank[1].role = new Role.AttackBase();
+            }
+            else if ((board.playerTank[1].destroyed && (board.playerTank[0].role.GetType() == typeof(Role.DefendBase))))
+            {
+                Debug.WriteLine("Switching surviving player tank to assault mode.");
+                board.playerTank[0].role = new Role.AttackBase();
+            }
+            else if (!board.opponentTank[0].destroyed && !board.opponentTank[1].destroyed)
+            {
+                /* Calculate whether all other tanks are within one-third radius of the enemy base. If so, let
+                 * the defender switch to offense. Only do this if both the enemy tanks still survive (i.e. our
+                 * single attacker would be outnumbered).
+                 */
+                int L = Math.Abs(board.playerBase.x - board.opponentBase.x)
+                    + Math.Abs(board.playerBase.y - board.opponentBase.y);
+
+                int defender = -1;
+                int attacker = -1;
+
+                if (board.playerTank[0].role.GetType() == typeof(Role.DefendBase))
+                {
+                    defender = 0;
+                    attacker = 1;
+                }
+                else if (board.playerTank[1].role.GetType() == typeof(Role.DefendBase))
+                {
+                    defender = 1;
+                    attacker = 0;
+                }
+
+                if (defender != -1)
+                {
+                    int O1 = Math.Abs(board.opponentBase.x - board.opponentTank[0].x)
+                        + Math.Abs(board.opponentBase.y - board.opponentTank[0].y);
+                    int O2 = Math.Abs(board.opponentBase.x - board.opponentTank[1].x)
+                        + Math.Abs(board.opponentBase.y - board.opponentTank[1].y);
+                    int Pa = Math.Abs(board.opponentBase.x - board.opponentTank[attacker].x)
+                        + Math.Abs(board.opponentBase.y - board.opponentTank[attacker].y);
+                    if ( (O1 < L/3) && (O2 < L/3) && (Pa < L/3) )
+                    {
+                        Debug.WriteLine("Switching player's defending tank over to assault.");
+                        board.playerTank[defender].role = new Role.AttackBase();
+                    }
+                }
+            }
 
             Debug.WriteLine("{0} tanks in play", board.playerTank.Length);
             for (int i = 0; i < 2; i++)

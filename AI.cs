@@ -1375,6 +1375,40 @@ namespace battlecity
             if (route[1] != null)
                 planner[1].renderRoute(board, route[1], String.Format("route{0}.png", 1));
 #endif
+            // Now act on the (hopefully updated) routes.
+            for (int i = 0; i < 2; i++)
+            {
+                if (!board.playerTank[i].destroyed)
+                {
+                    if ((route[i] == null) || (route.Length < 4))
+                    {
+                        // The pathfinder hasn't been able to find a valid route yet, or we're practically
+                        // at the target. Just bash ahead.
+                        A[i] = RunAndGun(board.playerTank[i], planner[i].destX, planner[i].destY);
+                    }
+                    else
+                    {
+                        // Check the proposed route, and target the end of the first straight line
+                        // segment in the route (this works well, because RunAndGun handles straight
+                        // lines perfectly: correctly alternating between moving and firing).
+                        int dx = route[i][1].Item1 - route[i][0].Item1;
+                        int dy = route[i][1].Item2 - route[i][0].Item2;
+                        int destItem = 1;
+                        for (int j = 2; j < route[i].Count; j++)
+                        {
+                            if (((route[i][j].Item1 - route[i][j].Item1) == dx) &&
+                                ((route[i][j].Item2 - route[i][j].Item2) == dy))
+                            {
+                                destItem = j;
+                            }
+                            else
+                                break;
+                        }
+                        A[i] = RunAndGun(board.playerTank[i], route[i][destItem].Item1, route[i][destItem].Item2);
+                    }
+                }
+            }
+
         }
 
         public override void postFinalMove()

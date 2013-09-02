@@ -111,6 +111,9 @@ namespace battlecity
 	{
         public double[,] map { get; set; }
 
+        public int destX { get; set; }
+        public int destY { get; set; }
+
         public double GetMap(int x, int y)
         {
             if ((x < 0) || (x >= map.GetLength(0)))
@@ -159,6 +162,8 @@ namespace battlecity
 			enemyClearance = new double[] {0.03, 0.02, 0.01, 0.01};
 			
 			lastUpdate = -2;
+            destX = -1;
+            destY = -1;
 		}
 		
 		public PathPlanner ()
@@ -373,6 +378,11 @@ namespace battlecity
         public List<Tuple<int, int>> GetPath(int x1, int y1, int x2, int y2, CancellationTokenSource cancel)
         {
             List<Tuple<int, int>> result = new List<Tuple<int, int>>();
+
+            // Save the destination on which the path was planned. This is useful if the planning gets cancelled
+            // and we later want to re-run the plan (or substitute it with an alternative).
+            destX = x2;
+            destY = y2;
 
             Games.Pathfinding.AStar astar = new Games.Pathfinding.AStar();
 

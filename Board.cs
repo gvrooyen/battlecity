@@ -71,7 +71,7 @@ namespace battlecity
             return result.ToString();
         }
 
-        public bool Watchdog()
+        public ChallengeService.action Watchdog()
         {
             /* Monitor the tank's activity, and reset it if it seems to be stuck.
              */
@@ -84,7 +84,7 @@ namespace battlecity
                 xHistory.Enqueue(x);
                 yHistory.Clear();
                 yHistory.Enqueue(y);
-                return true;
+                return ChallengeService.action.NONE;
             }
             else
             {
@@ -92,25 +92,30 @@ namespace battlecity
                 yHistory.Enqueue(y);
             }
 
-            if (xHistory.Count >= period)
+            if (xHistory.Count >= 2*period)
+            {
+                // We've been stuck for a long time, and clearing plans haven't done much.
+                // Do random moves until we break free.
+                Debug.WriteLine("Tank (id={0}) is still stuck! Trying to wriggle free.", id);
+                Array actions = Enum.GetValues(typeof(ChallengeService.action));
+                return (ChallengeService.action)actions.GetValue(AI.random.Next(actions.Length));
+            }
+            else if (xHistory.Count >= period)
             {
                 int pastValue = xHistory.Peek();
                 foreach (int x in xHistory)
                     if (x != pastValue)
-                        return true;
+                        return ChallengeService.action.NONE;
                 pastValue = yHistory.Peek();
                 foreach (int y in yHistory)
                     if (y != pastValue)
-                        return true;
+                        return ChallengeService.action.NONE;
+                Debug.WriteLine("WARNING: Watchdog triggered for tank (id={0}). Clearing plans.", id);
+                plans.Clear();
+                return ChallengeService.action.NONE;
             }
             else
-                return true;
-
-            Debug.WriteLine("WARNING: Watchdog triggered for tank (id={0})", id);
-            xHistory.Clear();
-            yHistory.Clear();
-            plans.Clear();
-            return false;
+                return ChallengeService.action.NONE;
         }
     }
 

@@ -281,7 +281,7 @@ namespace battlecity
         protected Board board;
         protected ChallengeService.ChallengeClient client;
 
-        static protected readonly Random random = new Random(Guid.NewGuid().GetHashCode());
+        static public readonly Random random = new Random(Guid.NewGuid().GetHashCode());
 
         private void Initialize()
         {

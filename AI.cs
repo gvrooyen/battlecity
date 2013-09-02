@@ -1276,6 +1276,8 @@ namespace battlecity
                 // like no-go areas).
 
                 Tank t = board.playerTank[i];
+                if (t.destroyed)
+                    break;
 
                 planner[i] = new PathPlanner();
 
@@ -1296,27 +1298,65 @@ namespace battlecity
                      */
 
                     cancel = new CancellationTokenSource();
-                    Debug.WriteLine("Map value: {0}", planner[i].map[20, 20]);
 
-                    Debug.WriteLine("Before the task: i={0}", i);
+                    // Make a local copy of the loop variable, since the latter can change while the task
+                    // executes.
                     int _i = i;
+
                     Task task = new Task(() =>
                         {
-                            Debug.WriteLine("Inside the task (start): i={0}, _i={1}", i, _i);
-                            Debug.WriteLine("Calculating route for playerTank[{0}]", _i);
-                            Debug.WriteLine("Map value: {0}", planner[_i].map[20, 20]);
                             route[_i] = planner[_i].GetPath(t.x, t.y, board.opponentBase.x, board.opponentBase.y, cancel);
-                            Debug.WriteLine("Inside the task (end): i={0}, _i={1}", i, _i);
                         }, cancel.Token);
+
                     task.ContinueWith(battlecity.Program.ExceptionHandler, TaskContinuationOptions.OnlyOnFaulted);
                     taskPool.Add(task);
                     task.Start();
-
-                   //  planner.renderRoute(board, route, String.Format("route{0}.png", t.id));
                 }
                 else if (t.role.GetType() == typeof(Role.DefendBase))
                 {
+                    // Find out which of the opponents is closest to our base.
 
+                    int closestDist = int.MaxValue;
+                    Tank closestOpponent = null;
+
+                    for (int j = 0; j < 2; j++)
+                    {
+                        if (board.opponentTank[j].destroyed)
+                            break;
+                        int dist = Math.Abs(board.playerBase.x - board.opponentTank[j].x)
+                            + Math.Abs(board.playerBase.y - board.opponentTank[j].y);
+                        if (dist < closestDist)
+                        {
+                            closestDist = dist;
+                            closestOpponent = board.opponentTank[j];
+                        }
+                    }
+
+                    if (closestOpponent != null)
+                    {
+                        // Target a point one third of the way between the opponent and the base.
+                        int destX = board.playerBase.x + (closestOpponent.x - board.playerBase.x) / 3;
+                        int destY = board.playerBase.y + (closestOpponent.y - board.playerBase.y) / 3;
+
+                        /* Next, we start an asynchronous task running the path planner. We'll check its results
+                         * in postEarlyMove(), and cancel it if it's not done by postFinalMove().
+                         */
+
+                        cancel = new CancellationTokenSource();
+
+                        // Make a local copy of the loop variable, since the latter can change while the task
+                        // executes.
+                        int _i = i;
+
+                        Task task = new Task(() =>
+                        {
+                            route[_i] = planner[_i].GetPath(t.x, t.y, destX, destY, cancel);
+                        }, cancel.Token);
+
+                        task.ContinueWith(battlecity.Program.ExceptionHandler, TaskContinuationOptions.OnlyOnFaulted);
+                        taskPool.Add(task);
+                        task.Start();
+                    }
                 }
                 else
                     Debug.WriteLine("ERROR: Player tank (id={0}) has unsupported role {1}", t.id, t.role);
@@ -1327,12 +1367,14 @@ namespace battlecity
         {
             cancel.Cancel();
             foreach (Task task in taskPool)
-               task.Wait(200);
+               task.Wait(100);
             taskPool.Clear();
+#if DEBUG
             if (route[0] != null)
                 planner[0].renderRoute(board, route[0], String.Format("route{0}.png", 0));
             if (route[1] != null)
                 planner[1].renderRoute(board, route[1], String.Format("route{0}.png", 1));
+#endif
         }
 
         public override void postFinalMove()

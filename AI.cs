@@ -1306,8 +1306,8 @@ namespace battlecity
                         + Math.Abs(board.opponentBase.y - board.opponentTank[0].y);
                     int O2 = Math.Abs(board.opponentBase.x - board.opponentTank[1].x)
                         + Math.Abs(board.opponentBase.y - board.opponentTank[1].y);
-                    int Pa = Math.Abs(board.opponentBase.x - board.opponentTank[attacker].x)
-                        + Math.Abs(board.opponentBase.y - board.opponentTank[attacker].y);
+                    int Pa = Math.Abs(board.opponentBase.x - board.playerTank[attacker].x)
+                        + Math.Abs(board.opponentBase.y - board.playerTank[attacker].y);
                     if ( (O1 < L/3) && (O2 < L/3) && (Pa < L/3) )
                     {
                         Debug.WriteLine("Switching player's defending tank over to assault.");
@@ -1328,6 +1328,8 @@ namespace battlecity
                 if (t.destroyed)
                     break;
 
+                A[i] = ChallengeService.action.NONE;
+
                 planner[i] = new PathPlanner();
 
                 planner[i].mapBoard(board, t);
@@ -1335,7 +1337,17 @@ namespace battlecity
                 planner[i].renderMap(board, String.Format("map{0}.png", t.id));
 #endif
 
-                if (t.role.GetType() == typeof(Role.AttackBase))
+                // See if there's a bullet we need to dodge
+                ChallengeService.action dodgeAction = Dodge(board.playerTank[i]);
+
+                // See if there's an enemy to take a pot shot at
+                ChallengeService.action potshotAction = PotShot(board.playerTank[i]);
+
+                if (dodgeAction != ChallengeService.action.NONE)
+                    A[i] = dodgeAction;
+                else if (potshotAction != ChallengeService.action.NONE)
+                    A[i] = potshotAction;
+                else if (t.role.GetType() == typeof(Role.AttackBase))
                 {
                     // For now, just target the actual coordinates of the base (gun at it and run over it).
                     // TODO: Scan the horizontal and vertical lines from the base, to find good sniping spots.
@@ -1429,31 +1441,36 @@ namespace battlecity
             {
                 if (!board.playerTank[i].destroyed)
                 {
-                    if ((route[i] == null) || (route.Length < 4))
+                    // If we already assigned a dodge or a pot shot action, nothing remains to be done here
+                    if (A[i] == ChallengeService.action.NONE)
                     {
-                        // The pathfinder hasn't been able to find a valid route yet, or we're practically
-                        // at the target. Just bash ahead.
-                        A[i] = RunAndGun(board.playerTank[i], planner[i].destX, planner[i].destY);
-                    }
-                    else
-                    {
-                        // Check the proposed route, and target the end of the first straight line
-                        // segment in the route (this works well, because RunAndGun handles straight
-                        // lines perfectly: correctly alternating between moving and firing).
-                        int dx = route[i][1].Item1 - route[i][0].Item1;
-                        int dy = route[i][1].Item2 - route[i][0].Item2;
-                        int destItem = 1;
-                        for (int j = 2; j < route[i].Count; j++)
+                        board.playerTank[i].plans.Clear();
+                        if ((route[i] == null) || (route.Length < 4))
                         {
-                            if (((route[i][j].Item1 - route[i][j].Item1) == dx) &&
-                                ((route[i][j].Item2 - route[i][j].Item2) == dy))
-                            {
-                                destItem = j;
-                            }
-                            else
-                                break;
+                            // The pathfinder hasn't been able to find a valid route yet, or we're practically
+                            // at the target. Just bash ahead.
+                            A[i] = RunAndGun(board.playerTank[i], planner[i].destX, planner[i].destY);
                         }
-                        A[i] = RunAndGun(board.playerTank[i], route[i][destItem].Item1, route[i][destItem].Item2);
+                        else
+                        {
+                            // Check the proposed route, and target the end of the first straight line
+                            // segment in the route (this works well, because RunAndGun handles straight
+                            // lines perfectly: correctly alternating between moving and firing).
+                            int dx = route[i][1].Item1 - route[i][0].Item1;
+                            int dy = route[i][1].Item2 - route[i][0].Item2;
+                            int destItem = 1;
+                            for (int j = 2; j < route[i].Count; j++)
+                            {
+                                if (((route[i][j].Item1 - route[i][j].Item1) == dx) &&
+                                    ((route[i][j].Item2 - route[i][j].Item2) == dy))
+                                {
+                                    destItem = j;
+                                }
+                                else
+                                    break;
+                            }
+                            A[i] = RunAndGun(board.playerTank[i], route[i][destItem].Item1, route[i][destItem].Item2);
+                        }
                     }
                 }
             }

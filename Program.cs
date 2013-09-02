@@ -180,6 +180,7 @@ namespace battlecity
                 ChallengeService.game status = client.getStatus();
                 board.Update(status);
                 Console.Title = board.playerName;
+                Debug.Listeners.Add(new TextWriterTraceListener(board.playerName+".log"));
 
                 switch (botname)
                 {

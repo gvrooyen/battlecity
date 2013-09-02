@@ -501,7 +501,8 @@ namespace battlecity
                 {
                     // This bullet has not been updated this round, so it must have been destroyed.
                     // Remove the tank's reference to it.
-                    bullet.Value.owner.bullet = null;
+                    if (bullet.Value.owner != null)
+                        bullet.Value.owner.bullet = null;
                     // We can't remove it from the dictionary inside the loop, so take note of the destroyed bullets.
                     destroyedBullets.Add(bullet.Key);
                 }

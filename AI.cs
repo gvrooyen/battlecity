@@ -1275,7 +1275,7 @@ namespace battlecity
                     //       has a long vertical corridor heading straight towards the base.
                     Stopwatch sw = new Stopwatch();
                     sw.Start();
-                    var route = planner.GetPath(t.x, t.y, board.opponentBase.x, board.opponentBase.y, 1.0);
+                    var route = planner.GetPath(t.x, t.y, board.opponentBase.x, board.opponentBase.y);
                     sw.Stop();
                     Debug.WriteLine("It took {0} ms to find a route of length {0}", sw.ElapsedMilliseconds, route.Count);
                     planner.renderRoute(board, route, String.Format("route{0}.png", t.id));

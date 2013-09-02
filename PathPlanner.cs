@@ -14,6 +14,8 @@ namespace battlecity
 		 * This code has been adapted from a license-free public-domain source:
 		 * http://www.codeproject.com/Articles/5758/Path-finding-in-C
 		 */
+
+        public PathPlanner planner { get; set; }
 		
 		// The X-coordinate of the node
 		public int X 
@@ -35,37 +37,23 @@ namespace battlecity
 		}
 		private int FY;
 
-        // Speedup factor (weight for the heuristic function)
-        public static double speedUp { get; set; }
-
-        public static double[,] map { get; set; }
-
-        static public double GetMap(int x, int y)
-        {
-            if ((x < 0) || (x >= map.GetLength(0)))
-                return (-1);
-            if ((y < 0) || (y >= map.GetLength(1)))
-                return (-1);
-            return (map[x, y]);
-        }
-
 		// Constructor for a node in a 2-dimensional map
-		public AStarNodeBC(AStarNode AParent, AStarNode AGoalNode, double ACost, int AX, int AY) : base(AParent, AGoalNode, ACost)
+		public AStarNodeBC(AStarNode AParent, AStarNode AGoalNode, double ACost, int AX, int AY, PathPlanner owner) : base(AParent, AGoalNode, ACost)
 		{
 			FX = AX;
 			FY = AY;
-            speedUp = 1.0;
+            planner = owner;
 		}
 
 		// Adds a successor to a list if it is not impassible or the parent node
 		private void AddSuccessor(ArrayList ASuccessors, int AX, int AY) 
 		{
-			double CurrentCost = GetMap(AX, AY);
+			double CurrentCost = planner.GetMap(AX, AY);
 			if (CurrentCost < 0.0)
 			{
 				return;
 			}
-			AStarNodeBC NewNode = new AStarNodeBC(this, GoalNode, Cost + CurrentCost, AX, AY);
+			AStarNodeBC NewNode = new AStarNodeBC(this, GoalNode, Cost + CurrentCost, AX, AY, planner);
 			if (NewNode.IsSameState(Parent)) 
 			{
 				return;
@@ -92,7 +80,7 @@ namespace battlecity
 				double xd = FX - ((AStarNodeBC)GoalNode).X;
 				double yd = FY - ((AStarNodeBC)GoalNode).Y;
 				// "Manhattan Distance" - Used when search can only move vertically and horizontally.
-				GoalEstimate = speedUp * (Math.Abs(xd) + Math.Abs(yd)); 
+				GoalEstimate = 1.0 * (Math.Abs(xd) + Math.Abs(yd)); 
 			}
 			else
 			{
@@ -120,8 +108,18 @@ namespace battlecity
 	
 	public class PathPlanner
 	{
-		public double[,] kernel;
-		// private int[,] map;
+        public double[,] map { get; set; }
+
+        public double GetMap(int x, int y)
+        {
+            if ((x < 0) || (x >= map.GetLength(0)))
+                return (-1);
+            if ((y < 0) || (y >= map.GetLength(1)))
+                return (-1);
+            return (map[x, y]);
+        }
+
+        public double[,] kernel;
 		
 		// Tick number of the last update (to avoid re-scanning the board in the same round).
 		private int lastUpdate;
@@ -156,9 +154,8 @@ namespace battlecity
 				 {0.03,0.02,0.01,0.02,0.03},
 				 {0.03,0.02,0.02,0.02,0.03},
 				 {0.03,0.03,0.03,0.03,0.03}};
-
 			
-			enemyClearance = new double[] {0.1};
+			enemyClearance = new double[] {0.03, 0.02, 0.01, 0.01};
 			
 			lastUpdate = -2;
 		}
@@ -176,7 +173,7 @@ namespace battlecity
 				return;
 			
 			lastUpdate = tick;
-            AStarNodeBC.map = new double[board.xsize - 4, board.ysize - 4];
+            map = new double[board.xsize - 4, board.ysize - 4];
 
 			/* Scan through the board and apply the kernel, and use that to create a map of movement
 			 * costs for the A* algorithm.
@@ -185,7 +182,7 @@ namespace battlecity
 				for (int y = 2; y < board.ysize -2; y++)
                 {
                     // Always start with a cost of one (the actual movement cost to enter the square)
-                    AStarNodeBC.map[x - 2, y - 2] = 1;
+                    map[x - 2, y - 2] = 1;
 
                     // Next, calculate the estimated movement penalty due to obstructions
                     for (int dx = -2; dx <= 2; dx++)
@@ -211,13 +208,13 @@ namespace battlecity
 
                             if (cost == -1)
                             {
-                                AStarNodeBC.map[x - 2, y - 2] = -1;
+                                map[x - 2, y - 2] = -1;
                                 break;
                             }
 
-                            AStarNodeBC.map[x - 2, y - 2] += cost * kernel[dx + 2, dy + 2];
+                            map[x - 2, y - 2] += cost * kernel[dx + 2, dy + 2];
                         }
-                        if (AStarNodeBC.map[x - 2, y - 2] == -1)
+                        if (map[x - 2, y - 2] == -1)
                             // Once it's impassible, there's no way to recover
                             break;
                     }
@@ -258,12 +255,12 @@ namespace battlecity
                 if (!t.destroyed && ((excludeTank == null) || (excludeTank.id != t.id)))
                     for (int dx = -4; dx <= 4; dx++)
                         for (int dy = -4; dy <= 4; dy++)
-                            if ((t.x - 2 + dx >= 0) && (t.x - 2 + dx < AStarNodeBC.map.GetLength(0)) &&
-                                (t.y - 2 + dy >= 0) && (t.y - 2 + dy < AStarNodeBC.map.GetLength(1)))
+                            if ((t.x - 2 + dx >= 0) && (t.x - 2 + dx < map.GetLength(0)) &&
+                                (t.y - 2 + dy >= 0) && (t.y - 2 + dy < map.GetLength(1)))
                             {
                                 try
                                 {
-                                    AStarNodeBC.map[t.x - 2 + dx, t.y - 2 + dy] = -1;
+                                    map[t.x - 2 + dx, t.y - 2 + dy] = -1;
                                 }
                                 catch (IndexOutOfRangeException)
                                 {
@@ -277,16 +274,16 @@ namespace battlecity
                     for (int dx = -4 - enemyClearance.Length; dx <= 4 + enemyClearance.Length; dx++)
                         for (int dy = -4 - enemyClearance.Length; dy <= 4 + enemyClearance.Length; dy++)
                         {
-                            if ((t.x - 2 + dx >= 0) && (t.x - 2 + dx < AStarNodeBC.map.GetLength(0)) &&
-                                (t.y - 2 + dy >= 0) && (t.y - 2 + dy < AStarNodeBC.map.GetLength(1)))
+                            if ((t.x - 2 + dx >= 0) && (t.x - 2 + dx < map.GetLength(0)) &&
+                                (t.y - 2 + dy >= 0) && (t.y - 2 + dy < map.GetLength(1)))
                             {
                                 int clearance = Math.Max(Math.Abs(dx) - 5, Math.Abs(dy) - 5);
                                 try
                                 {
-                                    if ((clearance >= 0) && (AStarNodeBC.map[t.x - 2 + dx, t.y - 2 + dy] != -1))
-                                        AStarNodeBC.map[t.x - 2 + dx, t.y - 2 + dy] += enemyClearance[clearance];
+                                    if ((clearance >= 0) && (map[t.x - 2 + dx, t.y - 2 + dy] != -1))
+                                        map[t.x - 2 + dx, t.y - 2 + dy] += enemyClearance[clearance];
                                     else if (clearance < 0)
-                                        AStarNodeBC.map[t.x - 2 + dx, t.y - 2 + dy] = -1;
+                                        map[t.x - 2 + dx, t.y - 2 + dy] = -1;
                                 }
                                 catch (IndexOutOfRangeException)
                                 {
@@ -314,9 +311,9 @@ namespace battlecity
 
             for (int dx = -2; dx <= 2; dx++)
                 for (int dy = -2; dy <= 2; dy++)
-                    if ((board.playerBase.x + dx - 2 >= 0) && (board.playerBase.x + dx - 2 < AStarNodeBC.map.GetLength(0)) &&
-                        (board.playerBase.y + dy - 2 >= 0) && (board.playerBase.y + dy - 2 < AStarNodeBC.map.GetLength(1)))
-                        AStarNodeBC.map[board.playerBase.x + dx - 2, board.playerBase.y + dy - 2] = -1;
+                    if ((board.playerBase.x + dx - 2 >= 0) && (board.playerBase.x + dx - 2 < map.GetLength(0)) &&
+                        (board.playerBase.y + dy - 2 >= 0) && (board.playerBase.y + dy - 2 < map.GetLength(1)))
+                        map[board.playerBase.x + dx - 2, board.playerBase.y + dy - 2] = -1;
         }
 
         private Bitmap drawMap(Board board)
@@ -325,12 +322,12 @@ namespace battlecity
             using (Graphics g = Graphics.FromImage(b))
             {
                 g.Clear(Color.FromArgb(255, 0, 0));
-                for (int x = 0; x < AStarNodeBC.map.GetLength(0); x++)
-                    for (int y = 0; y < AStarNodeBC.map.GetLength(1); y++)
+                for (int x = 0; x < map.GetLength(0); x++)
+                    for (int y = 0; y < map.GetLength(1); y++)
                     {
                         int green = 0;
                         int blue = 0;
-                        int red = (int)Math.Round((AStarNodeBC.map[x, y] - 1.0) * 200);
+                        int red = (int)Math.Round((map[x, y] - 1.0) * 200);
                         if (red > 255)
                             red = 255;
                         else if (red < 0)
@@ -372,18 +369,16 @@ namespace battlecity
             }
         }
 
-        public List<Tuple<int, int>> GetPath(int x1, int y1, int x2, int y2, double speedUp = 1.0)
+        public List<Tuple<int, int>> GetPath(int x1, int y1, int x2, int y2)
         {
             List<Tuple<int, int>> result = new List<Tuple<int, int>>();
 
-            AStarNodeBC.speedUp = speedUp;
-
             Games.Pathfinding.AStar astar = new Games.Pathfinding.AStar();
 
-            AStarNodeBC GoalNode = new AStarNodeBC(null, null, 0, x2-2, y2-2);
-            AStarNodeBC StartNode = new AStarNodeBC(null, GoalNode, 0, x1-2, y1-2);
+            AStarNodeBC GoalNode = new AStarNodeBC(null, null, 0, x2-2, y2-2, this);
+            AStarNodeBC StartNode = new AStarNodeBC(null, GoalNode, 0, x1-2, y1-2, this);
             StartNode.GoalNode = GoalNode;
-            astar.FindPath(StartNode, GoalNode, 20000);
+            astar.FindPath(StartNode, GoalNode);
 
             foreach (AStarNodeBC n in astar.Solution)
                 result.Add(new Tuple<int, int>(n.X, n.Y));

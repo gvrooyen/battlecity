@@ -11,7 +11,7 @@ namespace battlecity
 {
     class Program
     {
-        static bool debug = true;
+        static bool debug = false;
 
         static Clock clock;
         static ChallengeService.ChallengeClient client;
@@ -128,6 +128,9 @@ namespace battlecity
 
         static void Main(string[] args)
         {
+            Console.WriteLine("Battle City AI, Copyright (c) 1985 U.S. Robots and Mechanical Men, Inc.");
+            Console.WriteLine("Welcome, scalvin.");
+
             // var info = new Microsoft.VisualBasic.Devices.ComputerInfo();
             string botname = "random";
 
@@ -223,7 +226,7 @@ namespace battlecity
                 planner.mapBoard(board);
                 planner.renderMap(board, board.playerName + ".png");
 
-                if (board.playerName == "Player One")
+                // if (board.playerName == "Player One")
                     botname = "aggro";
 
                 switch (botname)
@@ -239,8 +242,11 @@ namespace battlecity
                         break;
                 }
 
+                Console.WriteLine("Launching AI '{0}'", botname);
+
                 clock.Start(status.millisecondsToNextTick + Settings.SYNC_INITIAL_DELAY);
                 Debug.Flush();
+
             }
             catch (Exception e)
             {
@@ -253,7 +259,7 @@ namespace battlecity
             AggregateException e = t.Exception;
             if (e.InnerException.GetType() == typeof(System.ServiceModel.EndpointNotFoundException))
             {
-                Debug.WriteLine(Environment.NewLine + "--=[ GAME OVER! ]=--");
+                Console.WriteLine(Environment.NewLine + "--=[ GAME OVER! ]=--");
                 Debug.Flush();
                 Program.clock.Abort();
             }

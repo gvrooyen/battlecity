@@ -15,6 +15,9 @@ namespace battlecity
         public int id { get; set; }
         public ChallengeService.direction direction { get; set; }
 
+        private Queue<int> xHistory;
+        private Queue<int> yHistory;
+
         // Tanks' positions get updated every tick. If an update is skipped, it means the tank is destroyed.
         public bool updated { get; set; }
 
@@ -27,29 +30,34 @@ namespace battlecity
         // The tank's plans for the future
         public LinkedList<Plan.Plan> plans;
 
+        private void Initialize()
+        {
+            destroyed = false;
+            bullet = null;
+            role = null;
+            plans = new LinkedList<Plan.Plan>();
+            xHistory = new Queue<int>();
+            yHistory = new Queue<int>();
+        }
+
         public Tank()
         {
+            Initialize();
             x = -1;
             y = -1;
-            destroyed = false;
             id = -1;
-            direction = ChallengeService.direction.NONE;
             updated = false;
-            bullet = null;
-            plans = new LinkedList<Plan.Plan>();
+            direction = ChallengeService.direction.NONE;
         }
 
         public Tank(int x, int y, ChallengeService.direction direction, int id)
         {
+            Initialize();
             this.x = x;
             this.y = y;
             this.id = id;
             this.direction = direction;
-            destroyed = false;
             updated = true;
-            bullet = null;
-            role = null;
-            plans = new LinkedList<Plan.Plan>();
         }
 
         public string PrintPlans()
@@ -63,6 +71,47 @@ namespace battlecity
             return result.ToString();
         }
 
+        public bool Watchdog()
+        {
+            /* Monitor the tank's activity, and reset it if it seems to be stuck.
+             */
+            int period = 2;
+
+            // Update the history
+            if (bullet != null)
+            {
+                xHistory.Clear();
+                xHistory.Enqueue(x);
+                yHistory.Clear();
+                yHistory.Enqueue(y);
+                return true;
+            }
+            else
+            {
+                xHistory.Enqueue(x);
+                yHistory.Enqueue(y);
+            }
+
+            if (xHistory.Count >= period)
+            {
+                int pastValue = xHistory.Peek();
+                foreach (int x in xHistory)
+                    if (x != pastValue)
+                        return true;
+                pastValue = yHistory.Peek();
+                foreach (int y in yHistory)
+                    if (y != pastValue)
+                        return true;
+            }
+            else
+                return true;
+
+            Debug.WriteLine("WARNING: Watchdog triggered for tank (id={0})", id);
+            xHistory.Clear();
+            yHistory.Clear();
+            plans.Clear();
+            return false;
+        }
     }
 
     public class Base
@@ -572,6 +621,29 @@ namespace battlecity
         public ChallengeService.state getState(int x, int y)
         {
             return (ChallengeService.state) board[x][y];
+        }
+
+        public bool ClearShot(int x1, int y1, int x2, int y2)
+        {
+            /* Returns true if there is are no filled blocks between the two coordinates.
+             * The coordinates must lie on a horizontal or vertical line.
+             */
+            if (x1 == x2)
+            {
+                for (int y = y1; y != y2; y += Math.Sign(y2 - y1))
+                    if (board[x1][y] == ChallengeService.state.FULL)
+                        return false;
+            }
+            else if (y1 == y2)
+            {
+                for (int x = x1; x != x2; x += Math.Sign(x2 - x1))
+                    if (board[x][y1] == ChallengeService.state.FULL)
+                        return false;
+            }
+            else
+                return false;
+
+            return true;
         }
     }
 }

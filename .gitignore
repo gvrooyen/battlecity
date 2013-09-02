@@ -8,3 +8,4 @@ Player Two.brd
 Player Two.txt
 *.png
 *.log
+bin/Release/*

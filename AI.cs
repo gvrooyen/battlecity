@@ -279,6 +279,8 @@ namespace battlecity
         protected Board board;
         protected ChallengeService.ChallengeClient client;
 
+        static protected readonly Random random = new Random(Guid.NewGuid().GetHashCode());
+
         private void Initialize()
         {
         }
@@ -936,6 +938,139 @@ namespace battlecity
             return ChallengeService.action.NONE;
 		}
 
+        protected ChallengeService.action Dodge(Tank tank)
+        {
+            /* Check for incoming bullets, and take evasive action, if necessary.
+             * For now, we keep it simple and a bit naive: just do a single move in the "safest" direction.
+             * No checks for obstacles are made yet!
+             * At a later stage, this could add plans at the start of the queue.
+             */
+            foreach (KeyValuePair<int,Bullet> bullet in board.opponentBullet)
+            {
+                if (((bullet.Value.direction == ChallengeService.direction.LEFT) && (tank.x < bullet.Value.x) && 
+                    (Math.Abs(tank.y - bullet.Value.y) <= 2) && board.ClearShot(bullet.Value.x, bullet.Value.y, tank.x, bullet.Value.y))
+                    ||
+                    ((bullet.Value.direction == ChallengeService.direction.RIGHT) && (tank.x > bullet.Value.x) &&
+                    (Math.Abs(tank.y - bullet.Value.y) <= 2) && board.ClearShot(bullet.Value.x, bullet.Value.y, tank.x, bullet.Value.y)))
+                {
+                    Debug.WriteLine("Incoming bullet!");
+                    if (tank.y - bullet.Value.y < 0)
+                    {
+                        // Move UP, if there's space
+                        int dy = 3 + tank.y - bullet.Value.y;
+                        if (tank.y > dy)
+                            return ChallengeService.action.UP;
+                        else
+                            return ChallengeService.action.DOWN;
+                    }
+                    else if (tank.y == bullet.Value.y)
+                    {
+                        if (random.Next(2) == 0)
+                            return ChallengeService.action.UP;
+                        else
+                            return ChallengeService.action.DOWN;
+                    }
+                    else
+                    {
+                        // Move DOWN, if there's space
+                        int dy = 3 - tank.y + bullet.Value.y;
+                        if ((board.ysize - tank.y) > dy)
+                            return ChallengeService.action.DOWN;
+                        else
+                            return ChallengeService.action.UP;
+                    }
+                }
+                if (((bullet.Value.direction == ChallengeService.direction.UP) && (tank.y < bullet.Value.y) &&
+                    (Math.Abs(tank.x - bullet.Value.x) <= 2) && board.ClearShot(bullet.Value.x, bullet.Value.y, bullet.Value.x, tank.y))
+                    ||
+                   ((bullet.Value.direction == ChallengeService.direction.DOWN) && (tank.y > bullet.Value.y) &&
+                    (Math.Abs(tank.x - bullet.Value.x) <= 2) && board.ClearShot(bullet.Value.x, bullet.Value.y, bullet.Value.x, tank.y)))
+                {
+                    Debug.WriteLine("Incoming bullet!");
+                    if (tank.x - bullet.Value.x < 0)
+                    {
+                        // Move LEFT, if there's space
+                        int dx = 3 + tank.x - bullet.Value.x;
+                        if (tank.x > dx)
+                            return ChallengeService.action.LEFT;
+                        else
+                            return ChallengeService.action.RIGHT;
+                    }
+                    else if (tank.x == bullet.Value.x)
+                    {
+                        if (random.Next(2) == 0)
+                            return ChallengeService.action.LEFT;
+                        else
+                            return ChallengeService.action.RIGHT;
+                    }
+                    else
+                    {
+                        // Move RIGHT, if there's space
+                        int dx = 3 - tank.x + bullet.Value.x;
+                        if ((board.xsize - tank.x) > dx)
+                            return ChallengeService.action.RIGHT;
+                        else
+                            return ChallengeService.action.LEFT;
+                    }
+                }
+            }
+            return ChallengeService.action.NONE;
+        }
+
+        protected ChallengeService.action PotShot(Tank tank)
+        {
+            /* Check whether enemies are within range, and fire at them.
+             * TODO: Also check whether the base or any incoming bullets are in range.
+             */
+            if (tank.bullet != null)
+                return ChallengeService.action.NONE;
+
+            foreach (Tank opponent in board.opponentTank)
+            {
+                if (!opponent.destroyed)
+                {
+                    if ((Math.Abs(opponent.x - tank.x) <= 2) && board.ClearShot(tank.x, tank.y, tank.x, opponent.y))
+                    {
+                        Debug.WriteLine("Opponent in range!");
+                        if (opponent.y > tank.y)
+                        {
+                            if (tank.direction == ChallengeService.direction.DOWN)
+                                return ChallengeService.action.FIRE;
+                            else
+                                return ChallengeService.action.DOWN;
+                        }
+                        else
+                        {
+                            if (tank.direction == ChallengeService.direction.UP)
+                                return ChallengeService.action.FIRE;
+                            else
+                                return ChallengeService.action.UP;
+                        }
+                    }
+                    if ((Math.Abs(opponent.y - tank.y) <= 2) && board.ClearShot(tank.x, tank.y, opponent.x, tank.y))
+                    {
+                        Debug.WriteLine("Opponent in range!");
+                        if (opponent.x > tank.x)
+                        {
+                            if (tank.direction == ChallengeService.direction.RIGHT)
+                                return ChallengeService.action.FIRE;
+                            else
+                                return ChallengeService.action.RIGHT;
+                        }
+                        else
+                        {
+                            if (tank.direction == ChallengeService.direction.LEFT)
+                                return ChallengeService.action.FIRE;
+                            else
+                                return ChallengeService.action.LEFT;
+                        }
+                    }
+                }
+            }
+
+            return ChallengeService.action.NONE;
+        }
+
     }
 
     class AI_Random: AI
@@ -943,8 +1078,6 @@ namespace battlecity
         /* A simple bot that just issues random commands to both tanks.
          * No checks are done to see whether a tank has been destroyed.
          */
-
-        static readonly Random random = new Random(Guid.NewGuid().GetHashCode());
 
         public AI_Random() : base() { }
         public AI_Random(Board board, ChallengeService.ChallengeClient client) : base(board, client) { }
@@ -995,22 +1128,133 @@ namespace battlecity
         {
             // We'll do most of our calculations here, and just post the actions in the final move.
 
-            Tank tank0 = board.playerTank[0];
-            Tank tank1 = board.playerTank[1];
+            Tank baseKiller = null;
+            Tank tankKiller = null;
+
+            if (!board.playerTank[0].destroyed && !board.playerTank[1].destroyed)
+            {
+                baseKiller = board.playerTank[0];
+                tankKiller = board.playerTank[1];
+            }
+            else if (!board.playerTank[0].destroyed)
+                baseKiller = board.playerTank[0];
+            else if (!board.playerTank[1].destroyed)
+                baseKiller = board.playerTank[1];
 
             A1 = ChallengeService.action.NONE;
             A2 = ChallengeService.action.NONE;
 
-            // If both tanks exist, one goes for the base, and one goes for an enemy tank
-            if (!tank0.destroyed && !tank1.destroyed)
-            {
-                // Tank 0 goes for the base
-                Debug.WriteLine("Calculating next move...");
-                Debug.WriteLine(board.PrintArea(tank0.x - 8, tank0.y - 8, tank0.x + 9, tank0.y + 9));
-                A1 = RunAndGun(tank0, board.opponentBase.x, board.opponentBase.y);
-                Debug.WriteLine("Settled on action {0}", A1);
+            // One tank goes for the base
+            baseKiller.Watchdog();
+            A1 = Dodge(baseKiller);
+            if (A1 == ChallengeService.action.NONE)
+                A1 = PotShot(baseKiller);
+            if (A1 == ChallengeService.action.NONE)
+                A1 = RunAndGun(baseKiller, board.opponentBase.x, board.opponentBase.y);
 
-                // Tank 1 goes for the closest enemy
+            // The other tank (if we still have two) goes for the closest enemy
+            tankKiller.Watchdog();
+            A2 = Dodge(tankKiller);
+            if (A2 == ChallengeService.action.NONE)
+                A2 = PotShot(tankKiller);
+            if (A2 == ChallengeService.action.NONE)
+            {
+                int o1 = Math.Abs(board.opponentTank[0].x - tankKiller.x) + Math.Abs(board.opponentTank[0].y - tankKiller.y);
+                int o2 = Math.Abs(board.opponentTank[1].x - tankKiller.x) + Math.Abs(board.opponentTank[1].y - tankKiller.y);
+                if ((o1 < o2) && !board.opponentTank[0].destroyed)
+                    A2 = RunAndGun(tankKiller, board.opponentTank[0].x, board.opponentTank[0].y);
+                else
+                    A2 = RunAndGun(tankKiller, board.opponentTank[1].x, board.opponentTank[1].y);
+            }
+
+            // If the original base killer is destroyed, appoint his successor.
+            if (baseKiller.destroyed)
+                A2 = A1;
+
+            if (!baseKiller.destroyed && !tankKiller.destroyed)
+            {
+                Debug.WriteLine("- - - - - - - - - - - - - - - - - - -");
+                Debug.WriteLine("Sniper's minimap:");
+                Debug.WriteLine(board.PrintArea(tankKiller.x - 7, tankKiller.y - 7, tankKiller.x + 8, tankKiller.y + 8));
+                Debug.WriteLine("Sniper's move: {0}", A1);
+            }
+            Debug.WriteLine("- - - - - - - - - - - - - - - - - - -");
+            Debug.WriteLine("Base attacker's minimap:");
+            Debug.WriteLine(board.PrintArea(baseKiller.x - 7, baseKiller.y - 7, baseKiller.x + 8, baseKiller.y + 8));
+            Debug.WriteLine("Base attacker's move: {0}", A1);
+        }
+
+        public override void postEarlyMove()
+        {
+            // Do nothing
+        }
+
+        public override void postFinalMove()
+        {
+            lock (client)
+            {
+                Debug.WriteLine("Tank 1 {0}; Tank 2 {1}", A1, A2);
+                if (!board.playerTank[0].destroyed)
+                {
+                    lock (client)
+                        client.setAction(board.playerTank[0].id, A1);
+                    Debug.WriteLine("Tank 1's plans:");
+                    Debug.WriteLine(board.playerTank[0].PrintPlans());
+                }
+                if (!board.playerTank[1].destroyed)
+                {
+                    lock (client)
+                        client.setAction(board.playerTank[1].id, A2);
+                    Debug.WriteLine("Tank 2's plans:");
+                    Debug.WriteLine(board.playerTank[1].PrintPlans());
+                }
+            }
+        }
+
+    }
+
+    class AI_CTF : AI
+    {
+        /* "Capture The Flag". One bot randomly chooses to take the AttackBase role, and the other one takes the
+         * DefendBase role. The attacker uses the path planner to find the shortest route to a point from where
+         * the enemy base can be shot. He then runs and guns down that route, dodging enemy bullets and taking
+         * opportunistic pot shots at enemies when possible. The defender attempts to obstruct enemy tanks. He
+         * uses the path planner to stay at a point one-third of the way along a straight line from the player
+         * base to the enemy tank which is closest to the player base.
+         * 
+         * If one of the bots is destroyed, the surviving bot automatically assumes the AttackBase role.
+         * 
+         * If the opponent assumes a completely defensive strategy, the defender quits his DefendBase role, and
+         * also takes the AttackBase role. This is triggered based on the distance L between the player base and
+         * the enemy base. If our first attacker reaches a distance L/3 from the enemy base, but all surviving
+         * opponents are also still within L/3 from the enemy base.
+         */
+
+        ChallengeService.action A1, A2;
+
+        public AI_CTF() : base() { }
+        public AI_CTF(Board board, ChallengeService.ChallengeClient client)
+            : base(board, client)
+        {
+            A1 = ChallengeService.action.NONE;
+            A2 = ChallengeService.action.NONE;
+        }
+
+        public override void newTick()
+        {
+            if ((board.playerTank[0].role == null) || (board.playerTank[1].role == null))
+            {
+                // We haven't assigned roles yet, so randomly assign the AttackBase and DefendBase roles.
+                if (random.Next(2) == 0)
+                {
+                    board.playerTank[0].role = new Role.AttackBase();
+                    board.playerTank[1].role = new Role.DefendBase();
+                }
+                else
+                {
+                    board.playerTank[1].role = new Role.AttackBase();
+                    board.playerTank[0].role = new Role.DefendBase();
+                }
             }
         }
 
@@ -1042,5 +1286,6 @@ namespace battlecity
         }
 
     }
+
 
 }

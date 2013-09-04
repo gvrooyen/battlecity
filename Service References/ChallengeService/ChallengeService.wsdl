@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="utf-8"?>
+<definitions xmlns:wsp="http://www.w3.org/ns/ws-policy" xmlns:wsam="http://www.w3.org/2007/05/addressing/metadata" xmlns:tns="http://challenge.entelect.co.za/" xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:wsp1_2="http://schemas.xmlsoap.org/ws/2004/09/policy" xmlns:wsu="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd" name="ChallengeService" targetNamespace="http://challenge.entelect.co.za/" xmlns="http://schemas.xmlsoap.org/wsdl/">
+  <types>
+    <xsd:schema>
+      <xsd:import schemaLocation="http://localhost:7070/Challenge/ChallengeService?xsd=1" namespace="http://challenge.entelect.co.za/" />
+    </xsd:schema>
+  </types>
+  <message name="getStatus">
+    <part name="parameters" element="tns:getStatus" />
+  </message>
+  <message name="getStatusResponse">
+    <part name="parameters" element="tns:getStatusResponse" />
+  </message>
+  <message name="setAction">
+    <part name="parameters" element="tns:setAction" />
+  </message>
+  <message name="setActionResponse">
+    <part name="parameters" element="tns:setActionResponse" />
+  </message>
+  <message name="EndOfGameException">
+    <part name="fault" element="tns:EndOfGameException" />
+  </message>
+  <message name="setActions">
+    <part name="parameters" element="tns:setActions" />
+  </message>
+  <message name="setActionsResponse">
+    <part name="parameters" element="tns:setActionsResponse" />
+  </message>
+  <message name="login">
+    <part name="parameters" element="tns:login" />
+  </message>
+  <message name="loginResponse">
+    <part name="parameters" element="tns:loginResponse" />
+  </message>
+  <message name="NoBlameException">
+    <part name="fault" element="tns:NoBlameException" />
+  </message>
+  <portType name="Challenge">
+    <operation name="getStatus">
+      <input wsam:Action="http://challenge.entelect.co.za/Challenge/getStatusRequest" message="tns:getStatus" />
+      <output wsam:Action="http://challenge.entelect.co.za/Challenge/getStatusResponse" message="tns:getStatusResponse" />
+    </operation>
+    <operation name="setAction">
+      <input wsam:Action="http://challenge.entelect.co.za/Challenge/setActionRequest" message="tns:setAction" />
+      <output wsam:Action="http://challenge.entelect.co.za/Challenge/setActionResponse" message="tns:setActionResponse" />
+      <fault wsam:Action="http://challenge.entelect.co.za/Challenge/setAction/Fault/EndOfGameException" name="EndOfGameException" message="tns:EndOfGameException" />
+    </operation>
+    <operation name="setActions">
+      <input wsam:Action="http://challenge.entelect.co.za/Challenge/setActionsRequest" message="tns:setActions" />
+      <output wsam:Action="http://challenge.entelect.co.za/Challenge/setActionsResponse" message="tns:setActionsResponse" />
+      <fault wsam:Action="http://challenge.entelect.co.za/Challenge/setActions/Fault/EndOfGameException" name="EndOfGameException" message="tns:EndOfGameException" />
+    </operation>
+    <operation name="login">
+      <input wsam:Action="http://challenge.entelect.co.za/Challenge/loginRequest" message="tns:login" />
+      <output wsam:Action="http://challenge.entelect.co.za/Challenge/loginResponse" message="tns:loginResponse" />
+      <fault wsam:Action="http://challenge.entelect.co.za/Challenge/login/Fault/EndOfGameException" name="EndOfGameException" message="tns:EndOfGameException" />
+      <fault wsam:Action="http://challenge.entelect.co.za/Challenge/login/Fault/NoBlameException" name="NoBlameException" message="tns:NoBlameException" />
+    </operation>
+  </portType>
+  <binding name="ChallengePortBinding" type="tns:Challenge">
+    <soap:binding transport="http://schemas.xmlsoap.org/soap/http" />
+    <operation name="getStatus">
+      <soap:operation soapAction="" />
+      <input>
+        <soap:body use="literal" />
+      </input>
+      <output>
+        <soap:body use="literal" />
+      </output>
+    </operation>
+    <operation name="setAction">
+      <soap:operation soapAction="" />
+      <input>
+        <soap:body use="literal" />
+      </input>
+      <output>
+        <soap:body use="literal" />
+      </output>
+      <fault name="EndOfGameException">
+        <soap:fault use="literal" name="EndOfGameException" namespace="" />
+      </fault>
+    </operation>
+    <operation name="setActions">
+      <soap:operation soapAction="" />
+      <input>
+        <soap:body use="literal" />
+      </input>
+      <output>
+        <soap:body use="literal" />
+      </output>
+      <fault name="EndOfGameException">
+        <soap:fault use="literal" name="EndOfGameException" namespace="" />
+      </fault>
+    </operation>
+    <operation name="login">
+      <soap:operation soapAction="" />
+      <input>
+        <soap:body use="literal" />
+      </input>
+      <output>
+        <soap:body use="literal" />
+      </output>
+      <fault name="EndOfGameException">
+        <soap:fault use="literal" name="EndOfGameException" namespace="" />
+      </fault>
+      <fault name="NoBlameException">
+        <soap:fault use="literal" name="NoBlameException" namespace="" />
+      </fault>
+    </operation>
+  </binding>
+  <service name="ChallengeService">
+    <port name="ChallengePort" binding="tns:ChallengePortBinding">
+      <soap:address location="http://localhost:7070/Challenge/ChallengeService" />
+    </port>
+  </service>
+</definitions>

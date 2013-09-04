@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
-<SavedWcfConfigurationInformation xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" Version="9.1" CheckSum="4F03oNu3/eQOJavyPGEzB2t9lH0=">
+<SavedWcfConfigurationInformation xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" Version="9.1" CheckSum="dgjEhRc3TCs8nmGI7vatwp1nnYg=">
   <bindingConfigurations>
-    <bindingConfiguration bindingType="basicHttpBinding" name="ChallengeServiceSoapBinding">
+    <bindingConfiguration bindingType="basicHttpBinding" name="ChallengePortBinding">
       <properties>
         <property path="/name" isComplexType="false" isExplicitlyDefined="true" clrType="System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
-          <serializedValue>ChallengeServiceSoapBinding</serializedValue>
+          <serializedValue>ChallengePortBinding</serializedValue>
         </property>
         <property path="/closeTimeout" isComplexType="false" isExplicitlyDefined="true" clrType="System.TimeSpan, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
           <serializedValue>00:01:00</serializedValue>
@@ -112,10 +112,10 @@
     </bindingConfiguration>
   </bindingConfigurations>
   <endpoints>
-    <endpoint name="ChallengePort" contract="ChallengeService.Challenge" bindingType="basicHttpBinding" address="http://localhost:9090/ChallengePort" bindingConfiguration="ChallengeServiceSoapBinding">
+    <endpoint name="ChallengePort" contract="ChallengeService.Challenge" bindingType="basicHttpBinding" address="http://localhost:7070/Challenge/ChallengeService" bindingConfiguration="ChallengePortBinding">
       <properties>
         <property path="/address" isComplexType="false" isExplicitlyDefined="true" clrType="System.Uri, System, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
-          <serializedValue>http://localhost:9090/ChallengePort</serializedValue>
+          <serializedValue>http://localhost:7070/Challenge/ChallengeService</serializedValue>
         </property>
         <property path="/behaviorConfiguration" isComplexType="false" isExplicitlyDefined="false" clrType="System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
           <serializedValue />
@@ -124,7 +124,7 @@
           <serializedValue>basicHttpBinding</serializedValue>
         </property>
         <property path="/bindingConfiguration" isComplexType="false" isExplicitlyDefined="true" clrType="System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
-          <serializedValue>ChallengeServiceSoapBinding</serializedValue>
+          <serializedValue>ChallengePortBinding</serializedValue>
         </property>
         <property path="/contract" isComplexType="false" isExplicitlyDefined="true" clrType="System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
           <serializedValue>ChallengeService.Challenge</serializedValue>

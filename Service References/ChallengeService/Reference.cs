@@ -12,12 +12,40 @@ namespace battlecity.ChallengeService {
     
     
     /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "4.0.30319.1009")]
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "4.0.30319.1015")]
     [System.SerializableAttribute()]
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.ComponentModel.DesignerCategoryAttribute("code")]
     [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://challenge.entelect.co.za/")]
     public partial class EndOfGameException : object, System.ComponentModel.INotifyPropertyChanged {
+        
+        private string loserField;
+        
+        private string messageField;
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Form=System.Xml.Schema.XmlSchemaForm.Unqualified, Order=0)]
+        public string loser {
+            get {
+                return this.loserField;
+            }
+            set {
+                this.loserField = value;
+                this.RaisePropertyChanged("loser");
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Form=System.Xml.Schema.XmlSchemaForm.Unqualified, Order=1)]
+        public string message {
+            get {
+                return this.messageField;
+            }
+            set {
+                this.messageField = value;
+                this.RaisePropertyChanged("message");
+            }
+        }
         
         public event System.ComponentModel.PropertyChangedEventHandler PropertyChanged;
         
@@ -30,7 +58,7 @@ namespace battlecity.ChallengeService {
     }
     
     /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "4.0.30319.1009")]
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "4.0.30319.1015")]
     [System.SerializableAttribute()]
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.ComponentModel.DesignerCategoryAttribute("code")]
@@ -62,7 +90,7 @@ namespace battlecity.ChallengeService {
     }
     
     /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "4.0.30319.1009")]
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "4.0.30319.1015")]
     [System.SerializableAttribute()]
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.ComponentModel.DesignerCategoryAttribute("code")]
@@ -108,7 +136,7 @@ namespace battlecity.ChallengeService {
     }
     
     /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "4.0.30319.1009")]
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "4.0.30319.1015")]
     [System.SerializableAttribute()]
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.ComponentModel.DesignerCategoryAttribute("code")]
@@ -182,7 +210,7 @@ namespace battlecity.ChallengeService {
     }
     
     /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "4.0.30319.1009")]
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "4.0.30319.1015")]
     [System.SerializableAttribute()]
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.ComponentModel.DesignerCategoryAttribute("code")]
@@ -270,7 +298,7 @@ namespace battlecity.ChallengeService {
     }
     
     /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "4.0.30319.1009")]
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "4.0.30319.1015")]
     [System.SerializableAttribute()]
     [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://challenge.entelect.co.za/")]
     public enum direction {
@@ -292,7 +320,7 @@ namespace battlecity.ChallengeService {
     }
     
     /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "4.0.30319.1009")]
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "4.0.30319.1015")]
     [System.SerializableAttribute()]
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.ComponentModel.DesignerCategoryAttribute("code")]
@@ -408,7 +436,7 @@ namespace battlecity.ChallengeService {
     }
     
     /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "4.0.30319.1009")]
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "4.0.30319.1015")]
     [System.SerializableAttribute()]
     [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://challenge.entelect.co.za/")]
     public enum action {
@@ -433,7 +461,7 @@ namespace battlecity.ChallengeService {
     }
     
     /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "4.0.30319.1009")]
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "4.0.30319.1015")]
     [System.SerializableAttribute()]
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.ComponentModel.DesignerCategoryAttribute("code")]
@@ -493,7 +521,7 @@ namespace battlecity.ChallengeService {
     }
     
     /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "4.0.30319.1009")]
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "4.0.30319.1015")]
     [System.SerializableAttribute()]
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.ComponentModel.DesignerCategoryAttribute("code")]
@@ -539,7 +567,7 @@ namespace battlecity.ChallengeService {
     }
     
     /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "4.0.30319.1009")]
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "4.0.30319.1015")]
     [System.SerializableAttribute()]
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.ComponentModel.DesignerCategoryAttribute("code")]
@@ -599,7 +627,7 @@ namespace battlecity.ChallengeService {
     }
     
     /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "4.0.30319.1009")]
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "4.0.30319.1015")]
     [System.SerializableAttribute()]
     [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://challenge.entelect.co.za/")]
     public enum state {
@@ -618,7 +646,7 @@ namespace battlecity.ChallengeService {
     }
     
     /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "4.0.30319.1009")]
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "4.0.30319.1015")]
     [System.SerializableAttribute()]
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.ComponentModel.DesignerCategoryAttribute("code")]
@@ -664,7 +692,7 @@ namespace battlecity.ChallengeService {
     }
     
     /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "4.0.30319.1009")]
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "4.0.30319.1015")]
     [System.SerializableAttribute()]
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.ComponentModel.DesignerCategoryAttribute("code")]
@@ -780,12 +808,26 @@ namespace battlecity.ChallengeService {
     }
     
     /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "4.0.30319.1009")]
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "4.0.30319.1015")]
     [System.SerializableAttribute()]
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.ComponentModel.DesignerCategoryAttribute("code")]
     [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://challenge.entelect.co.za/")]
     public partial class NoBlameException : object, System.ComponentModel.INotifyPropertyChanged {
+        
+        private string messageField;
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Form=System.Xml.Schema.XmlSchemaForm.Unqualified, Order=0)]
+        public string message {
+            get {
+                return this.messageField;
+            }
+            set {
+                this.messageField = value;
+                this.RaisePropertyChanged("message");
+            }
+        }
         
         public event System.ComponentModel.PropertyChangedEventHandler PropertyChanged;
         
@@ -802,41 +844,41 @@ namespace battlecity.ChallengeService {
     public interface Challenge {
         
         // CODEGEN: Parameter 'return' requires additional schema information that cannot be captured using the parameter mode. The specific attribute is 'System.Xml.Serialization.XmlElementAttribute'.
-        [System.ServiceModel.OperationContractAttribute(Action="", ReplyAction="*")]
+        [System.ServiceModel.OperationContractAttribute(Action="http://challenge.entelect.co.za/Challenge/getStatusRequest", ReplyAction="http://challenge.entelect.co.za/Challenge/getStatusResponse")]
         [System.ServiceModel.XmlSerializerFormatAttribute(SupportFaults=true)]
         [return: System.ServiceModel.MessageParameterAttribute(Name="return")]
-        battlecity.ChallengeService.getStatusResponse getStatus(battlecity.ChallengeService.getStatus request);
+        battlecity.ChallengeService.getStatusResponse getStatus(battlecity.ChallengeService.getStatusRequest request);
         
         // CODEGEN: Parameter 'return' requires additional schema information that cannot be captured using the parameter mode. The specific attribute is 'System.Xml.Serialization.XmlElementAttribute'.
-        [System.ServiceModel.OperationContractAttribute(Action="", ReplyAction="*")]
-        [System.ServiceModel.FaultContractAttribute(typeof(battlecity.ChallengeService.EndOfGameException), Action="", Name="EndOfGameException")]
+        [System.ServiceModel.OperationContractAttribute(Action="http://challenge.entelect.co.za/Challenge/setActionRequest", ReplyAction="http://challenge.entelect.co.za/Challenge/setActionResponse")]
+        [System.ServiceModel.FaultContractAttribute(typeof(battlecity.ChallengeService.EndOfGameException), Action="http://challenge.entelect.co.za/Challenge/setAction/Fault/EndOfGameException", Name="EndOfGameException")]
         [System.ServiceModel.XmlSerializerFormatAttribute(SupportFaults=true)]
         [return: System.ServiceModel.MessageParameterAttribute(Name="return")]
-        battlecity.ChallengeService.setActionResponse setAction(battlecity.ChallengeService.setAction request);
-        
-        // CODEGEN: Parameter 'return' requires additional schema information that cannot be captured using the parameter mode. The specific attribute is 'System.Xml.Serialization.XmlArrayAttribute'.
-        [System.ServiceModel.OperationContractAttribute(Action="", ReplyAction="*")]
-        [System.ServiceModel.FaultContractAttribute(typeof(battlecity.ChallengeService.NoBlameException), Action="", Name="NoBlameException")]
-        [System.ServiceModel.FaultContractAttribute(typeof(battlecity.ChallengeService.EndOfGameException), Action="", Name="EndOfGameException")]
-        [System.ServiceModel.XmlSerializerFormatAttribute(SupportFaults=true)]
-        [return: System.ServiceModel.MessageParameterAttribute(Name="return")]
-        battlecity.ChallengeService.loginResponse login(battlecity.ChallengeService.login request);
+        battlecity.ChallengeService.setActionResponse setAction(battlecity.ChallengeService.setActionRequest request);
         
         // CODEGEN: Parameter 'return' requires additional schema information that cannot be captured using the parameter mode. The specific attribute is 'System.Xml.Serialization.XmlElementAttribute'.
-        [System.ServiceModel.OperationContractAttribute(Action="", ReplyAction="*")]
-        [System.ServiceModel.FaultContractAttribute(typeof(battlecity.ChallengeService.EndOfGameException), Action="", Name="EndOfGameException")]
+        [System.ServiceModel.OperationContractAttribute(Action="http://challenge.entelect.co.za/Challenge/setActionsRequest", ReplyAction="http://challenge.entelect.co.za/Challenge/setActionsResponse")]
+        [System.ServiceModel.FaultContractAttribute(typeof(battlecity.ChallengeService.EndOfGameException), Action="http://challenge.entelect.co.za/Challenge/setActions/Fault/EndOfGameException", Name="EndOfGameException")]
         [System.ServiceModel.XmlSerializerFormatAttribute(SupportFaults=true)]
         [return: System.ServiceModel.MessageParameterAttribute(Name="return")]
-        battlecity.ChallengeService.setActionsResponse setActions(battlecity.ChallengeService.setActions request);
+        battlecity.ChallengeService.setActionsResponse setActions(battlecity.ChallengeService.setActionsRequest request);
+        
+        // CODEGEN: Parameter 'return' requires additional schema information that cannot be captured using the parameter mode. The specific attribute is 'System.Xml.Serialization.XmlElementAttribute'.
+        [System.ServiceModel.OperationContractAttribute(Action="http://challenge.entelect.co.za/Challenge/loginRequest", ReplyAction="http://challenge.entelect.co.za/Challenge/loginResponse")]
+        [System.ServiceModel.FaultContractAttribute(typeof(battlecity.ChallengeService.EndOfGameException), Action="http://challenge.entelect.co.za/Challenge/login/Fault/EndOfGameException", Name="EndOfGameException")]
+        [System.ServiceModel.FaultContractAttribute(typeof(battlecity.ChallengeService.NoBlameException), Action="http://challenge.entelect.co.za/Challenge/login/Fault/NoBlameException", Name="NoBlameException")]
+        [System.ServiceModel.XmlSerializerFormatAttribute(SupportFaults=true)]
+        [return: System.ServiceModel.MessageParameterAttribute(Name="return")]
+        battlecity.ChallengeService.loginResponse login(battlecity.ChallengeService.loginRequest request);
     }
     
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.CodeDom.Compiler.GeneratedCodeAttribute("System.ServiceModel", "4.0.0.0")]
     [System.ComponentModel.EditorBrowsableAttribute(System.ComponentModel.EditorBrowsableState.Advanced)]
     [System.ServiceModel.MessageContractAttribute(WrapperName="getStatus", WrapperNamespace="http://challenge.entelect.co.za/", IsWrapped=true)]
-    public partial class getStatus {
+    public partial class getStatusRequest {
         
-        public getStatus() {
+        public getStatusRequest() {
         }
     }
     
@@ -862,7 +904,7 @@ namespace battlecity.ChallengeService {
     [System.CodeDom.Compiler.GeneratedCodeAttribute("System.ServiceModel", "4.0.0.0")]
     [System.ComponentModel.EditorBrowsableAttribute(System.ComponentModel.EditorBrowsableState.Advanced)]
     [System.ServiceModel.MessageContractAttribute(WrapperName="setAction", WrapperNamespace="http://challenge.entelect.co.za/", IsWrapped=true)]
-    public partial class setAction {
+    public partial class setActionRequest {
         
         [System.ServiceModel.MessageBodyMemberAttribute(Namespace="http://challenge.entelect.co.za/", Order=0)]
         [System.Xml.Serialization.XmlElementAttribute(Form=System.Xml.Schema.XmlSchemaForm.Unqualified)]
@@ -872,10 +914,10 @@ namespace battlecity.ChallengeService {
         [System.Xml.Serialization.XmlElementAttribute(Form=System.Xml.Schema.XmlSchemaForm.Unqualified)]
         public battlecity.ChallengeService.action arg1;
         
-        public setAction() {
+        public setActionRequest() {
         }
         
-        public setAction(int arg0, battlecity.ChallengeService.action arg1) {
+        public setActionRequest(int arg0, battlecity.ChallengeService.action arg1) {
             this.arg0 = arg0;
             this.arg1 = arg1;
         }
@@ -902,38 +944,8 @@ namespace battlecity.ChallengeService {
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.CodeDom.Compiler.GeneratedCodeAttribute("System.ServiceModel", "4.0.0.0")]
     [System.ComponentModel.EditorBrowsableAttribute(System.ComponentModel.EditorBrowsableState.Advanced)]
-    [System.ServiceModel.MessageContractAttribute(WrapperName="login", WrapperNamespace="http://challenge.entelect.co.za/", IsWrapped=true)]
-    public partial class login {
-        
-        public login() {
-        }
-    }
-    
-    [System.Diagnostics.DebuggerStepThroughAttribute()]
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.ServiceModel", "4.0.0.0")]
-    [System.ComponentModel.EditorBrowsableAttribute(System.ComponentModel.EditorBrowsableState.Advanced)]
-    [System.ServiceModel.MessageContractAttribute(WrapperName="loginResponse", WrapperNamespace="http://challenge.entelect.co.za/", IsWrapped=true)]
-    public partial class loginResponse {
-        
-        [System.ServiceModel.MessageBodyMemberAttribute(Namespace="http://challenge.entelect.co.za/", Order=0)]
-        [System.Xml.Serialization.XmlArrayAttribute(Form=System.Xml.Schema.XmlSchemaForm.Unqualified)]
-        [System.Xml.Serialization.XmlArrayItemAttribute("states", Form=System.Xml.Schema.XmlSchemaForm.Unqualified)]
-        [System.Xml.Serialization.XmlArrayItemAttribute("item", Form=System.Xml.Schema.XmlSchemaForm.Unqualified, NestingLevel=1)]
-        public System.Nullable<state>[][] @return;
-        
-        public loginResponse() {
-        }
-        
-        public loginResponse(System.Nullable<state>[][] @return) {
-            this.@return = @return;
-        }
-    }
-    
-    [System.Diagnostics.DebuggerStepThroughAttribute()]
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.ServiceModel", "4.0.0.0")]
-    [System.ComponentModel.EditorBrowsableAttribute(System.ComponentModel.EditorBrowsableState.Advanced)]
     [System.ServiceModel.MessageContractAttribute(WrapperName="setActions", WrapperNamespace="http://challenge.entelect.co.za/", IsWrapped=true)]
-    public partial class setActions {
+    public partial class setActionsRequest {
         
         [System.ServiceModel.MessageBodyMemberAttribute(Namespace="http://challenge.entelect.co.za/", Order=0)]
         [System.Xml.Serialization.XmlElementAttribute(Form=System.Xml.Schema.XmlSchemaForm.Unqualified)]
@@ -943,10 +955,10 @@ namespace battlecity.ChallengeService {
         [System.Xml.Serialization.XmlElementAttribute(Form=System.Xml.Schema.XmlSchemaForm.Unqualified)]
         public battlecity.ChallengeService.action arg1;
         
-        public setActions() {
+        public setActionsRequest() {
         }
         
-        public setActions(battlecity.ChallengeService.action arg0, battlecity.ChallengeService.action arg1) {
+        public setActionsRequest(battlecity.ChallengeService.action arg0, battlecity.ChallengeService.action arg1) {
             this.arg0 = arg0;
             this.arg1 = arg1;
         }
@@ -966,6 +978,81 @@ namespace battlecity.ChallengeService {
         }
         
         public setActionsResponse(battlecity.ChallengeService.delta @return) {
+            this.@return = @return;
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "4.0.30319.1015")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://challenge.entelect.co.za/")]
+    public partial class board : object, System.ComponentModel.INotifyPropertyChanged {
+        
+        private int endGamePointField;
+        
+        private System.Nullable<state>[][] statesField;
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute(Form=System.Xml.Schema.XmlSchemaForm.Unqualified, Order=0)]
+        public int endGamePoint {
+            get {
+                return this.endGamePointField;
+            }
+            set {
+                this.endGamePointField = value;
+                this.RaisePropertyChanged("endGamePoint");
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlArrayAttribute(Form=System.Xml.Schema.XmlSchemaForm.Unqualified, IsNullable=true, Order=1)]
+        [System.Xml.Serialization.XmlArrayItemAttribute("item", typeof(state), Form=System.Xml.Schema.XmlSchemaForm.Unqualified)]
+        public System.Nullable<state>[][] states {
+            get {
+                return this.statesField;
+            }
+            set {
+                this.statesField = value;
+                this.RaisePropertyChanged("states");
+            }
+        }
+        
+        public event System.ComponentModel.PropertyChangedEventHandler PropertyChanged;
+        
+        protected void RaisePropertyChanged(string propertyName) {
+            System.ComponentModel.PropertyChangedEventHandler propertyChanged = this.PropertyChanged;
+            if ((propertyChanged != null)) {
+                propertyChanged(this, new System.ComponentModel.PropertyChangedEventArgs(propertyName));
+            }
+        }
+    }
+    
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.ServiceModel", "4.0.0.0")]
+    [System.ComponentModel.EditorBrowsableAttribute(System.ComponentModel.EditorBrowsableState.Advanced)]
+    [System.ServiceModel.MessageContractAttribute(WrapperName="login", WrapperNamespace="http://challenge.entelect.co.za/", IsWrapped=true)]
+    public partial class loginRequest {
+        
+        public loginRequest() {
+        }
+    }
+    
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.ServiceModel", "4.0.0.0")]
+    [System.ComponentModel.EditorBrowsableAttribute(System.ComponentModel.EditorBrowsableState.Advanced)]
+    [System.ServiceModel.MessageContractAttribute(WrapperName="loginResponse", WrapperNamespace="http://challenge.entelect.co.za/", IsWrapped=true)]
+    public partial class loginResponse {
+        
+        [System.ServiceModel.MessageBodyMemberAttribute(Namespace="http://challenge.entelect.co.za/", Order=0)]
+        [System.Xml.Serialization.XmlElementAttribute(Form=System.Xml.Schema.XmlSchemaForm.Unqualified)]
+        public battlecity.ChallengeService.board @return;
+        
+        public loginResponse() {
+        }
+        
+        public loginResponse(battlecity.ChallengeService.board @return) {
             this.@return = @return;
         }
     }
@@ -998,23 +1085,23 @@ namespace battlecity.ChallengeService {
         }
         
         [System.ComponentModel.EditorBrowsableAttribute(System.ComponentModel.EditorBrowsableState.Advanced)]
-        battlecity.ChallengeService.getStatusResponse battlecity.ChallengeService.Challenge.getStatus(battlecity.ChallengeService.getStatus request) {
+        battlecity.ChallengeService.getStatusResponse battlecity.ChallengeService.Challenge.getStatus(battlecity.ChallengeService.getStatusRequest request) {
             return base.Channel.getStatus(request);
         }
         
         public battlecity.ChallengeService.game getStatus() {
-            battlecity.ChallengeService.getStatus inValue = new battlecity.ChallengeService.getStatus();
+            battlecity.ChallengeService.getStatusRequest inValue = new battlecity.ChallengeService.getStatusRequest();
             battlecity.ChallengeService.getStatusResponse retVal = ((battlecity.ChallengeService.Challenge)(this)).getStatus(inValue);
             return retVal.@return;
         }
         
         [System.ComponentModel.EditorBrowsableAttribute(System.ComponentModel.EditorBrowsableState.Advanced)]
-        battlecity.ChallengeService.setActionResponse battlecity.ChallengeService.Challenge.setAction(battlecity.ChallengeService.setAction request) {
+        battlecity.ChallengeService.setActionResponse battlecity.ChallengeService.Challenge.setAction(battlecity.ChallengeService.setActionRequest request) {
             return base.Channel.setAction(request);
         }
         
         public battlecity.ChallengeService.delta setAction(int arg0, battlecity.ChallengeService.action arg1) {
-            battlecity.ChallengeService.setAction inValue = new battlecity.ChallengeService.setAction();
+            battlecity.ChallengeService.setActionRequest inValue = new battlecity.ChallengeService.setActionRequest();
             inValue.arg0 = arg0;
             inValue.arg1 = arg1;
             battlecity.ChallengeService.setActionResponse retVal = ((battlecity.ChallengeService.Challenge)(this)).setAction(inValue);
@@ -1022,26 +1109,26 @@ namespace battlecity.ChallengeService {
         }
         
         [System.ComponentModel.EditorBrowsableAttribute(System.ComponentModel.EditorBrowsableState.Advanced)]
-        battlecity.ChallengeService.loginResponse battlecity.ChallengeService.Challenge.login(battlecity.ChallengeService.login request) {
-            return base.Channel.login(request);
-        }
-        
-        public System.Nullable<state>[][] login() {
-            battlecity.ChallengeService.login inValue = new battlecity.ChallengeService.login();
-            battlecity.ChallengeService.loginResponse retVal = ((battlecity.ChallengeService.Challenge)(this)).login(inValue);
-            return retVal.@return;
-        }
-        
-        [System.ComponentModel.EditorBrowsableAttribute(System.ComponentModel.EditorBrowsableState.Advanced)]
-        battlecity.ChallengeService.setActionsResponse battlecity.ChallengeService.Challenge.setActions(battlecity.ChallengeService.setActions request) {
+        battlecity.ChallengeService.setActionsResponse battlecity.ChallengeService.Challenge.setActions(battlecity.ChallengeService.setActionsRequest request) {
             return base.Channel.setActions(request);
         }
         
         public battlecity.ChallengeService.delta setActions(battlecity.ChallengeService.action arg0, battlecity.ChallengeService.action arg1) {
-            battlecity.ChallengeService.setActions inValue = new battlecity.ChallengeService.setActions();
+            battlecity.ChallengeService.setActionsRequest inValue = new battlecity.ChallengeService.setActionsRequest();
             inValue.arg0 = arg0;
             inValue.arg1 = arg1;
             battlecity.ChallengeService.setActionsResponse retVal = ((battlecity.ChallengeService.Challenge)(this)).setActions(inValue);
+            return retVal.@return;
+        }
+        
+        [System.ComponentModel.EditorBrowsableAttribute(System.ComponentModel.EditorBrowsableState.Advanced)]
+        battlecity.ChallengeService.loginResponse battlecity.ChallengeService.Challenge.login(battlecity.ChallengeService.loginRequest request) {
+            return base.Channel.login(request);
+        }
+        
+        public battlecity.ChallengeService.board login() {
+            battlecity.ChallengeService.loginRequest inValue = new battlecity.ChallengeService.loginRequest();
+            battlecity.ChallengeService.loginResponse retVal = ((battlecity.ChallengeService.Challenge)(this)).login(inValue);
             return retVal.@return;
         }
     }

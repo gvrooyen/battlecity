@@ -160,8 +160,9 @@ namespace battlecity
 
             try
             {
-                ChallengeService.state?[][] result = client.login();
-                board = new Board(result);
+                ChallengeService.board result = client.login();
+                board = new Board(result.states);
+                board.endGamePoint = result.endGamePoint;
 
                 // Set up the clock, and add all the tasks that should execute each cycle.
                 clock = new Clock(Settings.SYNC_TICK, Settings.SYNC_DELTA_STEP_LO);

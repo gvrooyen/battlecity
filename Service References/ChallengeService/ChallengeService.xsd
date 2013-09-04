@@ -1,0 +1,171 @@
+<?xml version="1.0" encoding="utf-8"?>
+<xs:schema xmlns:tns="http://challenge.entelect.co.za/" targetNamespace="http://challenge.entelect.co.za/" version="1.0" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+  <xs:element name="EndOfGameException" type="tns:EndOfGameException" />
+  <xs:element name="NoBlameException" type="tns:NoBlameException" />
+  <xs:element name="getStatus" type="tns:getStatus" />
+  <xs:element name="getStatusResponse" type="tns:getStatusResponse" />
+  <xs:element name="login" type="tns:login" />
+  <xs:element name="loginResponse" type="tns:loginResponse" />
+  <xs:element name="setAction" type="tns:setAction" />
+  <xs:element name="setActionResponse" type="tns:setActionResponse" />
+  <xs:element name="setActions" type="tns:setActions" />
+  <xs:element name="setActionsResponse" type="tns:setActionsResponse" />
+  <xs:complexType name="setAction">
+    <xs:sequence>
+      <xs:element name="arg0" type="xs:int" />
+      <xs:element minOccurs="0" name="arg1" type="tns:action" />
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="setActionResponse">
+    <xs:sequence>
+      <xs:element minOccurs="0" name="return" type="tns:delta" />
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="delta">
+    <xs:sequence>
+      <xs:element name="millisecondsToNextTick" type="xs:long" />
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="EndOfGameException">
+    <xs:sequence>
+      <xs:element minOccurs="0" name="loser" type="xs:string" />
+      <xs:element minOccurs="0" name="message" type="xs:string" />
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="login">
+    <xs:sequence />
+  </xs:complexType>
+  <xs:complexType name="loginResponse">
+    <xs:sequence>
+      <xs:element minOccurs="0" name="return" type="tns:board" />
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="board">
+    <xs:sequence>
+      <xs:element name="endGamePoint" type="xs:int" />
+      <xs:element minOccurs="0" maxOccurs="unbounded" name="states" nillable="true" type="tns:stateArray" />
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="NoBlameException">
+    <xs:sequence>
+      <xs:element minOccurs="0" name="message" type="xs:string" />
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="setActions">
+    <xs:sequence>
+      <xs:element minOccurs="0" name="arg0" type="tns:action" />
+      <xs:element minOccurs="0" name="arg1" type="tns:action" />
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="setActionsResponse">
+    <xs:sequence>
+      <xs:element minOccurs="0" name="return" type="tns:delta" />
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="getStatus">
+    <xs:sequence />
+  </xs:complexType>
+  <xs:complexType name="getStatusResponse">
+    <xs:sequence>
+      <xs:element minOccurs="0" name="return" type="tns:game" />
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="game">
+    <xs:sequence>
+      <xs:element name="currentTick" type="xs:int" />
+      <xs:element minOccurs="0" name="events" type="tns:events" />
+      <xs:element name="millisecondsToNextTick" type="xs:long" />
+      <xs:element minOccurs="0" name="nextTickTime" type="xs:dateTime" />
+      <xs:element minOccurs="0" name="playerName" type="xs:string" />
+      <xs:element minOccurs="0" maxOccurs="unbounded" name="players" nillable="true" type="tns:player" />
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="events">
+    <xs:sequence>
+      <xs:element minOccurs="0" maxOccurs="unbounded" name="blockEvents" nillable="true" type="tns:blockEvent" />
+      <xs:element minOccurs="0" maxOccurs="unbounded" name="unitEvents" nillable="true" type="tns:unitEvent" />
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="blockEvent">
+    <xs:sequence>
+      <xs:element minOccurs="0" name="newState" type="tns:state" />
+      <xs:element minOccurs="0" name="point" type="tns:point" />
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="point">
+    <xs:sequence>
+      <xs:element name="x" type="xs:int" />
+      <xs:element name="y" type="xs:int" />
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="unitEvent">
+    <xs:sequence>
+      <xs:element minOccurs="0" name="bullet" type="tns:bullet" />
+      <xs:element name="tickTime" type="xs:int" />
+      <xs:element minOccurs="0" name="unit" type="tns:unit" />
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="bullet">
+    <xs:sequence>
+      <xs:element minOccurs="0" name="direction" type="tns:direction" />
+      <xs:element name="id" type="xs:int" />
+      <xs:element name="x" type="xs:int" />
+      <xs:element name="y" type="xs:int" />
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="unit">
+    <xs:sequence>
+      <xs:element minOccurs="0" name="action" type="tns:action" />
+      <xs:element minOccurs="0" name="direction" type="tns:direction" />
+      <xs:element name="id" type="xs:int" />
+      <xs:element name="x" type="xs:int" />
+      <xs:element name="y" type="xs:int" />
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="player">
+    <xs:sequence>
+      <xs:element minOccurs="0" name="base" type="tns:base" />
+      <xs:element minOccurs="0" maxOccurs="unbounded" name="bullets" nillable="true" type="tns:bullet" />
+      <xs:element minOccurs="0" name="name" type="xs:string" />
+      <xs:element minOccurs="0" maxOccurs="unbounded" name="units" nillable="true" type="tns:unit" />
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="base">
+    <xs:sequence>
+      <xs:element name="x" type="xs:int" />
+      <xs:element name="y" type="xs:int" />
+    </xs:sequence>
+  </xs:complexType>
+  <xs:simpleType name="action">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="NONE" />
+      <xs:enumeration value="UP" />
+      <xs:enumeration value="DOWN" />
+      <xs:enumeration value="LEFT" />
+      <xs:enumeration value="RIGHT" />
+      <xs:enumeration value="FIRE" />
+    </xs:restriction>
+  </xs:simpleType>
+  <xs:simpleType name="state">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="FULL" />
+      <xs:enumeration value="EMPTY" />
+      <xs:enumeration value="OUT_OF_BOUNDS" />
+      <xs:enumeration value="NONE" />
+    </xs:restriction>
+  </xs:simpleType>
+  <xs:simpleType name="direction">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="NONE" />
+      <xs:enumeration value="UP" />
+      <xs:enumeration value="DOWN" />
+      <xs:enumeration value="LEFT" />
+      <xs:enumeration value="RIGHT" />
+    </xs:restriction>
+  </xs:simpleType>
+  <xs:complexType name="stateArray" final="#all">
+    <xs:sequence>
+      <xs:element minOccurs="0" maxOccurs="unbounded" name="item" nillable="true" type="tns:state" />
+    </xs:sequence>
+  </xs:complexType>
+</xs:schema>

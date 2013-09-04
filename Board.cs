@@ -177,6 +177,7 @@ namespace battlecity
         public ChallengeService.state?[][] board { get; private set; }
         public int xsize { get; private set; }
         public int ysize { get; private set; }
+        public int endGamePoint { get; set; }
 
         public string playerName { get; set; }
         public string opponentName { get; set; }

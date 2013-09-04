@@ -18,10 +18,11 @@
     <ServiceContractMappings />
   </ClientOptions>
   <MetadataSources>
-    <MetadataSource Address="file:///C:/Users/G-J/Documents/Visual%20Studio%202010/Projects/battlecity/harness/100kTestHarness/wsdl/ChallengeService.wsdl" Protocol="file" SourceId="1" />
+    <MetadataSource Address="http://localhost:7070/Challenge/ChallengeService/?wsdl" Protocol="http" SourceId="1" />
   </MetadataSources>
   <Metadata>
-    <MetadataFile FileName="ChallengeService1.wsdl" MetadataType="Wsdl" ID="113b38d2-a259-441e-86cd-3f00808c2bc3" SourceId="1" SourceUrl="file:///C:/Users/G-J/Documents/Visual Studio 2010/Projects/battlecity/harness/100kTestHarness/wsdl/ChallengeService.wsdl" />
+    <MetadataFile FileName="ChallengeService.wsdl" MetadataType="Wsdl" ID="f8b1287e-560e-40c1-9237-e954c4ad2576" SourceId="1" SourceUrl="http://localhost:7070/Challenge/ChallengeService/?wsdl" />
+    <MetadataFile FileName="ChallengeService.xsd" MetadataType="Schema" ID="c1045821-f295-4f95-9a19-892100f3633c" SourceId="1" SourceUrl="http://localhost:7070/Challenge/ChallengeService?xsd=1" />
   </Metadata>
   <Extensions>
     <ExtensionFile FileName="configuration91.svcinfo" Name="configuration91.svcinfo" />

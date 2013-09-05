@@ -1334,7 +1334,7 @@ namespace battlecity
 
                 Tank t = board.playerTank[i];
                 if (t.destroyed)
-                    break;
+                    continue;
 
                 A[i] = ChallengeService.action.NONE;
 

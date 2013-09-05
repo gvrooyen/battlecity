@@ -1147,7 +1147,8 @@ namespace battlecity
             A2 = ChallengeService.action.NONE;
 
             // One tank goes for the base
-            baseKiller.Watchdog();
+            if (!baseKiller.destroyed)
+                baseKiller.Watchdog();
             A1 = Dodge(baseKiller);
             if (A1 == ChallengeService.action.NONE)
                 A1 = PotShot(baseKiller);
@@ -1155,7 +1156,8 @@ namespace battlecity
                 A1 = RunAndGun(baseKiller, board.opponentBase.x, board.opponentBase.y);
 
             // The other tank (if we still have two) goes for the closest enemy
-            tankKiller.Watchdog();
+            if (!tankKiller.destroyed)
+                tankKiller.Watchdog();
             A2 = Dodge(tankKiller);
             if (A2 == ChallengeService.action.NONE)
                 A2 = PotShot(tankKiller);

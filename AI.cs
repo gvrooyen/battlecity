@@ -466,7 +466,14 @@ namespace battlecity
 
             Plan.RunAndGun plan;
 
-            if (recursionDepth > 0)
+            if (recursionDepth > 32)
+            {
+                // Maximum recursion depth reached; bailing out.
+                Debug.WriteLine("ERROR: Maximum recursion depth reached, bailing out.");
+                tank.plans.Clear();
+                return ChallengeService.action.NONE;
+            }
+            else if (recursionDepth > 0)
             {
                 // Subplans are in play, so we don't need to do much here.
                 plan = (Plan.RunAndGun)tank.plans.First.Value;
@@ -943,79 +950,119 @@ namespace battlecity
         protected ChallengeService.action Dodge(Tank tank)
         {
             /* Check for incoming bullets, and take evasive action, if necessary.
-             * For now, we keep it simple and a bit naive: just do a single move in the "safest" direction.
-             * No checks for obstacles are made yet!
-             * At a later stage, this could add plans at the start of the queue.
+             * 
+             * There are a number of possible reactions, in order of preference:
+             *   1. Move laterally in the direction that requires the fewest moves to avoid the bullet, if there's space
+             *   2. Move laterally in the other direction, if there's space
+             *   3. Run away from the bullet, if there's time
+             *   4. Do nothing, and hope we can take a shot at the bullet
+             * The order of (3) and (4) is significant: If we default to pot-shots, the chances are higher that a
+             * permanent stand-off occurs. If we run away, the chances are higher that we'll be able to do a lateral
+             * movement later.
+             * 
+             * At the moment, just a single action is taken. A more effective approach might be to add plans to the
+             * tank's queue.
              */
-            foreach (KeyValuePair<int,Bullet> bullet in board.opponentBullet)
-            {
-                if (((bullet.Value.direction == ChallengeService.direction.LEFT) && (tank.x < bullet.Value.x) && 
-                    (Math.Abs(tank.y - bullet.Value.y) <= 2) && board.ClearShot(bullet.Value.x, bullet.Value.y, tank.x, bullet.Value.y))
-                    ||
-                    ((bullet.Value.direction == ChallengeService.direction.RIGHT) && (tank.x > bullet.Value.x) &&
-                    (Math.Abs(tank.y - bullet.Value.y) <= 2) && board.ClearShot(bullet.Value.x, bullet.Value.y, tank.x, bullet.Value.y)))
+
+            ChallengeService.direction incomingFrom = ChallengeService.direction.NONE;
+            ChallengeService.action result = ChallengeService.action.NONE;
+            Bullet bullet = null;
+
+            foreach (KeyValuePair<int, Bullet> b in board.opponentBullet)
+                if ((b.Value.direction == ChallengeService.direction.LEFT) && (tank.x < b.Value.x) &&
+                    (Math.Abs(tank.y - b.Value.y) <= 2) && board.ClearShot(b.Value.x, b.Value.y, tank.x, b.Value.y))
                 {
-                    Debug.WriteLine("Incoming bullet!");
-                    if (tank.y - bullet.Value.y < 0)
-                    {
-                        // Move UP, if there's space
-                        int dy = 3 + tank.y - bullet.Value.y;
-                        if (tank.y > dy)
-                            return ChallengeService.action.UP;
-                        else
-                            return ChallengeService.action.DOWN;
-                    }
-                    else if (tank.y == bullet.Value.y)
-                    {
-                        if (random.Next(2) == 0)
-                            return ChallengeService.action.UP;
-                        else
-                            return ChallengeService.action.DOWN;
-                    }
-                    else
-                    {
-                        // Move DOWN, if there's space
-                        int dy = 3 - tank.y + bullet.Value.y;
-                        if ((board.ysize - tank.y) > dy)
-                            return ChallengeService.action.DOWN;
-                        else
-                            return ChallengeService.action.UP;
-                    }
+                    incomingFrom = ChallengeService.direction.RIGHT;
+                    bullet = b.Value;
+                    break;
                 }
-                if (((bullet.Value.direction == ChallengeService.direction.UP) && (tank.y < bullet.Value.y) &&
-                    (Math.Abs(tank.x - bullet.Value.x) <= 2) && board.ClearShot(bullet.Value.x, bullet.Value.y, bullet.Value.x, tank.y))
-                    ||
-                   ((bullet.Value.direction == ChallengeService.direction.DOWN) && (tank.y > bullet.Value.y) &&
-                    (Math.Abs(tank.x - bullet.Value.x) <= 2) && board.ClearShot(bullet.Value.x, bullet.Value.y, bullet.Value.x, tank.y)))
+                else if ((b.Value.direction == ChallengeService.direction.RIGHT) && (tank.x > b.Value.x) &&
+                    (Math.Abs(tank.y - b.Value.y) <= 2) && board.ClearShot(b.Value.x, b.Value.y, tank.x, b.Value.y))
                 {
-                    Debug.WriteLine("Incoming bullet!");
-                    if (tank.x - bullet.Value.x < 0)
-                    {
-                        // Move LEFT, if there's space
-                        int dx = 3 + tank.x - bullet.Value.x;
-                        if (tank.x > dx)
-                            return ChallengeService.action.LEFT;
-                        else
-                            return ChallengeService.action.RIGHT;
-                    }
-                    else if (tank.x == bullet.Value.x)
-                    {
-                        if (random.Next(2) == 0)
-                            return ChallengeService.action.LEFT;
-                        else
-                            return ChallengeService.action.RIGHT;
-                    }
+                    incomingFrom = ChallengeService.direction.LEFT;
+                    bullet = b.Value;
+                    break;
+                }
+                else if ((b.Value.direction == ChallengeService.direction.UP) && (tank.y < b.Value.y) &&
+                    (Math.Abs(tank.x - b.Value.x) <= 2) && board.ClearShot(b.Value.x, b.Value.y, b.Value.x, tank.y))
+                {
+                    incomingFrom = ChallengeService.direction.DOWN;
+                    bullet = b.Value;
+                    break;
+                }
+                else if ((b.Value.direction == ChallengeService.direction.DOWN) && (tank.y > b.Value.y) &&
+                    (Math.Abs(tank.x - b.Value.x) <= 2) && board.ClearShot(b.Value.x, b.Value.y, b.Value.x, tank.y))
+                {
+                    incomingFrom = ChallengeService.direction.UP;
+                    bullet = b.Value;
+                    break;
+                }
+
+            if (incomingFrom == ChallengeService.direction.NONE)
+                return result;
+
+            Debug.WriteLine("Incoming bullet!");
+
+            if ((incomingFrom == ChallengeService.direction.LEFT) || (incomingFrom == ChallengeService.direction.RIGHT))
+            {
+                // Try to dodge vertically
+                if (tank.y - bullet.y < 0)
+                {
+                    // Move UP, if there's space
+                    int dy = 3 + tank.y - bullet.y;
+                    if (tank.y > dy)
+                        return ChallengeService.action.UP;
                     else
-                    {
-                        // Move RIGHT, if there's space
-                        int dx = 3 - tank.x + bullet.Value.x;
-                        if ((board.xsize - tank.x) > dx)
-                            return ChallengeService.action.RIGHT;
-                        else
-                            return ChallengeService.action.LEFT;
-                    }
+                        return ChallengeService.action.DOWN;
+                }
+                else if (tank.y == bullet.y)
+                {
+                    if (random.Next(2) == 0)
+                        return ChallengeService.action.UP;
+                    else
+                        return ChallengeService.action.DOWN;
+                }
+                else
+                {
+                    // Move DOWN, if there's space
+                    int dy = 3 - tank.y + bullet.y;
+                    if ((board.ysize - tank.y) > dy)
+                        return ChallengeService.action.DOWN;
+                    else
+                        return ChallengeService.action.UP;
                 }
             }
+            else
+            {
+                // Try to dodge horizontally
+                Debug.WriteLine("Incoming bullet!");
+                if (tank.x - bullet.x < 0)
+                {
+                    // Move LEFT, if there's space
+                    int dx = 3 + tank.x - bullet.x;
+                    if (tank.x > dx)
+                        return ChallengeService.action.LEFT;
+                    else
+                        return ChallengeService.action.RIGHT;
+                }
+                else if (tank.x == bullet.x)
+                {
+                    if (random.Next(2) == 0)
+                        return ChallengeService.action.LEFT;
+                    else
+                        return ChallengeService.action.RIGHT;
+                }
+                else
+                {
+                    // Move RIGHT, if there's space
+                    int dx = 3 - tank.x + bullet.x;
+                    if ((board.xsize - tank.x) > dx)
+                        return ChallengeService.action.RIGHT;
+                    else
+                        return ChallengeService.action.LEFT;
+                }
+            }
+
             return ChallengeService.action.NONE;
         }
 

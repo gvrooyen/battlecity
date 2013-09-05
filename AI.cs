@@ -1019,53 +1019,86 @@ namespace battlecity
             return ChallengeService.action.NONE;
         }
 
+        protected ChallengeService.action FireOrTurn(Tank tank, int tx, int ty, int targetSize = 0)
+        {
+            /* If the tank is horizontally or vertically in line with the target and we have a clear shot,
+             * either prepare to fire by moving in the target direction (if necessary) or just fire.
+             * If the tank is not in line with the target, the NONE action is returned.
+             */
+            if ((Math.Abs(tx - tank.x) <= targetSize) && board.ClearShot(tank.x, tank.y, tank.x, ty))
+            {
+                if (ty > tank.y)
+                {
+                    if (tank.direction == ChallengeService.direction.DOWN)
+                        return ChallengeService.action.FIRE;
+                    else
+                        return ChallengeService.action.DOWN;
+                }
+                else
+                {
+                    if (tank.direction == ChallengeService.direction.UP)
+                        return ChallengeService.action.FIRE;
+                    else
+                        return ChallengeService.action.UP;
+                }
+            }
+            else if ((Math.Abs(ty - tank.y) <= targetSize) && board.ClearShot(tank.x, tank.y, tx, tank.y))
+            {
+                if (tx > tank.x)
+                {
+                    if (tank.direction == ChallengeService.direction.RIGHT)
+                        return ChallengeService.action.FIRE;
+                    else
+                        return ChallengeService.action.RIGHT;
+                }
+                else
+                {
+                    if (tank.direction == ChallengeService.direction.LEFT)
+                        return ChallengeService.action.FIRE;
+                    else
+                        return ChallengeService.action.LEFT;
+                }
+            }
+            else
+                return ChallengeService.action.NONE;
+        }
+
         protected ChallengeService.action PotShot(Tank tank)
         {
             /* Check whether enemies are within range, and fire at them.
-             * TODO: Also check whether the base or any incoming bullets are in range.
              */
-            if (tank.bullet != null)
-                return ChallengeService.action.NONE;
+            ChallengeService.action result = ChallengeService.action.NONE;
 
+            if (tank.bullet != null)
+                return result;
+
+            result = FireOrTurn(tank, board.opponentBase.x, board.opponentBase.y);
+            if (result != ChallengeService.action.NONE)
+            {
+                Debug.WriteLine("All your base are belong to us!");
+                return result;
+            }
+
+            foreach (KeyValuePair<int,Bullet> bullet in board.opponentBullet)
+            {
+                // TODO: Check that the bullet is actually being fired towards the tank
+                result = FireOrTurn(tank, bullet.Value.x, bullet.Value.y);
+                if (result != ChallengeService.action.NONE)
+                {
+                    Debug.WriteLine("Attempting countershot!");
+                    return result;
+                }
+            }
+        
             foreach (Tank opponent in board.opponentTank)
             {
                 if (!opponent.destroyed)
                 {
-                    if ((Math.Abs(opponent.x - tank.x) <= 2) && board.ClearShot(tank.x, tank.y, tank.x, opponent.y))
+                    result = FireOrTurn(tank, opponent.x, opponent.y);
+                    if (result != ChallengeService.action.NONE)
                     {
-                        Debug.WriteLine("Opponent in range!");
-                        if (opponent.y > tank.y)
-                        {
-                            if (tank.direction == ChallengeService.direction.DOWN)
-                                return ChallengeService.action.FIRE;
-                            else
-                                return ChallengeService.action.DOWN;
-                        }
-                        else
-                        {
-                            if (tank.direction == ChallengeService.direction.UP)
-                                return ChallengeService.action.FIRE;
-                            else
-                                return ChallengeService.action.UP;
-                        }
-                    }
-                    if ((Math.Abs(opponent.y - tank.y) <= 2) && board.ClearShot(tank.x, tank.y, opponent.x, tank.y))
-                    {
-                        Debug.WriteLine("Opponent in range!");
-                        if (opponent.x > tank.x)
-                        {
-                            if (tank.direction == ChallengeService.direction.RIGHT)
-                                return ChallengeService.action.FIRE;
-                            else
-                                return ChallengeService.action.RIGHT;
-                        }
-                        else
-                        {
-                            if (tank.direction == ChallengeService.direction.LEFT)
-                                return ChallengeService.action.FIRE;
-                            else
-                                return ChallengeService.action.LEFT;
-                        }
+                        Debug.WriteLine("Die, Piggy-Piggy, die die!");
+                        return result;
                     }
                 }
             }
@@ -1424,6 +1457,8 @@ namespace battlecity
                              * them, and move towards the closest one which doesn't imply that we're too
                              * close to the base.
                              */
+                            Debug.WriteLine("Attempting to flank opponent.");
+
                             int[,] flanks = new int[,] { {closestOpponent.x - 5, closestOpponent.y    },
                                                          {closestOpponent.x    , closestOpponent.y - 5},
                                                          {closestOpponent.x + 5, closestOpponent.y    },

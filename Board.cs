@@ -378,7 +378,6 @@ namespace battlecity
 
             // Update tank positions
 
-
             foreach (Tank t in playerTank)
             {
                 bool wasDestroyed = t.destroyed;

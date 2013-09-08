@@ -12,7 +12,9 @@
         public const long SYNC_DELTA_STEP_HI = 100;                                 // Sync adjustment step far from SYNC_TARGET
         public const long SYNC_INITIAL_DELAY = 200;                                 // Initial sync delay
 
-        public const long SCHEDULE_EARLY_MOVE = -600;                              // Time before end of tick to post the backup move
+        public const long SCHEDULE_EARLY_MOVE = -600;                               // Time before end of tick to post the backup move
         public const long SCHEDULE_FINAL_MOVE = -300;                               // Time before end of tick to post the final move
+
+        public const int PATHFINDER_SCALESPACE = 3;                                 // How coarsely to calculate the route before zooming in on the detail
     }
 }

@@ -1548,7 +1548,7 @@ namespace battlecity
 
                 planner[i] = new PathPlanner();
 
-                planner[i].MapBoard(board, t, -1, 3);
+                planner[i].MapBoard(board, t, -1, Settings.PATHFINDER_SCALESPACE);
 #if DEBUG
                 planner[i].RenderMap(board, String.Format("map{0}-0.png", t.id), 0);
                 // planner[i].RenderMap(board, String.Format("map{0}-1.png", t.id), 1);
@@ -1589,7 +1589,7 @@ namespace battlecity
 
                     Task task = new Task(() =>
                         {
-                            route[_i] = planner[_i].GetPath(t.x, t.y, board.opponentBase.x, board.opponentBase.y, cancel);
+                            route[_i] = planner[_i].GetPath(t.x, t.y, board.opponentBase.x, board.opponentBase.y, cancel, Settings.PATHFINDER_SCALESPACE);
                         }, cancel.Token);
 
                     task.ContinueWith(battlecity.Program.ExceptionHandler, TaskContinuationOptions.OnlyOnFaulted);
@@ -1679,7 +1679,7 @@ namespace battlecity
 
                         Task task = new Task(() =>
                         {
-                            route[_i] = planner[_i].GetPath(t.x, t.y, destX, destY, cancel);
+                            route[_i] = planner[_i].GetPath(t.x, t.y, destX, destY, cancel, Settings.PATHFINDER_SCALESPACE);
                         }, cancel.Token);
 
                         task.ContinueWith(battlecity.Program.ExceptionHandler, TaskContinuationOptions.OnlyOnFaulted);

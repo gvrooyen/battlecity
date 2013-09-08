@@ -432,14 +432,14 @@ namespace battlecity
             // and we later want to re-run the plan (or substitute it with an alternative).
             DestX = x2;
             DestY = y2;
-            int scale = 2;
+            int scale = scaleSpace;
 
             int sx1 = ((x1 - 2) >> scale) << scale;
             int sy1 = ((y1 - 2) >> scale) << scale;
             int sx2 = ((x2 - 2) >> scale) << scale;
             int sy2 = ((y2 - 2) >> scale) << scale;
 
-            // for (int scale = 0; scale <= scaleSpace; scale++)
+            {
                 Games.Pathfinding.AStar astar = new Games.Pathfinding.AStar();
 
                 AStarNodeBC goalNode = new AStarNodeBC(null, null, 0, sx2, sy2, this, scale);
@@ -448,7 +448,59 @@ namespace battlecity
                 astar.FindPath(startNode, goalNode, cancel);
 
                 foreach (AStarNodeBC n in astar.Solution)
-                    result.Add(new Tuple<int, int>(n.X, n.Y));
+                    result.Add(new Tuple<int, int>(n.X + 2, n.Y + 2));
+            }
+
+            if (!cancel.IsCancellationRequested && (scaleSpace > 0))
+            {
+                /* If we've been working on a coarse first estimate, now connect the dots to find a finer
+                 * path for the first leg of the coarse path.
+                 */
+                int replaceNode = Math.Min(2, result.Count - 1);
+                Games.Pathfinding.AStar astar = new Games.Pathfinding.AStar();
+
+                // In the area of the coarse node that we're targeting, find the map coordinate with the
+                // lowest cost.
+
+                double minCost = double.PositiveInfinity;
+                for (int dx = 0; dx < (1 << scale); dx++)
+                    for (int dy = 0; dy < (1 << scale); dy++)
+                    {
+                        double thisCost = double.PositiveInfinity;
+                        int thisX = (result[replaceNode].Item1 - 2) + dx;
+                        int thisY = (result[replaceNode].Item2 - 2) + dy;
+                        if ((thisX > 0) && (thisX < Map.GetLength(1)) && (thisY > 0) && (thisY < Map.GetLength(2)))
+                            thisCost = Map[0, thisX, thisY];
+                        if (thisCost < minCost)
+                        {
+                            sx2 = thisX;
+                            sy2 = thisY;
+                            minCost = thisCost;
+                        }
+                    }
+
+                AStarNodeBC goalNode = new AStarNodeBC(null, null, 0, sx2, sy2, this, 0);
+                AStarNodeBC startNode = new AStarNodeBC(null, goalNode, 0, x1 - 2 , y1 - 2, this, 0);
+                startNode.GoalNode = goalNode;
+                astar.FindPath(startNode, goalNode, cancel);
+
+                List<Tuple<int, int>> finePath = new List<Tuple<int, int>>();
+
+                bool firstNode = true;
+                foreach (AStarNodeBC n in astar.Solution)
+                {
+                    if (!firstNode)
+                        finePath.Add(new Tuple<int, int>(n.X + 2, n.Y + 2));
+                    firstNode = false;
+                }
+
+                if (finePath.Count > 0)
+                {
+                    // Not particularly efficient; both operations are O(n)
+                    result.RemoveRange(0, replaceNode+1);
+                    result.InsertRange(0, finePath);
+                }
+            }
 
             return result;
         }

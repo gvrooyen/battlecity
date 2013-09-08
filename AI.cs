@@ -299,11 +299,11 @@ namespace battlecity
             this.client = client;
         }
 
-        public abstract void newTick();
-        public abstract void postEarlyMove();
-        public abstract void postFinalMove();
+        public abstract void NewTick();
+        public abstract void PostEarlyMove();
+        public abstract void PostFinalMove();
 
-        protected void directionToXY(ChallengeService.direction direction, out int dx, out int dy)
+        protected void DirectionToXY(ChallengeService.direction direction, out int dx, out int dy)
         {
             switch (direction)
             {
@@ -567,6 +567,10 @@ namespace battlecity
             {
                 // We've reached our goal. Move on to the next part of the plan, or wait for new instructions.
                 tank.plans.RemoveFirst();
+
+                // Tickle the watchdog
+                tank.Watchdog(true);
+
                 if (tank.plans.First == null)
 				    return ChallengeService.action.NONE;
                 else if (tank.plans.First.Value.GetType() == typeof(Plan.RunAndGun))
@@ -595,7 +599,7 @@ namespace battlecity
             {
                 // We have both the horizontal and vertical leg left to execute. Stick with what we
                 // were doing in the last tick.
-                directionToXY(plan.currentDirection, out dx, out dy);
+                DirectionToXY(plan.currentDirection, out dx, out dy);
             }
             else
             {
@@ -1077,15 +1081,14 @@ namespace battlecity
             if ((incomingFrom == ChallengeService.direction.LEFT) || (incomingFrom == ChallengeService.direction.RIGHT))
             {
                 // Try to dodge vertically
-                if (tank.y - bullet.y < 0)
+                if (tank.y < bullet.y)
                 {
                     // Move UP, if there's space
                     int dy = 3 + tank.y - bullet.y;
-                    if (tank.y > dy)
-                        if (FlankClear(tank, ChallengeService.direction.UP, tank.y - dy))
-                            return ChallengeService.action.UP;
-                        else if (FlankClear(tank, ChallengeService.direction.DOWN, 6 - tank.y + dy))
-                            return ChallengeService.action.DOWN;
+                    if (FlankClear(tank, ChallengeService.direction.UP, dy))
+                        return ChallengeService.action.UP;
+                    else if (FlankClear(tank, ChallengeService.direction.DOWN, 6 - dy))
+                        return ChallengeService.action.DOWN;
                 }
                 else if (tank.y == bullet.y)
                 {
@@ -1101,7 +1104,7 @@ namespace battlecity
                                 return ChallengeService.action.DOWN;
                         }
                         else
-                            return ChallengeService.action.LEFT;
+                            return ChallengeService.action.UP;
                     }
                     else if (clearDown)
                     {
@@ -1112,35 +1115,23 @@ namespace battlecity
                 {
                     // Move DOWN, if there's space
                     int dy = 3 - tank.y + bullet.y;
-                    if ((board.ysize - tank.y) > dy)
-                    {
-                        if (FlankClear(tank, ChallengeService.direction.DOWN, (board.ysize - tank.y) - dy))
-                            return ChallengeService.action.DOWN;
-                    }
-                    else
-                    {
-                        if (FlankClear(tank, ChallengeService.direction.UP, 6 - board.ysize + tank.y + dy))
+                    if (FlankClear(tank, ChallengeService.direction.DOWN, dy))
+                        return ChallengeService.action.DOWN;
+                    else if (FlankClear(tank, ChallengeService.direction.UP, 6 - dy))
                             return ChallengeService.action.UP;
-                    }
                 }
             }
             else
             {
                 // Try to dodge horizontally
-                if (tank.x - bullet.x < 0)
+                if (tank.x < bullet.x)
                 {
                     // Move LEFT, if there's space
                     int dx = 3 + tank.x - bullet.x;
-                    if (tank.x > dx)
-                    {
-                        if (FlankClear(tank, ChallengeService.direction.LEFT, tank.x - dx))
-                            return ChallengeService.action.LEFT;
-                    }
-                    else
-                    {
-                        if (FlankClear(tank, ChallengeService.direction.RIGHT, 6 - tank.x + dx))
+                    if (FlankClear(tank, ChallengeService.direction.LEFT, dx))
+                        return ChallengeService.action.LEFT;
+                    else if (FlankClear(tank, ChallengeService.direction.RIGHT, 6 - dx))
                             return ChallengeService.action.RIGHT;
-                    }
                 }
                 else if (tank.x == bullet.x)
                 {
@@ -1167,16 +1158,10 @@ namespace battlecity
                 {
                     // Move RIGHT, if there's space
                     int dx = 3 - tank.x + bullet.x;
-                    if ((board.xsize - tank.x) > dx)
-                    {
-                        if (FlankClear(tank, ChallengeService.direction.RIGHT, board.xsize - tank.x - dx))
-                            return ChallengeService.action.RIGHT;
-                    }
-                    else
-                    {
-                        if (FlankClear(tank, ChallengeService.direction.LEFT, 6 - board.xsize + tank.x + dx))
-                            return ChallengeService.action.LEFT;
-                    }
+                    if (FlankClear(tank, ChallengeService.direction.RIGHT, dx))
+                        return ChallengeService.action.RIGHT;
+                    else if (FlankClear(tank, ChallengeService.direction.LEFT, 6 - dx))
+                        return ChallengeService.action.LEFT;
                 }
             }
 
@@ -1295,17 +1280,17 @@ namespace battlecity
         public AI_Random() : base() { }
         public AI_Random(Board board, ChallengeService.ChallengeClient client) : base(board, client) { }
 
-        public override void newTick()
+        public override void NewTick()
         {
             // do nothing
         }
 
-        public override void postEarlyMove()
+        public override void PostEarlyMove()
         {
             // do nothing
         }
 
-        public override void postFinalMove()
+        public override void PostFinalMove()
         {
             Array actions = Enum.GetValues(typeof(ChallengeService.action));
             ChallengeService.action A1 = (ChallengeService.action)actions.GetValue(random.Next(actions.Length));
@@ -1330,16 +1315,16 @@ namespace battlecity
          * if need be), fires until it is destroyed, and then targets the second tank.
          */
 
-        ChallengeService.action A1, A2;
+        ChallengeService.action a1, a2;
 
         public AI_Aggro() : base() { }
         public AI_Aggro(Board board, ChallengeService.ChallengeClient client) : base(board, client)
         {
-            A1 = ChallengeService.action.NONE;
-            A2 = ChallengeService.action.NONE;
+            a1 = ChallengeService.action.NONE;
+            a2 = ChallengeService.action.NONE;
         }
 
-        public override void newTick()
+        public override void NewTick()
         {
             // We'll do most of our calculations here, and just post the actions in the final move.
 
@@ -1356,72 +1341,72 @@ namespace battlecity
             else if (!board.playerTank[1].destroyed)
                 baseKiller = board.playerTank[1];
 
-            A1 = ChallengeService.action.NONE;
-            A2 = ChallengeService.action.NONE;
+            a1 = ChallengeService.action.NONE;
+            a2 = ChallengeService.action.NONE;
 
             // One tank goes for the base
             if (!baseKiller.destroyed)
                 baseKiller.Watchdog();
-            A1 = Dodge(baseKiller);
-            if (A1 == ChallengeService.action.NONE)
-                A1 = PotShot(baseKiller);
-            if (A1 == ChallengeService.action.NONE)
-                A1 = RunAndGun(baseKiller, board.opponentBase.x, board.opponentBase.y);
+            a1 = Dodge(baseKiller);
+            if (a1 == ChallengeService.action.NONE)
+                a1 = PotShot(baseKiller);
+            if (a1 == ChallengeService.action.NONE)
+                a1 = RunAndGun(baseKiller, board.opponentBase.x, board.opponentBase.y);
 
             // The other tank (if we still have two) goes for the closest enemy
             if (!tankKiller.destroyed)
                 tankKiller.Watchdog();
-            A2 = Dodge(tankKiller);
-            if (A2 == ChallengeService.action.NONE)
-                A2 = PotShot(tankKiller);
-            if (A2 == ChallengeService.action.NONE)
+            a2 = Dodge(tankKiller);
+            if (a2 == ChallengeService.action.NONE)
+                a2 = PotShot(tankKiller);
+            if (a2 == ChallengeService.action.NONE)
             {
                 int o1 = Math.Abs(board.opponentTank[0].x - tankKiller.x) + Math.Abs(board.opponentTank[0].y - tankKiller.y);
                 int o2 = Math.Abs(board.opponentTank[1].x - tankKiller.x) + Math.Abs(board.opponentTank[1].y - tankKiller.y);
                 if ((o1 < o2) && !board.opponentTank[0].destroyed)
-                    A2 = RunAndGun(tankKiller, board.opponentTank[0].x, board.opponentTank[0].y);
+                    a2 = RunAndGun(tankKiller, board.opponentTank[0].x, board.opponentTank[0].y);
                 else
-                    A2 = RunAndGun(tankKiller, board.opponentTank[1].x, board.opponentTank[1].y);
+                    a2 = RunAndGun(tankKiller, board.opponentTank[1].x, board.opponentTank[1].y);
             }
 
             // If the original base killer is destroyed, appoint his successor.
             if (baseKiller.destroyed)
-                A2 = A1;
+                a2 = a1;
 
             if (!baseKiller.destroyed && !tankKiller.destroyed)
             {
                 Debug.WriteLine("- - - - - - - - - - - - - - - - - - -");
                 Debug.WriteLine("Sniper's minimap:");
                 Debug.WriteLine(board.PrintArea(tankKiller.x - 7, tankKiller.y - 7, tankKiller.x + 8, tankKiller.y + 8));
-                Debug.WriteLine("Sniper's move: {0}", A1);
+                Debug.WriteLine("Sniper's move: {0}", a1);
             }
             Debug.WriteLine("- - - - - - - - - - - - - - - - - - -");
             Debug.WriteLine("Base attacker's minimap:");
             Debug.WriteLine(board.PrintArea(baseKiller.x - 7, baseKiller.y - 7, baseKiller.x + 8, baseKiller.y + 8));
-            Debug.WriteLine("Base attacker's move: {0}", A1);
+            Debug.WriteLine("Base attacker's move: {0}", a1);
         }
 
-        public override void postEarlyMove()
+        public override void PostEarlyMove()
         {
             // Do nothing
         }
 
-        public override void postFinalMove()
+        public override void PostFinalMove()
         {
             lock (client)
             {
-                Debug.WriteLine("Tank 1 {0}; Tank 2 {1}", A1, A2);
+                Debug.WriteLine("Tank 1 {0}; Tank 2 {1}", a1, a2);
                 if (!board.playerTank[0].destroyed)
                 {
                     lock (client)
-                        client.setAction(board.playerTank[0].id, A1);
+                        client.setAction(board.playerTank[0].id, a1);
                     Debug.WriteLine("Tank 1's plans:");
                     Debug.WriteLine(board.playerTank[0].PrintPlans());
                 }
                 if (!board.playerTank[1].destroyed)
                 {
                     lock (client)
-                        client.setAction(board.playerTank[1].id, A2);
+                        client.setAction(board.playerTank[1].id, a2);
                     Debug.WriteLine("Tank 2's plans:");
                     Debug.WriteLine(board.playerTank[1].PrintPlans());
                 }
@@ -1473,7 +1458,7 @@ namespace battlecity
             planner = new PathPlanner[2];
         }
 
-        public override void newTick()
+        public override void NewTick()
         {
             #region Set up roles
             if ((board.playerTank[0].role == null) || (board.playerTank[1].role == null))
@@ -1563,11 +1548,11 @@ namespace battlecity
 
                 planner[i] = new PathPlanner();
 
-                planner[i].MapBoard(board, t, -1, 2);
+                planner[i].MapBoard(board, t, -1, 3);
 #if DEBUG
                 planner[i].RenderMap(board, String.Format("map{0}-0.png", t.id), 0);
-                planner[i].RenderMap(board, String.Format("map{0}-1.png", t.id), 1);
-                planner[i].RenderMap(board, String.Format("map{0}-2.png", t.id), 2);
+                // planner[i].RenderMap(board, String.Format("map{0}-1.png", t.id), 1);
+                // planner[i].RenderMap(board, String.Format("map{0}-2.png", t.id), 2);
 #endif
 
                 // See if there's a bullet we need to dodge
@@ -1593,7 +1578,7 @@ namespace battlecity
                     //       has a long vertical corridor heading straight towards the base.
 
                     /* Next, we start an asynchronous task running the path planner. We'll check its results
-                     * in postEarlyMove(), and cancel it if it's not done by postFinalMove().
+                     * in PostEarlyMove(), and cancel it if it's not done by PostFinalMove().
                      */
 
                     cancel = new CancellationTokenSource();
@@ -1683,7 +1668,7 @@ namespace battlecity
                         }
 
                         /* Next, we start an asynchronous task running the path planner. We'll check its results
-                         * in postEarlyMove(), and cancel it if it's not done by postFinalMove().
+                         * in PostEarlyMove(), and cancel it if it's not done by PostFinalMove().
                          */
 
                         cancel = new CancellationTokenSource();
@@ -1734,7 +1719,7 @@ namespace battlecity
             #endregion
         }
 
-        public override void postEarlyMove()
+        public override void PostEarlyMove()
         {
             cancel.Cancel();
 
@@ -1756,11 +1741,11 @@ namespace battlecity
                     if (A[i] == ChallengeService.action.NONE)
                     {
                         board.playerTank[i].plans.Clear();
-                        if ((route[i] == null) || (route.Length < 4))
+                        if ((route[i] == null) || (route[i].Count < 4))
                         {
                             // The pathfinder hasn't been able to find a valid route yet, or we're practically
                             // at the target. Just bash ahead.
-                            if (route[i] == null)
+                            if ((route[i] == null) || (route[i].Count == 0))
                                 Debug.WriteLine("WARNING: No suitable route found for tank (ID={0}); bashing ahead.", board.playerTank[i].id);
                             else
                                 Debug.WriteLine("Tank (ID={0}) going straight for the target.", board.playerTank[i].id);
@@ -1793,7 +1778,7 @@ namespace battlecity
 
         }
 
-        public override void postFinalMove()
+        public override void PostFinalMove()
         {
             lock (client)
             {

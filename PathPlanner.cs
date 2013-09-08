@@ -97,7 +97,7 @@ namespace battlecity
 			aSuccessors.Clear();
             AddSuccessor(aSuccessors, fX - (1 << Scale), fY);
 			AddSuccessor(aSuccessors, fX, fY - (1 << Scale));
-			AddSuccessor(aSuccessors, fX + (1 << Scale), fY  );
+			AddSuccessor(aSuccessors, fX + (1 << Scale), fY);
 			AddSuccessor(aSuccessors, fX, fY + (1 << Scale));
 		}	
 
@@ -122,7 +122,7 @@ namespace battlecity
              * scale = 0 returns the coordinates of the map as specified.
              * Otherwise the map is scaled down by a factor (2^scale).
              */
-            if ((x < 0) || (x >= (Map.GetLength(1) >> scale)) || (y < 0) || (y >= (Map.GetLength(2) >> scale)))
+            if ((x < 0) || (x >= Map.GetLength(1)) || (y < 0) || (y >= Map.GetLength(2)))
                 return -1;
 
             return Map[scale, x >> scale, y >> scale];
@@ -432,13 +432,18 @@ namespace battlecity
             // and we later want to re-run the plan (or substitute it with an alternative).
             DestX = x2;
             DestY = y2;
-            int scale = 3;
+            int scale = 2;
+
+            int sx1 = ((x1 - 2) >> scale) << scale;
+            int sy1 = ((y1 - 2) >> scale) << scale;
+            int sx2 = ((x2 - 2) >> scale) << scale;
+            int sy2 = ((y2 - 2) >> scale) << scale;
 
             // for (int scale = 0; scale <= scaleSpace; scale++)
                 Games.Pathfinding.AStar astar = new Games.Pathfinding.AStar();
 
-                AStarNodeBC goalNode = new AStarNodeBC(null, null, 0, x2 - 2, y2 - 2, this, scale);
-                AStarNodeBC startNode = new AStarNodeBC(null, goalNode, 0, x1 - 2, y1 - 2, this, scale);
+                AStarNodeBC goalNode = new AStarNodeBC(null, null, 0, sx2, sy2, this, scale);
+                AStarNodeBC startNode = new AStarNodeBC(null, goalNode, 0, sx1, sy1, this, scale);
                 startNode.GoalNode = goalNode;
                 astar.FindPath(startNode, goalNode, cancel);
 

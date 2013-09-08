@@ -17,7 +17,7 @@ namespace battlecity
         static Board board;
         static AI bot;
 
-        static void handleNewTick()
+        static void HandleNewTick()
         {
             /* At the start of a new clock cycle, the following should happen:
              * 1. Check the server status, and make sure we've actually advanced a
@@ -95,7 +95,7 @@ namespace battlecity
 
             lastTick = status.currentTick;
 
-            bot.newTick();
+            bot.NewTick();
 
             if (ms > 0)
                 Diagnostics.Sync.addTickPeriod(ms);
@@ -109,19 +109,19 @@ namespace battlecity
 
         }
 
-        static void postEarlyMove()
+        static void PostEarlyMove()
         {
-            /* Post the best move found so far. This is done in case the postFinalMove()
+            /* Post the best move found so far. This is done in case the PostFinalMove()
              * handler does not get serviced before the current tick ends.
              */
-            bot.postEarlyMove();
+            bot.PostEarlyMove();
         }
 
-        static void postFinalMove()
+        static void PostFinalMove()
         {
             /* Post the final best move found.
              */
-            bot.postFinalMove();
+            bot.PostFinalMove();
         }
 
         static void Main(string[] args)
@@ -167,13 +167,13 @@ namespace battlecity
                 clock = new Clock(Settings.SYNC_TICK, Settings.SYNC_DELTA_STEP_LO);
 
                 // At the start of each cycle, process all events and prune the game trees.
-                clock.AddTask(0, handleNewTick);
+                clock.AddTask(0, HandleNewTick);
 
                 // Some time through the cycle, post a preliminary move as backup.
-                clock.AddTask(Settings.SCHEDULE_EARLY_MOVE, postEarlyMove);
+                clock.AddTask(Settings.SCHEDULE_EARLY_MOVE, PostEarlyMove);
 
                 // Just before the end of the cycle, post the final best move found.
-                clock.AddTask(Settings.SCHEDULE_FINAL_MOVE, postFinalMove);
+                clock.AddTask(Settings.SCHEDULE_FINAL_MOVE, PostFinalMove);
 
                 // In the first tick, the server status is read, and the clock is started based
                 // on the reported millisecondsToNextTick.

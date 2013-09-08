@@ -825,7 +825,7 @@ namespace battlecity
                     int y = firstObstY;
                     for (int x = firstObstX - 1; x >= destX; x--)
                     {
-                        if (board.board[x][y] == ChallengeService.state.FULL)
+                        if ((x > 0) && (x < board.xsize) && (y > 0) && (y < board.ysize) && (board.board[x][y] == ChallengeService.state.FULL))
                         {
                             // There's a block to destroy. Let's see if it will take out any obstacles with it.
                             LinkedListNode<Tuple<int, int>> obst = obstacles.First;
@@ -1563,9 +1563,11 @@ namespace battlecity
 
                 planner[i] = new PathPlanner();
 
-                planner[i].mapBoard(board, t);
+                planner[i].MapBoard(board, t, -1, 2);
 #if DEBUG
-                planner[i].renderMap(board, String.Format("map{0}.png", t.id));
+                planner[i].RenderMap(board, String.Format("map{0}-0.png", t.id), 0);
+                planner[i].RenderMap(board, String.Format("map{0}-1.png", t.id), 1);
+                planner[i].RenderMap(board, String.Format("map{0}-2.png", t.id), 2);
 #endif
 
                 // See if there's a bullet we need to dodge
@@ -1717,7 +1719,7 @@ namespace battlecity
                 ChallengeService.action action = A[i];
 
                 if (action == ChallengeService.action.NONE)
-                    action = RunAndGun(board.playerTank[i], planner[i].destX, planner[i].destY);
+                    action = RunAndGun(board.playerTank[i], planner[i].DestX, planner[i].DestY);
 
                 try
                 {
@@ -1735,14 +1737,15 @@ namespace battlecity
         public override void postEarlyMove()
         {
             cancel.Cancel();
-            foreach (Task task in taskPool)
-               task.Wait(100);
+
+            for (int i = 0; i < taskPool.Count; i++)
+                taskPool[i].Wait(100);
             taskPool.Clear();
 #if DEBUG
             if (route[0] != null)
-                planner[0].renderRoute(board, route[0], String.Format("route{0}.png", 0));
+                planner[0].RenderRoute(board, route[0], String.Format("route{0}.png", 0));
             if (route[1] != null)
-                planner[1].renderRoute(board, route[1], String.Format("route{0}.png", 1));
+                planner[1].RenderRoute(board, route[1], String.Format("route{0}.png", 1));
 #endif
             // Now act on the (hopefully updated) routes.
             for (int i = 0; i < 2; i++)
@@ -1761,7 +1764,7 @@ namespace battlecity
                                 Debug.WriteLine("WARNING: No suitable route found for tank (ID={0}); bashing ahead.", board.playerTank[i].id);
                             else
                                 Debug.WriteLine("Tank (ID={0}) going straight for the target.", board.playerTank[i].id);
-                            // A[i] = RunAndGun(board.playerTank[i], planner[i].destX, planner[i].destY);
+                            // A[i] = RunAndGun(board.playerTank[i], Planner[i].DestX, Planner[i].destY);
                             A[i] = ChallengeService.action.NONE;
                         }
                         else

@@ -16,63 +16,63 @@ namespace battlecity
 		 * http://www.codeproject.com/Articles/5758/Path-finding-in-C
 		 */
 
-        public PathPlanner planner { get; set; }
-        int scale { get; set; }
+        public PathPlanner Planner { get; set; }
+        int Scale { get; set; }
 		
 		// The X-coordinate of the node
 		public int X 
 		{
 			get 
 			{
-				return FX;
+				return fX;
 			}
 		}
-		private int FX;
+        private readonly int fX;
 
 		// The Y-coordinate of the node
 		public int Y
 		{
 			get
 			{
-				return FY;
+				return fY;
 			}
 		}
-		private int FY;
+        private readonly int fY;
 
 		// Constructor for a node in a 2-dimensional map
-		public AStarNodeBC(AStarNode AParent, AStarNode AGoalNode, double ACost, int AX, int AY, PathPlanner owner, int scale = 0) : base(AParent, AGoalNode, ACost)
+		public AStarNodeBC(AStarNode aParent, AStarNode aGoalNode, double aCost, int aX, int aY, PathPlanner owner, int scale = 0) : base(aParent, aGoalNode, aCost)
 		{
-			FX = AX;
-			FY = AY;
-            planner = owner;
-            this.scale = scale;
+			fX = aX;
+			fY = aY;
+            Planner = owner;
+            this.Scale = scale;
 		}
 
 		// Adds a successor to a list if it is not impassible or the parent node
-		private void AddSuccessor(ArrayList ASuccessors, int AX, int AY) 
+		private void AddSuccessor(ArrayList aSuccessors, int aX, int aY) 
 		{
-			double CurrentCost = planner.GetMap(AX, AY, scale);
-			if (CurrentCost < 0.0)
+			double currentCost = Planner.GetMap(aX, aY, Scale);
+			if (currentCost < 0.0)
 			{
 				return;
 			}
-			AStarNodeBC NewNode = new AStarNodeBC(this, GoalNode, Cost + CurrentCost, AX, AY, planner, scale);
-			if (NewNode.IsSameState(Parent)) 
+			AStarNodeBC newNode = new AStarNodeBC(this, GoalNode, Cost + currentCost, aX, aY, Planner, Scale);
+			if (newNode.IsSameState(Parent)) 
 			{
 				return;
 			}
-			ASuccessors.Add(NewNode);
+			aSuccessors.Add(newNode);
 		}
 
 		// Determines wheather the current node is the same state as the on passed.
-		public override bool IsSameState(AStarNode ANode)
+		public override bool IsSameState(AStarNode aNode)
 		{
-			if(ANode == null) 
+			if(aNode == null) 
 			{
 				return false;
 			}
-			return ((((AStarNodeBC)ANode).X == FX) &&
-				(((AStarNodeBC)ANode).Y == FY));
+			return ((((AStarNodeBC)aNode).X == fX) &&
+				(((AStarNodeBC)aNode).Y == fY));
 		}
 		
 		// Calculates the estimated cost for the remaining trip to the goal.
@@ -80,8 +80,8 @@ namespace battlecity
 		{
 			if (GoalNode != null) 
 			{
-				double xd = FX - ((AStarNodeBC)GoalNode).X;
-				double yd = FY - ((AStarNodeBC)GoalNode).Y;
+				double xd = fX - ((AStarNodeBC)GoalNode).X;
+				double yd = fY - ((AStarNodeBC)GoalNode).Y;
 				// "Manhattan Distance" - Used when search can only move vertically and horizontally.
 				GoalEstimate = 1.0 * (Math.Abs(xd) + Math.Abs(yd)); 
 			}
@@ -92,29 +92,29 @@ namespace battlecity
 		}
 
 		// Gets all successors nodes from the current node and adds them to the successor list
-		public override void GetSuccessors(ArrayList ASuccessors)
+		public override void GetSuccessors(ArrayList aSuccessors)
 		{
-			ASuccessors.Clear();
-            AddSuccessor(ASuccessors, FX - (1 << scale), FY);
-			AddSuccessor(ASuccessors, FX, FY - (1 << scale));
-			AddSuccessor(ASuccessors, FX + (1 << scale), FY  );
-			AddSuccessor(ASuccessors, FX, FY + (1 << scale));
+			aSuccessors.Clear();
+            AddSuccessor(aSuccessors, fX - (1 << Scale), fY);
+			AddSuccessor(aSuccessors, fX, fY - (1 << Scale));
+			AddSuccessor(aSuccessors, fX + (1 << Scale), fY  );
+			AddSuccessor(aSuccessors, fX, fY + (1 << Scale));
 		}	
 
 		// Prints information about the current node
 		public override void PrintNodeInfo()
 		{
 			Debug.WriteLine("X:\t{0}\tY:\t{1}\tCost:\t{2}\tEst:\t{3}\tTotal:\t{4}",
-			                  FX, FY, Cost, GoalEstimate, TotalCost);
+			                  fX, fY, Cost, GoalEstimate, TotalCost);
 		}
 	}
 	
 	public class PathPlanner
 	{
-        public double[,] map { get; set; }
+        public double[,,] Map { get; set; }
 
-        public int destX { get; set; }
-        public int destY { get; set; }
+        public int DestX { get; set; }
+        public int DestY { get; set; }
 
         public double GetMap(int x, int y, int scale)
         {
@@ -122,24 +122,13 @@ namespace battlecity
              * scale = 0 returns the coordinates of the map as specified.
              * Otherwise the map is scaled down by a factor (2^scale).
              */
-            double result = 0;
+            if ((x < 0) || (x >= (Map.GetLength(1) >> scale)) || (y < 0) || (y >= (Map.GetLength(2) >> scale)))
+                return -1;
 
-            for (int dx = 0; dx < (1 << scale); dx++)
-                for (int dy = 0; dy < (1 << scale); dy++)
-                {
-                    if (((x+dx) < 0) || ((x+dx) >= map.GetLength(0)))
-                        return (-1);
-                    if (((y+dy) < 0) || ((y+dy) >= map.GetLength(1)))
-                        return (-1);
-                    if (map[x, y] == -1)
-                        return (-1);
-                    result += map[x, y];
-                }
-
-            return result / (Math.Pow(2.0, 2*scale));
+            return Map[scale, x >> scale, y >> scale];
         }
 
-        public double[,] kernel;
+        public double[,] Kernel;
 		
 		// Tick number of the last update (to avoid re-scanning the board in the same round).
 		private int lastUpdate;
@@ -148,7 +137,7 @@ namespace battlecity
 		// is the penalty for moving directly adjacent to an enemy tank, Element 1 the penalty
 		// at 1 block clearance, Element 2 at 2 blocks clearance, etc. Clearance is defined as
 		// the smallest of the x or the y clearance (i.e. diagonal distance is not considered).
-		public double[] enemyClearance;
+		public double[] EnemyClearance;
 		
 		private void Initialize()
 		{
@@ -160,7 +149,7 @@ namespace battlecity
 			 */
 			
             /*
-            kernel = new int[,]
+            Kernel = new int[,]
 				{{3,3,3,3,3},
 				 {3,2,2,2,3},
 				 {3,2,1,2,3},
@@ -168,25 +157,25 @@ namespace battlecity
 				 {3,3,3,3,3}};
              */
 
-            kernel = new double[,]
+            Kernel = new double[,]
                 {{0.03,0.03,0.03,0.03,0.03},
                  {0.03,0.02,0.02,0.02,0.03},
                  {0.03,0.02,0.01,0.02,0.03},
                  {0.03,0.02,0.02,0.02,0.03},
                  {0.03,0.03,0.03,0.03,0.03}};
 
-            //kernel = new double[,]
+            //Kernel = new double[,]
             //    {{0.04,0.04,0.04,0.04,0.04},
             //     {0.04,0.03,0.03,0.03,0.04},
             //     {0.04,0.03,0.02,0.03,0.04},
             //     {0.04,0.03,0.03,0.03,0.04},
             //     {0.04,0.04,0.04,0.04,0.04}};
 			
-			enemyClearance = new double[] {0.05, 0.04, 0.03, 0.02, 0.01, 0.01};
+			EnemyClearance = new double[] {0.05, 0.04, 0.03, 0.02, 0.01, 0.01};
 			
 			lastUpdate = -2;
-            destX = -1;
-            destY = -1;
+            DestX = -1;
+            DestY = -1;
 		}
 		
 		public PathPlanner ()
@@ -194,7 +183,7 @@ namespace battlecity
             Initialize();
 		}
 		
-		public void mapBoard(Board board, Tank excludeTank = null, int tick = -1)
+		public void MapBoard(Board board, Tank excludeTank = null, int tick = -1, int scaleSpace = 0)
 		{
 			// If tick is -1, force an update. Otherwise, check that we haven't already updated the map
 			// this round.
@@ -202,16 +191,19 @@ namespace battlecity
 				return;
 			
 			lastUpdate = tick;
-            map = new double[board.xsize - 4, board.ysize - 4];
+            Map = new double[scaleSpace+1, board.xsize - 4, board.ysize - 4];
 
 			/* Scan through the board and apply the kernel, and use that to create a map of movement
 			 * costs for the A* algorithm.
 			 */
+
+            int scale = 0;
+
 			for (int x = 2; x < board.xsize - 2; x++)
 				for (int y = 2; y < board.ysize -2; y++)
                 {
                     // Always start with a cost of one (the actual movement cost to enter the square)
-                    map[x - 2, y - 2] = 1;
+                    Map[scale, x - 2, y - 2] = 1;
 
                     // Next, calculate the estimated movement penalty due to obstructions
                     for (int dx = -2; dx <= 2; dx++)
@@ -237,13 +229,13 @@ namespace battlecity
 
                             if (cost == -1)
                             {
-                                map[x - 2, y - 2] = -1;
+                                Map[scale, x - 2, y - 2] = -1;
                                 break;
                             }
 
-                            map[x - 2, y - 2] += cost * kernel[dx + 2, dy + 2];
+                            Map[scale, x - 2, y - 2] += cost * Kernel[dx + 2, dy + 2];
                         }
-                        if (map[x - 2, y - 2] == -1)
+                        if (Map[scale, x - 2, y - 2] == -1)
                             // Once it's impassible, there's no way to recover
                             break;
                     }
@@ -276,7 +268,7 @@ namespace battlecity
              * 
              * Everything in a radius of 4 units (9x9 square) around a tank is a collision (no-go)
              * for another tank. For enemy tanks, concentric squares around this 9x9 area may also be
-             * penalised by the elements of this.enemyClearance.
+             * penalised by the elements of this.EnemyClearance.
              * 
              */
 
@@ -284,12 +276,12 @@ namespace battlecity
                 if (!t.destroyed && ((excludeTank == null) || (excludeTank.id != t.id)))
                     for (int dx = -4; dx <= 4; dx++)
                         for (int dy = -4; dy <= 4; dy++)
-                            if ((t.x - 2 + dx >= 0) && (t.x - 2 + dx < map.GetLength(0)) &&
-                                (t.y - 2 + dy >= 0) && (t.y - 2 + dy < map.GetLength(1)))
+                            if ((t.x - 2 + dx >= 0) && (t.x - 2 + dx < Map.GetLength(1)) &&
+                                (t.y - 2 + dy >= 0) && (t.y - 2 + dy < Map.GetLength(2)))
                             {
                                 try
                                 {
-                                    map[t.x - 2 + dx, t.y - 2 + dy] = -1;
+                                    Map[scale, t.x - 2 + dx, t.y - 2 + dy] = -1;
                                 }
                                 catch (IndexOutOfRangeException)
                                 {
@@ -300,19 +292,19 @@ namespace battlecity
 
             foreach (Tank t in board.opponentTank)
                 if (!t.destroyed && ((excludeTank == null) || (excludeTank.id != t.id)))
-                    for (int dx = -4 - enemyClearance.Length; dx <= 4 + enemyClearance.Length; dx++)
-                        for (int dy = -4 - enemyClearance.Length; dy <= 4 + enemyClearance.Length; dy++)
+                    for (int dx = -4 - EnemyClearance.Length; dx <= 4 + EnemyClearance.Length; dx++)
+                        for (int dy = -4 - EnemyClearance.Length; dy <= 4 + EnemyClearance.Length; dy++)
                         {
-                            if ((t.x - 2 + dx >= 0) && (t.x - 2 + dx < map.GetLength(0)) &&
-                                (t.y - 2 + dy >= 0) && (t.y - 2 + dy < map.GetLength(1)))
+                            if ((t.x - 2 + dx >= 0) && (t.x - 2 + dx < Map.GetLength(1)) &&
+                                (t.y - 2 + dy >= 0) && (t.y - 2 + dy < Map.GetLength(2)))
                             {
                                 int clearance = Math.Max(Math.Abs(dx) - 5, Math.Abs(dy) - 5);
                                 try
                                 {
-                                    if ((clearance >= 0) && (map[t.x - 2 + dx, t.y - 2 + dy] != -1))
-                                        map[t.x - 2 + dx, t.y - 2 + dy] += enemyClearance[clearance];
+                                    if ((clearance >= 0) && (Map[scale, t.x - 2 + dx, t.y - 2 + dy] != -1))
+                                        Map[scale, t.x - 2 + dx, t.y - 2 + dy] += EnemyClearance[clearance];
                                     else if (clearance < 0)
-                                        map[t.x - 2 + dx, t.y - 2 + dy] = -1;
+                                        Map[scale, t.x - 2 + dx, t.y - 2 + dy] = -1;
                                 }
                                 catch (IndexOutOfRangeException)
                                 {
@@ -340,23 +332,57 @@ namespace battlecity
 
             for (int dx = -2; dx <= 2; dx++)
                 for (int dy = -2; dy <= 2; dy++)
-                    if ((board.playerBase.x + dx - 2 >= 0) && (board.playerBase.x + dx - 2 < map.GetLength(0)) &&
-                        (board.playerBase.y + dy - 2 >= 0) && (board.playerBase.y + dy - 2 < map.GetLength(1)))
-                        map[board.playerBase.x + dx - 2, board.playerBase.y + dy - 2] = -1;
+                    if ((board.playerBase.x + dx - 2 >= 0) && (board.playerBase.x + dx - 2 < Map.GetLength(1)) &&
+                        (board.playerBase.y + dy - 2 >= 0) && (board.playerBase.y + dy - 2 < Map.GetLength(2)))
+                        Map[scale, board.playerBase.x + dx - 2, board.playerBase.y + dy - 2] = -1;
+
+            // Build the rest of the scale space
+            for (int s = 1; s <= scaleSpace; s++)
+            {
+                for (int x = 0; x < ((board.xsize-4) >> s); x++)
+                {
+                    int mapX = x << 1;
+                    for (int y = 0; y < ((board.ysize-4) >> s); y++)
+                    {
+                        int mapY = y << 1;
+                        Map[s, x, y] = 0;
+                        bool impassable = false;
+                        for (int dx = 0; dx < 2; dx++)
+                        {
+                            for (int dy = 0; dy < 2; dy++)
+                            {
+                                if ((mapX + dx < (board.xsize-4)) && (mapY + dy < (board.ysize-4)))
+                                    Map[s, x, y] += Map[s - 1, mapX + dx, mapY + dy];
+                                else
+                                {
+                                    impassable = true;
+                                    break;
+                                }
+                            }
+                            if (impassable)
+                                break;
+                        }
+                        if (impassable)
+                            Map[s, x, y] = -1;
+                        else
+                            Map[s, x, y] /= 4.0;
+                    }
+                }
+            }
         }
 
-        private Bitmap drawMap(Board board)
+        private Bitmap DrawMap(Board board, int scale = 0)
         {
             Bitmap b = new Bitmap(board.xsize * 8, board.ysize * 8);
             using (Graphics g = Graphics.FromImage(b))
             {
                 g.Clear(Color.FromArgb(255, 0, 0));
-                for (int x = 0; x < map.GetLength(0); x++)
-                    for (int y = 0; y < map.GetLength(1); y++)
+                for (int x = 0; x < Map.GetLength(1); x++)
+                    for (int y = 0; y < Map.GetLength(2); y++)
                     {
                         int green = 0;
                         int blue = 0;
-                        int red = (int)Math.Round((map[x, y] - 1.0) * 200);
+                        int red = (int)Math.Round((Map[scale, x >> scale, y >> scale] - 1.0) * 200);
                         if (red > 255)
                             red = 255;
                         else if (red < 0)
@@ -372,19 +398,19 @@ namespace battlecity
             return b;
         }
 
-        public void renderMap(Board board, string filename)
+        public void RenderMap(Board board, string filename, int scale = 0)
         {
             // Create a rendering of the cost map, superimposed onto the board.
-            using (Bitmap b = drawMap(board))
+            using (Bitmap b = DrawMap(board, scale))
             {
                 b.Save(filename, ImageFormat.Png);
             }
         }
 
-        public void renderRoute(Board board, List<Tuple<int,int>> route, string filename)
+        public void RenderRoute(Board board, List<Tuple<int,int>> route, string filename, int scale = 0)
         {
             // Create a rendering of the cost map, with the specified route superimposed on it.
-            using (Bitmap b = drawMap(board))
+            using (Bitmap b = DrawMap(board, scale))
             {
                 using (Graphics g = Graphics.FromImage(b))
                 {
@@ -404,17 +430,17 @@ namespace battlecity
 
             // Save the destination on which the path was planned. This is useful if the planning gets cancelled
             // and we later want to re-run the plan (or substitute it with an alternative).
-            destX = x2;
-            destY = y2;
-            int scale = 2;
+            DestX = x2;
+            DestY = y2;
+            int scale = 3;
 
             // for (int scale = 0; scale <= scaleSpace; scale++)
                 Games.Pathfinding.AStar astar = new Games.Pathfinding.AStar();
 
-                AStarNodeBC GoalNode = new AStarNodeBC(null, null, 0, x2 - 2, y2 - 2, this, scale);
-                AStarNodeBC StartNode = new AStarNodeBC(null, GoalNode, 0, x1 - 2, y1 - 2, this, scale);
-                StartNode.GoalNode = GoalNode;
-                astar.FindPath(StartNode, GoalNode, cancel);
+                AStarNodeBC goalNode = new AStarNodeBC(null, null, 0, x2 - 2, y2 - 2, this, scale);
+                AStarNodeBC startNode = new AStarNodeBC(null, goalNode, 0, x1 - 2, y1 - 2, this, scale);
+                startNode.GoalNode = goalNode;
+                astar.FindPath(startNode, goalNode, cancel);
 
                 foreach (AStarNodeBC n in astar.Solution)
                     result.Add(new Tuple<int, int>(n.X, n.Y));

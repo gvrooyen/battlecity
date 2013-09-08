@@ -471,7 +471,19 @@ namespace battlecity
                 // Maximum recursion depth reached; bailing out.
                 Debug.WriteLine("ERROR: Maximum recursion depth reached, bailing out.");
                 tank.plans.Clear();
-                return ChallengeService.action.NONE;
+
+                // This typically happens when we start inside the scenery. Taking a step back is one workaround.
+                if (tank.direction == ChallengeService.direction.UP)
+                    return ChallengeService.action.DOWN;
+                else if (tank.direction == ChallengeService.direction.DOWN)
+                    return ChallengeService.action.UP;
+                else if (tank.direction == ChallengeService.direction.LEFT)
+                    return ChallengeService.action.RIGHT;
+                else if (tank.direction == ChallengeService.direction.RIGHT)
+                    return ChallengeService.action.LEFT;
+                else
+                    return ChallengeService.action.NONE;
+
             }
             else if (recursionDepth > 0)
             {
@@ -947,6 +959,65 @@ namespace battlecity
             return ChallengeService.action.NONE;
 		}
 
+        protected bool Occupied(int x, int y)
+        {
+            // For now, just check for FULL blocks and our own base.
+            // TODO: Check for enemy tanks too
+            return !((x >= 0) && (x < board.xsize) && (y >= 0) && (y < board.ysize) &&
+                (board.board[x][y] == ChallengeService.state.EMPTY) &&
+                (x != board.playerBase.x) && (y != board.playerBase.y));
+        }
+
+        protected bool FlankClear(Tank tank, ChallengeService.direction direction, int distance)
+        {
+            /* true if there are no FULL blocks or other tanks in the specified direction,
+             * for the number of blocks specified by 'distance'.
+             */
+
+            int dx = 0;
+            int dy = 0;
+            int y0 = tank.x;
+            int x0 = tank.y;
+
+            if (direction == ChallengeService.direction.UP)
+            {
+                dy = -1;
+                y0 = tank.y - 3;
+            }
+            else if (direction == ChallengeService.direction.DOWN)
+            {
+                dy = 1;
+                y0 = tank.y + 3;
+            }
+            else if (direction == ChallengeService.direction.LEFT)
+            {
+                dx = -1;
+                x0 = tank.x - 3;
+            }
+            else if (direction == ChallengeService.direction.RIGHT)
+            {
+                dx = 1;
+                x0 = tank.x + 3;
+            }
+
+            if (dx == 0)
+            {
+                for (int y = y0; Math.Abs(y - y0) <= distance; y += dy)
+                    for (int x = x0 - 2; x <= x0 + 2; x++)
+                        if (Occupied(x, y))
+                            return false;
+            }
+            else
+            {
+                for (int x = x0; Math.Abs(x - x0) <= distance; x += dx)
+                    for (int y = y0 - 2; y <= y0 + 2; y++)
+                        if (Occupied(x, y))
+                            return false;
+            }
+
+            return true;
+        }
+
         protected ChallengeService.action Dodge(Tank tank)
         {
             /* Check for incoming bullets, and take evasive action, if necessary.
@@ -1011,56 +1082,116 @@ namespace battlecity
                     // Move UP, if there's space
                     int dy = 3 + tank.y - bullet.y;
                     if (tank.y > dy)
-                        return ChallengeService.action.UP;
-                    else
-                        return ChallengeService.action.DOWN;
+                        if (FlankClear(tank, ChallengeService.direction.UP, tank.y - dy))
+                            return ChallengeService.action.UP;
+                        else if (FlankClear(tank, ChallengeService.direction.DOWN, 6 - tank.y + dy))
+                            return ChallengeService.action.DOWN;
                 }
                 else if (tank.y == bullet.y)
                 {
-                    if (random.Next(2) == 0)
-                        return ChallengeService.action.UP;
-                    else
+                    bool clearUp = FlankClear(tank, ChallengeService.direction.UP, 3);
+                    bool clearDown = FlankClear(tank, ChallengeService.direction.DOWN, 3);
+                    if (clearUp)
+                    {
+                        if (clearDown)
+                        {
+                            if (random.Next(2) == 0)
+                                return ChallengeService.action.UP;
+                            else
+                                return ChallengeService.action.DOWN;
+                        }
+                        else
+                            return ChallengeService.action.LEFT;
+                    }
+                    else if (clearDown)
+                    {
                         return ChallengeService.action.DOWN;
+                    }
                 }
                 else
                 {
                     // Move DOWN, if there's space
                     int dy = 3 - tank.y + bullet.y;
                     if ((board.ysize - tank.y) > dy)
-                        return ChallengeService.action.DOWN;
+                    {
+                        if (FlankClear(tank, ChallengeService.direction.DOWN, (board.ysize - tank.y) - dy))
+                            return ChallengeService.action.DOWN;
+                    }
                     else
-                        return ChallengeService.action.UP;
+                    {
+                        if (FlankClear(tank, ChallengeService.direction.UP, 6 - board.ysize + tank.y + dy))
+                            return ChallengeService.action.UP;
+                    }
                 }
             }
             else
             {
                 // Try to dodge horizontally
-                Debug.WriteLine("Incoming bullet!");
                 if (tank.x - bullet.x < 0)
                 {
                     // Move LEFT, if there's space
                     int dx = 3 + tank.x - bullet.x;
                     if (tank.x > dx)
-                        return ChallengeService.action.LEFT;
+                    {
+                        if (FlankClear(tank, ChallengeService.direction.LEFT, tank.x - dx))
+                            return ChallengeService.action.LEFT;
+                    }
                     else
-                        return ChallengeService.action.RIGHT;
+                    {
+                        if (FlankClear(tank, ChallengeService.direction.RIGHT, 6 - tank.x + dx))
+                            return ChallengeService.action.RIGHT;
+                    }
                 }
                 else if (tank.x == bullet.x)
                 {
-                    if (random.Next(2) == 0)
-                        return ChallengeService.action.LEFT;
-                    else
+                    bool clearLeft = FlankClear(tank, ChallengeService.direction.LEFT, 3);
+                    bool clearRight = FlankClear(tank, ChallengeService.direction.RIGHT, 3);
+                    if (clearLeft)
+                    {
+                        if (clearRight)
+                        {
+                            if (random.Next(2) == 0)
+                                return ChallengeService.action.LEFT;
+                            else
+                                return ChallengeService.action.RIGHT;
+                        }
+                        else
+                            return ChallengeService.action.LEFT;
+                    }
+                    else if (clearRight)
+                    {
                         return ChallengeService.action.RIGHT;
+                    }
                 }
                 else
                 {
                     // Move RIGHT, if there's space
                     int dx = 3 - tank.x + bullet.x;
                     if ((board.xsize - tank.x) > dx)
-                        return ChallengeService.action.RIGHT;
+                    {
+                        if (FlankClear(tank, ChallengeService.direction.RIGHT, board.xsize - tank.x - dx))
+                            return ChallengeService.action.RIGHT;
+                    }
                     else
-                        return ChallengeService.action.LEFT;
+                    {
+                        if (FlankClear(tank, ChallengeService.direction.LEFT, 6 - board.xsize + tank.x + dx))
+                            return ChallengeService.action.LEFT;
+                    }
                 }
+            }
+
+            // We can't move laterally, rather run away and hope for the best next tick.
+
+            switch (incomingFrom)
+            {
+                case ChallengeService.direction.LEFT:
+                    return ChallengeService.action.RIGHT;
+                case ChallengeService.direction.RIGHT:
+                    return ChallengeService.action.LEFT;
+                case ChallengeService.direction.UP:
+                    return ChallengeService.action.DOWN;
+                case ChallengeService.direction.DOWN:
+                    return ChallengeService.action.UP;
             }
 
             return ChallengeService.action.NONE;
@@ -1183,8 +1314,10 @@ namespace battlecity
             lock (client)
             {
                 // client.setActions(A1, A2);
-                client.setAction(board.playerTank[0].id, A1);
-                client.setAction(board.playerTank[1].id, A2);
+                if (!board.playerTank[0].destroyed)
+                    client.setAction(board.playerTank[0].id, A1);
+                if (!board.playerTank[1].destroyed)
+                    client.setAction(board.playerTank[1].id, A2);
             }
         }
     }
@@ -1404,7 +1537,6 @@ namespace battlecity
                 }
             }
 
-            Debug.WriteLine("{0} tanks in play", board.playerTank.Length);
             for (int i = 0; i < 2; i++)
             {
                 // We create separate planners for each tank, so that they can run as parallel asynchronous
@@ -1587,6 +1719,10 @@ namespace battlecity
                         {
                             // The pathfinder hasn't been able to find a valid route yet, or we're practically
                             // at the target. Just bash ahead.
+                            if (route[i] == null)
+                                Debug.WriteLine("WARNING: No suitable route found for tank (ID={0}); bashing ahead.", board.playerTank[i].id);
+                            else
+                                Debug.WriteLine("Tank (ID={0}) going straight for the target.", board.playerTank[i].id);
                             A[i] = RunAndGun(board.playerTank[i], planner[i].destX, planner[i].destY);
                         }
                         else
@@ -1620,19 +1756,26 @@ namespace battlecity
             lock (client)
             {
                 Debug.WriteLine("Tank 1 {0}; Tank 2 {1}", A[0], A[1]);
-                if (!board.playerTank[0].destroyed)
+                try
                 {
-                    lock (client)
-                        client.setAction(board.playerTank[0].id, A[0]);
-                    Debug.WriteLine("Tank 1's plans:");
-                    Debug.WriteLine(board.playerTank[0].PrintPlans());
+                    if (!board.playerTank[0].destroyed)
+                    {
+                        lock (client)
+                            client.setAction(board.playerTank[0].id, A[0]);
+                        Debug.WriteLine("Tank 1's plans:");
+                        Debug.WriteLine(board.playerTank[0].PrintPlans());
+                    }
+                    if (!board.playerTank[1].destroyed)
+                    {
+                        lock (client)
+                            client.setAction(board.playerTank[1].id, A[1]);
+                        Debug.WriteLine("Tank 2's plans:");
+                        Debug.WriteLine(board.playerTank[1].PrintPlans());
+                    }
                 }
-                if (!board.playerTank[1].destroyed)
+                catch (System.ServiceModel.EndpointNotFoundException)
                 {
-                    lock (client)
-                        client.setAction(board.playerTank[1].id, A[1]);
-                    Debug.WriteLine("Tank 2's plans:");
-                    Debug.WriteLine(board.playerTank[1].PrintPlans());
+                    Debug.WriteLine("ERROR: Server seems to have shut down.");
                 }
             }
         }

@@ -71,14 +71,15 @@ namespace battlecity
             return result.ToString();
         }
 
-        public ChallengeService.action Watchdog()
+        public ChallengeService.action Watchdog(bool tickle = false)
         {
             /* Monitor the tank's activity, and reset it if it seems to be stuck.
+             * The optional argument just "tickles" the watchdog, clearing its history.
              */
             int period = 2;
 
             // Update the history
-            if (bullet != null)
+            if (tickle || (bullet != null))
             {
                 xHistory.Clear();
                 xHistory.Enqueue(x);
@@ -352,7 +353,9 @@ namespace battlecity
                 opponentBase.y = status.players[opponentID].@base.y;
 
                 if ((status.players[playerID].bullets == null) && (status.players[opponentID].bullets == null))
-                    Debug.WriteLine("No bullets in play yet.");
+                {
+                    // Debug.WriteLine("No bullets in play yet.");
+                }
                 else
                     Debug.WriteLine("WARNING: bullets already in play!");
                 int i = 0;

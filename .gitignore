@@ -1,11 +1,6 @@
-﻿bin/*
-*.exe
-bin/Debug/*
+bin/*
 obj/*
-Player One.brd
-Player One.txt
-Player Two.brd
-Player Two.txt
-*.png
+*.exe
 *.log
-bin/Release/*
+*.txt
+*.db

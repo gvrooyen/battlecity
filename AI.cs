@@ -905,7 +905,7 @@ namespace battlecity
                     int x = firstObstX;
                     for (int y = firstObstY - 1; y >= destY; y--)
                     {
-                        if (board.board[x][y] == ChallengeService.state.FULL)
+                        if ((x >= 0) && (x < board.xsize) && (y >= 0) && (y < board.ysize) && (board.board[x][y] == ChallengeService.state.FULL))
                         {
                             // There's a block to destroy. Let's see if it will take out any obstacles with it.
                             LinkedListNode<Tuple<int, int>> obst = obstacles.First;
@@ -1445,6 +1445,14 @@ namespace battlecity
          * also takes the AttackBase role. This is triggered based on the distance L between the player base and
          * the enemy base. If our first attacker reaches a distance L/3 from the enemy base, but all surviving
          * opponents are also still within L/3 from the enemy base.
+         * 
+         * The schedule is handled as follows:
+         * - At a new tick, basic checks for tactical moves are done (pot shot at enemy, dodge a bullet, etc.).
+         *   If no tactical moves have been scheduled, the path planner tasks are started, and the default
+         *   "run-and-gun" actions are calculated and submitted to the server. These serve as backup actions in
+         *   case the path planner does not complete in time, or the final actions aren't posted in time.
+         * - At the early-move tick, the results from the path planner are set as actions.
+         * - At the final-move tick, the queued actions are posted.
          */
 
         private ChallengeService.action[] A;
@@ -1467,6 +1475,7 @@ namespace battlecity
 
         public override void newTick()
         {
+            #region Set up roles
             if ((board.playerTank[0].role == null) || (board.playerTank[1].role == null))
             {
                 // We haven't assigned roles yet, so randomly assign the AttackBase and DefendBase roles.
@@ -1536,7 +1545,9 @@ namespace battlecity
                     }
                 }
             }
+            #endregion
 
+            #region Schedule tasks
             for (int i = 0; i < 2; i++)
             {
                 // We create separate planners for each tank, so that they can run as parallel asynchronous
@@ -1692,6 +1703,33 @@ namespace battlecity
                 else
                     Debug.WriteLine("ERROR: Player tank (id={0}) has unsupported role {1}", t.id, t.role);
             }
+            #endregion
+
+            #region Post default moves
+            for (int i = 0; i < 2; i++)
+            {
+                Tank t = board.playerTank[i];
+                if (t.destroyed)
+                    continue;
+
+                // We don't want to overwrite A[i], because we later use it to check whether a tactical move
+                // has been taken.
+                ChallengeService.action action = A[i];
+
+                if (action == ChallengeService.action.NONE)
+                    action = RunAndGun(board.playerTank[i], planner[i].destX, planner[i].destY);
+
+                try
+                {
+                    lock (client)
+                        client.setAction(board.playerTank[i].id, action);
+                }
+                catch (System.ServiceModel.EndpointNotFoundException)
+                {
+                    Debug.WriteLine("ERROR: Server seems to have shut down.");
+                }
+            }
+            #endregion
         }
 
         public override void postEarlyMove()
@@ -1723,7 +1761,8 @@ namespace battlecity
                                 Debug.WriteLine("WARNING: No suitable route found for tank (ID={0}); bashing ahead.", board.playerTank[i].id);
                             else
                                 Debug.WriteLine("Tank (ID={0}) going straight for the target.", board.playerTank[i].id);
-                            A[i] = RunAndGun(board.playerTank[i], planner[i].destX, planner[i].destY);
+                            // A[i] = RunAndGun(board.playerTank[i], planner[i].destX, planner[i].destY);
+                            A[i] = ChallengeService.action.NONE;
                         }
                         else
                         {
@@ -1758,14 +1797,15 @@ namespace battlecity
                 Debug.WriteLine("Tank 1 {0}; Tank 2 {1}", A[0], A[1]);
                 try
                 {
-                    if (!board.playerTank[0].destroyed)
+                    // A NONE action typically means a default action has already been posted in the NewTick() phase.
+                    if (!board.playerTank[0].destroyed && (A[0] != ChallengeService.action.NONE))
                     {
                         lock (client)
                             client.setAction(board.playerTank[0].id, A[0]);
                         Debug.WriteLine("Tank 1's plans:");
                         Debug.WriteLine(board.playerTank[0].PrintPlans());
                     }
-                    if (!board.playerTank[1].destroyed)
+                    if (!board.playerTank[1].destroyed && (A[1] != ChallengeService.action.NONE))
                     {
                         lock (client)
                             client.setAction(board.playerTank[1].id, A[1]);

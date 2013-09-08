@@ -17,6 +17,7 @@ namespace battlecity
 		 */
 
         public PathPlanner planner { get; set; }
+        int scale { get; set; }
 		
 		// The X-coordinate of the node
 		public int X 
@@ -39,22 +40,23 @@ namespace battlecity
 		private int FY;
 
 		// Constructor for a node in a 2-dimensional map
-		public AStarNodeBC(AStarNode AParent, AStarNode AGoalNode, double ACost, int AX, int AY, PathPlanner owner) : base(AParent, AGoalNode, ACost)
+		public AStarNodeBC(AStarNode AParent, AStarNode AGoalNode, double ACost, int AX, int AY, PathPlanner owner, int scale = 0) : base(AParent, AGoalNode, ACost)
 		{
 			FX = AX;
 			FY = AY;
             planner = owner;
+            this.scale = scale;
 		}
 
 		// Adds a successor to a list if it is not impassible or the parent node
 		private void AddSuccessor(ArrayList ASuccessors, int AX, int AY) 
 		{
-			double CurrentCost = planner.GetMap(AX, AY);
+			double CurrentCost = planner.GetMap(AX, AY, scale);
 			if (CurrentCost < 0.0)
 			{
 				return;
 			}
-			AStarNodeBC NewNode = new AStarNodeBC(this, GoalNode, Cost + CurrentCost, AX, AY, planner);
+			AStarNodeBC NewNode = new AStarNodeBC(this, GoalNode, Cost + CurrentCost, AX, AY, planner, scale);
 			if (NewNode.IsSameState(Parent)) 
 			{
 				return;
@@ -93,10 +95,10 @@ namespace battlecity
 		public override void GetSuccessors(ArrayList ASuccessors)
 		{
 			ASuccessors.Clear();
-			AddSuccessor(ASuccessors, FX-1, FY  );
-			AddSuccessor(ASuccessors, FX  , FY-1);
-			AddSuccessor(ASuccessors, FX+1, FY  );
-			AddSuccessor(ASuccessors, FX  , FY+1);
+            AddSuccessor(ASuccessors, FX - (1 << scale), FY);
+			AddSuccessor(ASuccessors, FX, FY - (1 << scale));
+			AddSuccessor(ASuccessors, FX + (1 << scale), FY  );
+			AddSuccessor(ASuccessors, FX, FY + (1 << scale));
 		}	
 
 		// Prints information about the current node
@@ -114,13 +116,27 @@ namespace battlecity
         public int destX { get; set; }
         public int destY { get; set; }
 
-        public double GetMap(int x, int y)
+        public double GetMap(int x, int y, int scale)
         {
-            if ((x < 0) || (x >= map.GetLength(0)))
-                return (-1);
-            if ((y < 0) || (y >= map.GetLength(1)))
-                return (-1);
-            return (map[x, y]);
+            /* Return the target coordinates, of a map scaled down by the specified power.
+             * scale = 0 returns the coordinates of the map as specified.
+             * Otherwise the map is scaled down by a factor (2^scale).
+             */
+            double result = 0;
+
+            for (int dx = 0; dx < (1 << scale); dx++)
+                for (int dy = 0; dy < (1 << scale); dy++)
+                {
+                    if (((x+dx) < 0) || ((x+dx) >= map.GetLength(0)))
+                        return (-1);
+                    if (((y+dy) < 0) || ((y+dy) >= map.GetLength(1)))
+                        return (-1);
+                    if (map[x, y] == -1)
+                        return (-1);
+                    result += map[x, y];
+                }
+
+            return result / (Math.Pow(2.0, 2*scale));
         }
 
         public double[,] kernel;
@@ -382,7 +398,7 @@ namespace battlecity
             }
         }
 
-        public List<Tuple<int, int>> GetPath(int x1, int y1, int x2, int y2, CancellationTokenSource cancel)
+        public List<Tuple<int, int>> GetPath(int x1, int y1, int x2, int y2, CancellationTokenSource cancel, int scaleSpace = 0)
         {
             List<Tuple<int, int>> result = new List<Tuple<int, int>>();
 
@@ -390,16 +406,18 @@ namespace battlecity
             // and we later want to re-run the plan (or substitute it with an alternative).
             destX = x2;
             destY = y2;
+            int scale = 2;
 
-            Games.Pathfinding.AStar astar = new Games.Pathfinding.AStar();
+            // for (int scale = 0; scale <= scaleSpace; scale++)
+                Games.Pathfinding.AStar astar = new Games.Pathfinding.AStar();
 
-            AStarNodeBC GoalNode = new AStarNodeBC(null, null, 0, x2-2, y2-2, this);
-            AStarNodeBC StartNode = new AStarNodeBC(null, GoalNode, 0, x1-2, y1-2, this);
-            StartNode.GoalNode = GoalNode;
-            astar.FindPath(StartNode, GoalNode, cancel);
+                AStarNodeBC GoalNode = new AStarNodeBC(null, null, 0, x2 - 2, y2 - 2, this, scale);
+                AStarNodeBC StartNode = new AStarNodeBC(null, GoalNode, 0, x1 - 2, y1 - 2, this, scale);
+                StartNode.GoalNode = GoalNode;
+                astar.FindPath(StartNode, GoalNode, cancel);
 
-            foreach (AStarNodeBC n in astar.Solution)
-                result.Add(new Tuple<int, int>(n.X, n.Y));
+                foreach (AStarNodeBC n in astar.Solution)
+                    result.Add(new Tuple<int, int>(n.X, n.Y));
 
             return result;
         }

@@ -416,7 +416,7 @@ namespace battlecity
                 {
                     foreach (Tuple<int, int> p in route)
                     {
-                        Rectangle rect = new Rectangle( (p.Item1 + 2) * 8 + 2, (p.Item2 + 2) * 8 + 2, 4, 4);
+                        Rectangle rect = new Rectangle( (p.Item1 - 2) * 8 + 2, (p.Item2 - 2) * 8 + 2, 4, 4);
                         g.FillEllipse(new SolidBrush(Color.FromArgb(0, 255, 0)), rect);
                     }
                 }
@@ -486,12 +486,11 @@ namespace battlecity
 
                 List<Tuple<int, int>> finePath = new List<Tuple<int, int>>();
 
-                bool firstNode = true;
+                int skip = 0;
                 foreach (AStarNodeBC n in astar.Solution)
                 {
-                    if (!firstNode)
+                    if (skip++ >= 0)
                         finePath.Add(new Tuple<int, int>(n.X + 2, n.Y + 2));
-                    firstNode = false;
                 }
 
                 if (finePath.Count > 0)

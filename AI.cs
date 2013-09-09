@@ -1345,7 +1345,7 @@ namespace battlecity
             a2 = ChallengeService.action.NONE;
 
             // One tank goes for the base
-            if (!baseKiller.destroyed)
+            if ((baseKiller != null) && (!baseKiller.destroyed))
                 baseKiller.Watchdog();
             a1 = Dodge(baseKiller);
             if (a1 == ChallengeService.action.NONE)
@@ -1354,7 +1354,7 @@ namespace battlecity
                 a1 = RunAndGun(baseKiller, board.opponentBase.x, board.opponentBase.y);
 
             // The other tank (if we still have two) goes for the closest enemy
-            if (!tankKiller.destroyed)
+            if ((tankKiller != null) && (!tankKiller.destroyed))
                 tankKiller.Watchdog();
             a2 = Dodge(tankKiller);
             if (a2 == ChallengeService.action.NONE)
@@ -1445,6 +1445,7 @@ namespace battlecity
         private CancellationTokenSource cancel;
         private List<Task> taskPool;
         private PathPlanner[] planner;
+        private bool[] tacticalMove = new bool[2];
 
         public AI_CTF() : base() { }
         public AI_CTF(Board board, ChallengeService.ChallengeClient client)
@@ -1461,6 +1462,10 @@ namespace battlecity
         public override void NewTick()
         {
             #region Set up roles
+
+            tacticalMove[0] = false;
+            tacticalMove[1] = false;
+
             if ((board.playerTank[0].role == null) || (board.playerTank[1].role == null))
             {
                 // We haven't assigned roles yet, so randomly assign the AttackBase and DefendBase roles.
@@ -1565,11 +1570,20 @@ namespace battlecity
                 ChallengeService.action recoveryAction = t.Watchdog();
 
                 if (dodgeAction != ChallengeService.action.NONE)
+                {
                     A[i] = dodgeAction;
+                    tacticalMove[i] = true;
+                }
                 else if (potshotAction != ChallengeService.action.NONE)
+                {
                     A[i] = potshotAction;
+                    tacticalMove[i] = true;
+                }
                 else if (recoveryAction != ChallengeService.action.NONE)
+                {
                     A[i] = recoveryAction;
+                    tacticalMove[i] = true;
+                }
                 else if (t.role.GetType() == typeof(Role.AttackBase))
                 {
                     // For now, just target the actual coordinates of the base (gun at it and run over it).
@@ -1699,8 +1713,7 @@ namespace battlecity
                 if (t.destroyed)
                     continue;
 
-                // We don't want to overwrite A[i], because we later use it to check whether a tactical move
-                // has been taken.
+                // We don't want to overwrite A[i], because that could cause a race with the path planner
                 ChallengeService.action action = A[i];
 
                 if (action == ChallengeService.action.NONE)
@@ -1757,13 +1770,13 @@ namespace battlecity
                             // Check the proposed route, and target the end of the first straight line
                             // segment in the route (this works well, because RunAndGun handles straight
                             // lines perfectly: correctly alternating between moving and firing).
-                            int dx = route[i][1].Item1 - route[i][0].Item1;
-                            int dy = route[i][1].Item2 - route[i][0].Item2;
+                            int dx = Math.Sign(route[i][1].Item1 - route[i][0].Item1);
+                            int dy = Math.Sign(route[i][1].Item2 - route[i][0].Item2);
                             int destItem = 1;
                             for (int j = 2; j < route[i].Count; j++)
                             {
-                                if (((route[i][j].Item1 - route[i][j].Item1) == dx) &&
-                                    ((route[i][j].Item2 - route[i][j].Item2) == dy))
+                                if ((Math.Sign(route[i][j].Item1 - route[i][j-1].Item1) == dx) &&
+                                    (Math.Sign(route[i][j].Item2 - route[i][j-1].Item2) == dy))
                                 {
                                     destItem = j;
                                 }
@@ -1786,14 +1799,14 @@ namespace battlecity
                 try
                 {
                     // A NONE action typically means a default action has already been posted in the NewTick() phase.
-                    if (!board.playerTank[0].destroyed && (A[0] != ChallengeService.action.NONE))
+                    if (!board.playerTank[0].destroyed && (!tacticalMove[0]))
                     {
                         lock (client)
                             client.setAction(board.playerTank[0].id, A[0]);
                         Debug.WriteLine("Tank 1's plans:");
                         Debug.WriteLine(board.playerTank[0].PrintPlans());
                     }
-                    if (!board.playerTank[1].destroyed && (A[1] != ChallengeService.action.NONE))
+                    if (!board.playerTank[1].destroyed && (!tacticalMove[0]))
                     {
                         lock (client)
                             client.setAction(board.playerTank[1].id, A[1]);
